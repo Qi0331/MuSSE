@@ -79,3 +79,10 @@
 - [硬件档案](HARDWARE.md)、[LED 矩阵调查](LED_MATRIX.md)、[文档导航](REFERENCES.md)、[上游基线](UPSTREAM.md)
 - [Espressif ESP-IDF ESP32-S3 入门](https://docs.espressif.com/projects/esp-idf/zh_CN/v6.1/esp32s3/get-started/index.html)
 - [小智面包板参考接线](https://xiaozhi.dev/docs/usage/hardware-guide/)
+
+## 2026-11-02 最新软件优先级补充（覆盖前文“直接独立新造表情系统”表述）
+
+1. 先复核锁定小智 v2.5.2 的 `Display::SetEmotion`、`Application` 状态事件、LED 回调及真实 emotion 来源；原则是**复用现成的语音/情绪语义，MuSSE 只实现缺失的 16×16 逻辑帧和硬件适配接口**。
+2. 一次离线批量完成 Windows 宿主 C++ 构建、5 类基本画面/动画、状态映射、单色/RGB 预览、确定性测试、孤立副本的上游最小补丁编译尝试和结果报告。不能把 Windows 测试或固件构建声称为真机运行。
+3. 后续语音配件和 LED 到货、电平/电源核验、真实板卡兼容之后，再单独申请烧录/接线授权。M1 语音闭环和 M2 硬件整合验收条件不变。
+4. 官方控制台已观察到记忆、知识库、扩展能力和 MCP 接入点；日常待办、定时提醒、长期进度与后台界面在后续 M3/M4 再决定存储/执行位置。详见 [官方平台调研](XIAOZHI_PLATFORM.md)。
