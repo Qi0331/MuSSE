@@ -11,7 +11,17 @@
 - 团队已经购买一套标称 ESP32-S3 N16R8 的语音 DIY 组件，具体见 `HARDWARE.md`。
 - 已定位小智公开仓库 `78/xiaozhi-esp32` 与 `v2.5.2` 的 `bread-compact-wifi` 候选固件；未确认实物匹配。
 - 功能目标包括基础语音对话、OLED、按键，未来拟加入 LED 灯阵、扭动开关、校园信息检索、记录、记忆和提醒。
-- GitHub 目录及 Agent 协作约定正在按初始化任务提交，不视为硬件开发进展。
+- GitHub 目录和 Agent 协作规则已提交。初次 GitHub Actions 文档检查已通过（提交 `1ec1c34`）；这**不代表**硬件、固件或业务功能通过测试。
+
+## 当前 GitHub 任务（从这里领取）
+
+- [#1 M0-01：核验 ESP32-S3 实物型号和引脚](https://github.com/Qi0331/MuSSE/issues/1) — **硬件主线第一步**
+- [#2 M0-02：首次单板 USB 识别（Windows）](https://github.com/Qi0331/MuSSE/issues/2) — 依赖 #1
+- [#3 M0-03：模块与候选固件接线兼容性](https://github.com/Qi0331/MuSSE/issues/3) — 实物核对
+- [#4 M1-01：发布包核验与首次安全烧录准备](https://github.com/Qi0331/MuSSE/issues/4) — 后续阶段，不代表自动授予烧录权限
+- [#5 M0-00：邀请组员并评估 main 分支规则](https://github.com/Qi0331/MuSSE/issues/5) — 可与硬件准备并行
+
+**当前首选任务：#1。** 没有实物照片时，不要擅自宣布兼容或开始外设接线。
 
 ## 尚未验证（绝对不要标为完成）
 
