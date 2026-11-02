@@ -27,3 +27,12 @@
 - 需要二次开发时由 Issue 决定是否采用上游 Fork、受控引入源码或独立固件模块，并锁定具体 tag/commit。
 - 上游发布新版本不等于自动升级；升级必须有变更评估与回归测试。
 - 分发修改的上游源码/二进制时遵守适用 MIT 许可证，保留版权与许可证文件。
+
+## 文档与源码导航
+
+完整资料分类与使用顺序见 [研发参考文档导航](REFERENCES.md)。本文件仅记录**当前选用/候选的上游版本**；不能把社区页面的最新内容误当成 `v2.5.2` 的正式接口。
+
+重点查看：
+- [参考板 GPIO 配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.h)、[构建配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.json)、[板级代码](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/compact_wifi_board.cc)
+- [上游自定义开发板中文指南](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/custom-board_zh.md)、[小智社区的接线指南](https://xiaozhi.dev/docs/usage/hardware-guide/)
+- [上游 MCP 协议](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-protocol_zh.md)、[上游 MCP 控制用法](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-usage_zh.md)
