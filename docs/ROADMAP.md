@@ -22,7 +22,7 @@
 - [x] 选定并安装 ESP-IDF **v6.1 正式版**（EIM 0.20.1，Reasonix 本地报告），符合小智上游 v2.5.2 的版本约束。
 
 ### M0b：最小硬件程序
-- [x] **仅本地编译阶段**：官方 ESP-IDF v6.1 Hello World 示例已复制并针对 esp32s3 编译成功（16MB / DIO / 40MHz，PSRAM 未启用），**未烧录、未运行、未提交本地源码**。
+- [x] **实际烧录与运行完成**：官方 ESP-IDF v6.1 Hello World（16MB / DIO / 40MHz，PSRAM 未启用）已由 Reasonix 报告成功烧录、串口输出及多次软件重启；**实验源码尚未提交本仓库**。
 - [x] 首次烧录前只读检查 Secure Boot / Flash Encryption，完整备份 16MiB 原 Flash 并取得首次 Hello World 烧录单独授权。
 - [x] [#10](https://github.com/Qi0331/MuSSE/issues/10) Hello World 真机稳定串口启动/自动重启；另有 GPIO/按钮独立工程本地编译，功能真机未验证。
 - [ ] 实物具备合适 LED/引脚时才验证 GPIO 输出。
