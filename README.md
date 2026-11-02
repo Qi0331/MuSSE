@@ -34,6 +34,7 @@
 ## 文档索引
 
 - [项目状态](docs/STATUS.md)（唯一权威进展记录）
+- [软件产品 V1：待办、长期目标与 iWiki 知识库](docs/PRODUCT_V1.md)（2026-11-03 已确定的 B+C 开发范围）
 - [硬件档案](docs/HARDWARE.md)
 - [16×16 LED 矩阵调查与安全检查](docs/LED_MATRIX.md)
 - [烧录工具与固件文件核验](docs/FLASH_FILES.md)
