@@ -58,7 +58,7 @@
 
 Windows 设备管理器显示 `USB-Enhanced-SERIAL CH343 (COM6)`，用户已完成拔插对应验证，且 `esptool v5.6.0 --no-stub flash-id` 成功与 ESP32-S3 通信。工具输出芯片修订 v0.2、晶振 40MHz、16MB Flash、Flash eFuse 电压 3.3V，列出 8MB embedded PSRAM；**尚未进行 PSRAM 运行时读写测试，也未烧录程序**。记录未包含设备 MAC 地址。
 
-**下一步**：先执行只读 `get-security-info` 了解芯片安全启动/闪存加密限制，再决定本地原固件备份与首次烧录方案。不要安装 FT232 驱动或误用普通 ESP32 固件。见 [测试记录](TEST_LOG.md)。
+**后续更新（2026-11-02 晚间）**：`get-security-info`、完整原 Flash 私有备份以及首次 Hello World 授权烧录和运行已由 Reasonix 报告完成；下文“新购买商品截图”对后续采购另有记录。勿安装 FT232 驱动或误用普通 ESP32 固件。见 [测试记录](TEST_LOG.md)。
 
 ## 安全规则
 
