@@ -77,3 +77,48 @@
 2. 决定是否及如何本地备份出厂固件；备份不得上传公共仓库。
 3. 单独授权后再进行首次 Hello World 烧录、串口启动日志与按钮实验。
 4. 完成开发板 PCB/USB-C 端口、GPIO、LED 5V 上拉电平和供电验证；LED 未核验前严禁接线。
+
+
+## M0 后续真实执行报告（2026-11-02；本节均为用户转交的 Reasonix CLI 本地报告）
+
+### T-20261102-06 — ESP32-S3 安全状态只读检查
+
+- 环境：CH343 COM6、esptool v5.6.0，`--chip esp32s3 --port COM6 --baud 115200 --no-stub get-security-info`。
+- 实际报告：退出码 0；`Flags: 0x00000000`、`Secure Boot: Disabled`、`Flash Encryption: Disabled`、`SPI_BOOT_CRYPT_CNT: 0x0`。
+- 结论：**只读通信成功，未发现这两项机制限制首次写入**；不等于所有 eFuse 位均已单独审计。未烧录、未擦除、未改 eFuse。
+
+### T-20261102-07 — 首次烧录前完整 Flash 本地备份与离线识别
+
+- 工具：esptool v5.6.0，COM6，`read-flash 0 0x1000000`；本地 16 MiB 备份文件 `esp32s3_factory_20261102.bin`；**原始文件不得进入 Public 仓库**。
+- 原始执行记录：`Read 16777216 bytes from 0x00000000 in 414.2 seconds`，退出码 0；文件大小 16,777,216 字节；SHA-256 `cd0f30ac9491da499eaf2167f07b5accf23cf6779c506110431aa766f346273e`。
+- 仅对备份离线解析：非空白区域出现 bootloader 0x0、分区表 0x8000 和应用 0x10000；原应用项目名 `led_strip`、构建时间 2021-08-17、ESP-IDF v4.4-dev、镜像头 2MB/DIO/80MHz，分区 `nvs` 0x9000 24 KiB、`phy_init` 0xF000 4 KiB、`factory` 0x10000 1 MiB。
+- 结论：备份成功（报告）、离线发现有原始示例程序；**没有声称原厂程序曾经运行成功**。
+
+### T-20261102-08 — 首次授权 Hello World 烧录、串口运行与自动重启
+
+- 用户已明确授权覆盖原 `led_strip`，禁止整片擦除、eFuse 修改及接外设；先复核本地备份和三个镜像哈希与旧记录一致。
+- 配置：ESP-IDF v6.1；16MB/DIO/40MHz、Single App 1MiB，PSRAM 关闭。以 esptool `write-flash` 定点写入三个镜像：bootloader `0x0`（21,120 字节）、partition table `0x8000`（3,072 字节）、`hello_world.bin` `0x10000`（150,720 字节）。
+- 实际写入报告：三个镜像分别出现 `Hash of data verified`，`FLASH_EXIT=0`；只发生目标写入扇区自动擦除，没有 `erase-flash`。
+- 运行：通过 CH343 COM6 以 115200 波特率使用 pyserial 采集约 45 秒。观察到 `ESP-IDF v6.1 2nd stage bootloader`、`Loaded app from partition at offset 0x10000`、`Project name: hello_world`、`Hello world!` 和 10 秒倒计时；共 5 次启动、5 次 `Hello world!`、4 次 `Restarting now.`，后续 `rst:0xc (RTC_SW_CPU_RST)`，未见 panic/Guru Meditation。
+- 结果：**首次烧录、真实应用运行、自动重启均通过（Reasonix 本地报告）**。原厂 `led_strip` 已覆盖，原始备份仍在本地并再次校验一致；串口复位边界存在短暂乱码，未影响后续启动。
+- 本地私有日志：`MuSSE-Private-Backups/logs/flash_20261102.log` 和 `hello_world_monitor_20261102.log`；未上传。该设备未做 PSRAM 读写测试。
+
+### T-20261102-09 — 独立 GPIO/按钮实验工程本地编译
+
+- 工程位置：`MuSSE-Lab/gpio_button`；ESP-IDF v6.1，`idf.py set-target esp32s3`、`idf.py build` 均退出码 0。
+- 实现：可选低电平有效按钮、内部上拉、10 ms 采样/约 30 ms 消抖，稳定变化打印 `BUTTON_PRESSED/RELEASED`；可选 GPIO 输出测试。**当前两个选项都关闭**，镜像不含按钮/输出测试字符串。
+- 当前构建 `gpio_button.bin`：170,352 字节，SHA-256 `902b60123a083e76b20cbe47d81a168e306f63732e563139205950c1cd2c5714`。
+- 结论：**本地编译通过，不等于 GPIO/按钮真机验证**；具体开发板引脚、BOOT 对应 GPIO0 尚未实物核对。本轮未烧录/未接线。
+
+### T-20261102-10 — 上游小智 v2.5.2 `bread-compact-wifi` 本地构建
+
+- 本地目录：`MuSSE-Lab/xiaozhi-esp32-v2.5.2`；tag `v2.5.2`、commit `49b4380b3faa0ceadd28a3e78aaf0f311c46c57e`、MIT，Reasonix 报告 `git status` 干净。
+- ESP-IDF v6.1 PowerShell 环境执行 `python scripts/build.py bread-compact-wifi --name bread-compact-wifi`，退出码 0；默认板型 `esp32s3`、16MB/DIO/80MHz、Octal PSRAM 80MHz、CPU 240MHz，OTA/asset 复合分区。
+- 主要镜像：`xiaozhi.bin` 2,577,504 字节，SHA-256 `3c77df039b71f03de25dca21bcd49d91fe8bf591ff7fd8259685feb1d94c7e12`；另生成 bootloader、分区表、OTA 数据、`generated_assets.bin`（561,011 字节）。
+- 烧录地址由本地 `flash_args` 报告：bootloader `0x0`、partition table `0x8000`、`ota_data_initial.bin` `0xD000`、`xiaozhi.bin` `0x20000`、`generated_assets.bin` `0x800000`。
+- 上游依赖：I²S 麦克风/功放、SSD1306 OLED、网络/云端配网/绑定；板型参考 GPIO 和应用状态机经过源码静态分析，见 [UPSTREAM](UPSTREAM.md)。
+- 结论：**上游本地构建成功，但从未烧录、没有 PSRAM 或语音真机测试**。不要将该构建当作 MuSSE 集成固件或设备已兼容的证据。本地报告路径 `MuSSE-Lab/reports/xiaozhi-v2.5.2-analysis.md`，未上传。
+
+### 记录边界
+
+以上数据为用户转交的本地执行报告；除此前由用户自行提供的最初芯片通信以外，仓库维护方未直接复核该 PC 的完整原始日志/文件。Reasonix 末尾的“有未验证的改动”据其说明是执行环境的审计状态提示，非经确认的 Git 文件修改，不据此推断项目源码受污染。

@@ -2,7 +2,7 @@
 
 **MuSSE** 是一个基于 ESP32-S3 和小智 AI（xiaozhi-esp32）的软硬件结合式 AI 陪伴机器人项目。
 
-> **当前状态：M0（已到货硬件识别、单板编程与 LED 矩阵安全调查）。** 截至 2026-11-02，尚无已验证运行的 MuSSE 固件、硬件接线或语音对话测试。最新事实见 [项目状态](docs/STATUS.md)。
+> **当前状态请以 [docs/STATUS.md](docs/STATUS.md) 为准。** 当前已有真实 Hello World 烧录运行记录；语音和矩阵仍未验证。
 
 ## 项目目标
 
@@ -21,17 +21,15 @@
 | 负责固件 | [UPSTREAM](docs/UPSTREAM.md) → HARDWARE → [TEST_LOG](docs/TEST_LOG.md) |
 | 负责规划 | [ROADMAP](docs/ROADMAP.md) → [DECISIONS](docs/DECISIONS.md) → [HANDOFF](docs/HANDOFF.md) |
 
-## 目前可用的实物（2026-11-02）
+## 最新进展（2026-11-02 晚间）
 
-- **已到货**：ESP32-S3 N16R8（型号与排针仍需实物核验）、面包板、跳线、按钮、Type-C 数据线；**创乐博 MAKEROBO 16×16 I²C LED 矩阵**（照片可见 `+5V / GND / SDA / SCL`，芯片和电平未确认）。
-- **尚未到货**：INMP441 麦克风、MAX98357 功放、扬声器、0.91 英寸四针 OLED。
-- **尚未确认购买**：扭动开关。
+**M0 实际设备进度**：ESP32-S3-N16R8 已通过 ESP-IDF v6.1 Hello World 的本地编译、授权烧录、串口运行和自动重启验证；原 Flash 已本地安全备份。GPIO/按钮实验工程已本地构建，尚未上板。**小智 v2.5.2 / bread-compact-wifi 已本地构建成功，但从未烧录或验证语音。** 以上以用户转交 Reasonix CLI 报告为依据，未直接核验另一台 Windows 主机的二进制文件。权威详情：[STATUS](docs/STATUS.md) / [TEST_LOG](docs/TEST_LOG.md) / [HANDOFF](docs/HANDOFF.md)。
 
-**现在的实际顺序**：开发板实物核验 → Windows USB 识别 → 独立 ESP-IDF 串口/按钮实验；LED 矩阵先调查控制器和 5V/I²C 电平，安全后再接线。语音组件到货后才进入小智预编译固件语音闭环；再将硬件功能集成到自定义固件。
+**新硬件变化**：除了现有创乐博 2×HT16K33A 的 **I²C 16×16 LED 矩阵**，用户还购买了一款单独的 **5V WS2812B 16×16 RGB 矩阵**、四路双向电平转换模块、标称 5V/3A USB 适配器和 14500 电池供电模块（均依据商品截图，实物/电气未核验）。**I²C 矩阵和 WS2812B 不能套用同一套驱动，电平转换器也需匹配具体信号接口。** 当前供电策略为 **USB 5V 长期有线桌面运行，不采用电池**。未经核验禁止给 LED 矩阵接线或上电。
 
-候选上游为小智 `v2.5.2 / bread-compact-wifi`（芯片族为 ESP32-S3）。外部教程给的 `bread-compact-esp32-128x32` 针对**普通 ESP32**，不应刷到当前 ESP32-S3-N16R8。**未刷写或测试**，不能把上游示例引脚直接认定为当前实物的接线图。
+## 实物与采购状态
 
-详见 [当前状态](docs/STATUS.md)、[阶段路线](docs/ROADMAP.md)、[LED 模块调查](docs/LED_MATRIX.md)。
+已到货的主板、按钮、创乐博 I²C LED 矩阵及尚未到货的音频/OLED 清单，见 [HARDWARE](docs/HARDWARE.md)。新买的 5V WS2812B RGB 矩阵与旧 I²C 模块属不同硬件，实际到货和电气均未核实；有关购买后续请看 [LED_MATRIX](docs/LED_MATRIX.md)。
 
 ## 文档索引
 

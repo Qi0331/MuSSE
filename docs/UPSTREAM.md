@@ -50,3 +50,17 @@
 另一压缩包 `flash_download_tool_3.9.7.zip` 是 Flash 下载器：归档内含同名 Windows EXE、中文/英文 PDF 使用手册和版本说明。离线检查哈希 `4fc5464df6aa6462da8f32fd01ff868b779215a9a123e6ffc5e8b80ee3da908d`。未执行 EXE，亦未证实它来源于乐鑫官网；实际烧录应优先从[乐鑫官方烧录文档](https://docs.espressif.com/projects/esp-test-tools/zh_CN/latest/esp32s3/production_stage/tools/flash_download_tool.html)取工具。文件/校验信息仅供团队定位错误安装包，不将这两个 ZIP 或 EXE 上传公共仓库。
 
 详见 [固件/烧录文件分析](FLASH_FILES.md)。
+
+
+## 2026-11-02 晚间：v2.5.2 上游已在本地构建（Reasonix 报告）
+
+> 此节**取代**上文“预期固件包尚未下载 / 尚未构建”的早期快照。此次获取的是 **tag 对应的源码研究副本**，而非已验证的 `v2.5.2_bread-compact-wifi.zip` 官方发布二进制；**没有烧录或实际测试语音**。
+
+- 官方源码 `https://github.com/78/xiaozhi-esp32`：tag `v2.5.2`，commit `49b4380b3faa0ceadd28a3e78aaf0f311c46c57e`，本地浅克隆 `MuSSE-Lab/xiaozhi-esp32-v2.5.2`，`git status` 干净；许可证 MIT。
+- 在 ESP-IDF v6.1 环境执行 `python scripts/build.py bread-compact-wifi --name bread-compact-wifi`，Reasonix 报告退出码 0；第一次缺 `--name` 时退出码 2，指定后正常。
+- 构建目标 `esp32s3`，16MB/DIO/80MHz，Octal PSRAM 80MHz，CPU 240MHz；`partitions/v2/16m.csv` 布局含 `ota_0` / `ota_1` / `assets`；`xiaozhi.bin` 2,577,504 字节、SHA-256 `3c77df039b71f03de25dca21bcd49d91fe8bf591ff7fd8259685feb1d94c7e12`。
+- 本地 `flash_args`：bootloader `0x0`，分区表 `0x8000`，OTA data `0xD000`，应用 `0x20000`，assets `0x800000`；与已经运行的 Hello World **0x10000 应用偏移**完全不同，不可互相套用烧录地址。
+- 面包板参考 GPIO（**不是本开发板已核验排针**）：麦克风 WS/SCK/DIN `4/5/6`；功放 BCLK/LRCK/DOUT `15/16/7`；OLED SDA/SCL `41/42`；BOOT `0`、触摸键 `47`、音量键 `40/39`；`SingleLed` WS2812 `48`；MCP 测试灯 `18`。原 16×16 HT16K33A I²C 板及新购 16×16 WS2812B RGB 板**均未作为 MuSSE 矩阵驱动在这次构建中集成**。
+- 状态机制（源码分析）：`main/device_state.h`，`main/device_state_machine.{h,cc}` 的 `TransitionTo` / `AddStateChangeListener`；`Application::SetDeviceState()` 通知灯/显示；`Led::OnStateChanged()`、`Board::GetLed()`、`Display::SetEmotion(const char*)` 可作为后续桥接点。
+- 建议新功能先写硬件无关帧缓冲、表情动画、离线测试与状态映射，再与上游最小侵入适配；不提前拷贝/修改上游大量源码。下次涉及新固件烧录、账号绑定和接口通信须分开授权。
+- 研究完整报告仅在 Windows 本地 `MuSSE-Lab/reports/xiaozhi-v2.5.2-analysis.md`；GitHub 此次只提交脱敏摘要，未上传上游副本或任何 .bin。
