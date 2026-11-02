@@ -37,6 +37,7 @@
 - [项目状态](docs/STATUS.md)（唯一权威进展记录）
 - [硬件档案](docs/HARDWARE.md)
 - [上游依赖](docs/UPSTREAM.md)
+- [研发参考资料总导航](docs/REFERENCES.md)
 - [系统架构草案](docs/ARCHITECTURE.md)
 - [路线图](docs/ROADMAP.md)
 - [决策记录](docs/DECISIONS.md)
