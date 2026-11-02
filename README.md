@@ -47,9 +47,61 @@
 
 ## 参考资料
 
-- 小智上游：https://github.com/78/xiaozhi-esp32
-- 候选发布：https://github.com/78/xiaozhi-esp32/releases/tag/v2.5.2
-- 小智社区文档（非上游官方）：https://xiaozhi.dev/docs/
+> **完整的分阶段用途、版本记录与来源说明见 [研发参考文档导航](docs/REFERENCES.md)**。无需一次性通读；先看当前阶段资料。小智上游源码是版本权威，**xiaozhi.dev 是非官方社区文档站**，乐鑫官方文档用于确认芯片和驱动行为。
+
+### 小智项目源码与候选固件（固定到 v2.5.2）
+
+- [小智上游仓库](https://github.com/78/xiaozhi-esp32) · [v2.5.2 发布页](https://github.com/78/xiaozhi-esp32/releases/tag/v2.5.2) · [bread-compact-wifi 候选发布包](https://github.com/78/xiaozhi-esp32/releases/download/v2.5.2/v2.5.2_bread-compact-wifi.zip)
+- [参考 GPIO 配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.h) · [板型构建配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.json) · [对应板型实现](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/compact_wifi_board.cc)
+- [上游自定义开发板（中文）](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/custom-board_zh.md) · [上游设备控制用法（中文）](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-usage_zh.md) · [上游协议文档](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-protocol_zh.md) · [MIT 许可证](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/LICENSE)
+
+### 小智社区文档（按开发用途分组，共 27 篇）
+
+社区总入口：[小智文档索引](https://xiaozhi.dev/docs/)。
+
+**基础认识**
+
+[AI 能力与设备/服务端分工](https://xiaozhi.dev/docs/ai-features/)
+
+**硬件与入门**
+
+[硬件搭建指南](https://xiaozhi.dev/docs/usage/hardware-guide/) · [支持的开发板](https://xiaozhi.dev/docs/usage/supported-boards/) · [ESP32 低成本方案](https://xiaozhi.dev/docs/usage/esp32-budget-version/)
+
+**烧录与使用**
+
+[固件下载与烧录](https://xiaozhi.dev/docs/usage/firmware-download/) · [首次配网、激活与绑定](https://xiaozhi.dev/docs/usage/activation/) · [网络配置](https://xiaozhi.dev/docs/usage/network-setup/) · [功能使用教程](https://xiaozhi.dev/docs/usage/feature-guide/) · [常见问题 FAQ](https://xiaozhi.dev/docs/usage/faq/)
+
+**开发与固件**
+
+[ESP-IDF 开发环境与编译](https://xiaozhi.dev/docs/development/esp-idf-setup/) · [自定义开发板指南](https://xiaozhi.dev/docs/development/custom-board/) · [代码风格指南](https://xiaozhi.dev/docs/development/code-style/) · [自定义资源（Assets）](https://xiaozhi.dev/docs/development/assets-customization/) · [BluFi 蓝牙配网](https://xiaozhi.dev/docs/development/blufi/)
+
+**设备与协议**
+
+[MCP 协议规范](https://xiaozhi.dev/docs/development/mcp/protocol/) · [MCP 物联网设备控制](https://xiaozhi.dev/docs/development/mcp/usage/) · [WebSocket 通信协议](https://xiaozhi.dev/docs/development/websocket/) · [MQTT + UDP 混合协议](https://xiaozhi.dev/docs/development/mqtt-udp/)
+
+**显示与提醒**
+
+[Emoji 情感显示](https://xiaozhi.dev/docs/development/emotion/) · [动态文字 Glyph Push](https://xiaozhi.dev/docs/development/glyph-push/) · [异步语音通知（notify）](https://xiaozhi.dev/docs/development/notify/)
+
+**后台与扩展**
+
+[自建服务端](https://xiaozhi.dev/docs/usage/self-hosted-server/) · [生态项目与服务端](https://xiaozhi.dev/docs/development/ecosystem/)
+
+**ESP32 深入**
+
+[芯片支持与存储规格](https://xiaozhi.dev/docs/esp32/technical-specs/) · [固件代码导览](https://xiaozhi.dev/docs/esp32/programming-guide/) · [进阶扩展点](https://xiaozhi.dev/docs/esp32/advanced-features/) · [ESP32 开发问题排查](https://xiaozhi.dev/docs/esp32/troubleshooting/)
+
+### 乐鑫官方文档（芯片、驱动与烧录）
+
+- [ESP-IDF v6.1 ESP32-S3 快速入门](https://docs.espressif.com/projects/esp-idf/zh_CN/v6.1/esp32s3/get-started/index.html)
+- [Espressif esptool（ESP32-S3）](https://docs.espressif.com/projects/esptool/en/latest/esp32s3/index.html)
+- [ESP32-S3 GPIO 驱动与引脚限制](https://docs.espressif.com/projects/esp-idf/zh_CN/v6.1/esp32s3/api-reference/peripherals/gpio.html)
+- [ESP32-S3 I2S 音频驱动](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/i2s.html)
+- [ESP32-S3 I2C 驱动](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/i2c.html)
+
+### 暂待确认的资料
+
+实际开发板及电子元件的原厂规格书、软工集市和 iWiki 的合法授权接口文档，待型号/权限确认后补充；**绝不在公开仓库发布令牌、校园内部文件或私人链接**。
 
 ## 公开仓库提醒
 
