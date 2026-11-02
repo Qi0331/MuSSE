@@ -8,10 +8,12 @@
 
 ### M0a：主板识别与工具链
 - [ ] [#1](https://github.com/Qi0331/MuSSE/issues/1) 拍摄 ESP32-S3 实物正背面，验证板型、USB 接口、PCB/排针丝印。
-- [ ] [#2](https://github.com/Qi0331/MuSSE/issues/2) **不接外设**：USB 连接 Windows，识别端口、驱动或 USB 设备；提交真实测试日志。
-- [ ] 选定与候选小智源码相容的 ESP-IDF 开发环境；记录真实安装版本，不凭网上任意示例猜测。
+- [x] [#2](https://github.com/Qi0331/MuSSE/issues/2) **不接外设**：用户完成 CH343 COM6 插拔对照与 ESP32-S3 只读识别；记录入 [TEST_LOG](TEST_LOG.md)。Issue 是否关闭仍按其完整验收条件判断。
+- [x] 选定并安装 ESP-IDF **v6.1 正式版**（EIM 0.20.1，Reasonix 本地报告），符合小智上游 v2.5.2 的版本约束。
 
 ### M0b：最小硬件程序
+- [x] **仅本地编译阶段**：官方 ESP-IDF v6.1 Hello World 示例已复制并针对 esp32s3 编译成功（16MB / DIO / 40MHz，PSRAM 未启用），**未烧录、未运行、未提交本地源码**。
+- [ ] 首次烧录前只读检查 Secure Boot / Flash Encryption，讨论原 Flash 备份需求并取得单独烧录授权。
 - [ ] [#10](https://github.com/Qi0331/MuSSE/issues/10) 创建独立 ESP-IDF 实验工程，串口可打印稳定的启动日志。
 - [ ] 实物具备合适 LED/引脚时才验证 GPIO 输出。
 - [ ] 按钮接入已核验输入 GPIO；验证按下/松开与软件消抖。
