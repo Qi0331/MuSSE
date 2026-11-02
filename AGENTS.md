@@ -8,7 +8,7 @@
 2. `docs/STATUS.md`：**唯一权威的当前完成状态**与最近任务。
 3. `docs/HARDWARE.md`、`docs/UPSTREAM.md`、`docs/ARCHITECTURE.md`：硬件、上游基线和系统边界。
 4. `docs/DECISIONS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`：决策、证据与近期交接。
-5. 查看 GitHub Issues / PR，确认用户实际指派的任务；没有明确任务不擅自扩展范围。
+6. 查看 GitHub Issues / PR，确认用户实际指派的任务；没有明确任务不擅自扩展范围。
 
 ## 当前事实（2026-11-02）
 
