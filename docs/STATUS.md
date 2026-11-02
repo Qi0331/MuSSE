@@ -8,9 +8,9 @@
 
 ## 已到货（2026-11-02）
 
-- **ESP32-S3 N16R8** 主控（文字确认已到手；**尚未提交可辨认实物排针/PCB 的照片**）
+- **ESP32-S3 N16R8** 主控（新实物照片可确认模组金属屏蔽罩标有 `ESP32-S3-N16R8`、开发板有两个 USB-C 与 BOOT/RST 按键；PCB 版本、两个 USB 口功能和 Windows 枚举仍待验证）
 - 面包板、足量跳线、轻触按钮、Type-C 数据线
-- **16×16 LED 矩阵**：照片显示“创乐博 MAKEROBO / I2C 16x16 LED Matrix Board for Raspberry Pi”，引脚标示 `+5V / GND / SDA / SCL`；**驱动芯片、电平转换、I²C 地址、最大电流未知；目前不可接 ESP32-S3 测试**。详见 [LED 矩阵调查](LED_MATRIX.md)。
+- **16×16 LED 矩阵**：照片显示“创乐博 MAKEROBO / I2C 16x16 LED Matrix Board for Raspberry Pi”，引脚标示 `+5V / GND / SDA / SCL`；**背面芯片已确认 2 × Holtek HT16K33A（原厂要求 4.5–5.5V）；I²C 上拉电压、地址、整板耗电仍未知，暂不可接 ESP32-S3 测试**。详见 [LED 矩阵调查](LED_MATRIX.md)。
 
 ## 尚未到货（已采购的基础语音配件）
 
@@ -39,14 +39,20 @@
 
 ## 尚未验证（不能声称完成的事项）
 
-- ESP32-S3 实物型号/PCB 排针、Windows USB 识别、任何编译或设备烧录。
-- LED 模块驱动型号、逻辑电平兼容、供电和图案显示。
+- ESP32-S3 **模组型号已从照片确认**；开发板 PCB 修订、两个 USB-C 口实际功能、Windows USB 识别、任何编译或设备烧录仍未验证。
+- LED 板已有**两颗 HT16K33A 芯片型号证据**，但具体 I²C 地址、上拉电压、电源电流、像素映射和图案显示尚未验证。
 - 麦克风、功放、扬声器、OLED 的接线和语音对话。
 - 校园接口授权、后端、提醒功能。
 - 团队成员权限或分支保护已完成配置。
 
+## 外部教程 ZIP 的核验结论（未刷写）
+
+- `v2.5.2_bread-compact-esp32-128x32.zip` 虽与上游 v2.5.2 发布版 ZIP 的 SHA-256 匹配，但目标是 **普通 ESP32**（`target: esp32`），**不是已确认的 ESP32-S3-N16R8**，不可用于这块板。
+- `flash_download_tool_3.9.7.zip` 是含 Windows EXE/中英文手册的烧录工具归档；未运行 EXE，来源安全性尚需官方渠道核验。
+- 当前正确芯片族的候选固件仍为 `v2.5.2_bread-compact-wifi.zip`（`target: esp32s3`），**未检查该附件、未烧录**。详细文件校验见 [FLASH_FILES](FLASH_FILES.md)。
+
 ## 最直接的下一步
 
-请取得 **ESP32-S3 正反面清晰实物照（含丝印和 USB 口）**，优先完成 Issue #1；另外提交 **LED 矩阵另一面（LED/芯片面）** 的照片用于 Issue #11 的驱动识别。此时**不接 LED 矩阵电源或 SDA/SCL**。
+已确认 ESP32-S3 模组标识，**下一步核验开发板的 PCB 型号、两枚 USB-C 端口用途，并完成单板 USB 枚举**（Issue #1/#2）。LED 背面芯片已识别，转向调查 I²C 电平、地址、供电和整板线路（Issue #11）。在这些电气条件未确认前**不接 LED 矩阵电源或 SDA/SCL**。
 
 进度变化更新本文件，真实实验记录到 [TEST_LOG](TEST_LOG.md)，设计取舍记录到 [DECISIONS](DECISIONS.md)。分阶段计划见 [ROADMAP](ROADMAP.md)。

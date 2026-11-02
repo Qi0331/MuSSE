@@ -29,7 +29,7 @@
 
 **现在的实际顺序**：开发板实物核验 → Windows USB 识别 → 独立 ESP-IDF 串口/按钮实验；LED 矩阵先调查控制器和 5V/I²C 电平，安全后再接线。语音组件到货后才进入小智预编译固件语音闭环；再将硬件功能集成到自定义固件。
 
-候选上游为小智 `v2.5.2 / bread-compact-wifi`。**未刷写或测试**，不能把上游示例引脚直接认定为当前实物的接线图。
+候选上游为小智 `v2.5.2 / bread-compact-wifi`（芯片族为 ESP32-S3）。外部教程给的 `bread-compact-esp32-128x32` 针对**普通 ESP32**，不应刷到当前 ESP32-S3-N16R8。**未刷写或测试**，不能把上游示例引脚直接认定为当前实物的接线图。
 
 详见 [当前状态](docs/STATUS.md)、[阶段路线](docs/ROADMAP.md)、[LED 模块调查](docs/LED_MATRIX.md)。
 
@@ -38,6 +38,7 @@
 - [项目状态](docs/STATUS.md)（唯一权威进展记录）
 - [硬件档案](docs/HARDWARE.md)
 - [16×16 LED 矩阵调查与安全检查](docs/LED_MATRIX.md)
+- [烧录工具与固件文件核验](docs/FLASH_FILES.md)
 - [上游依赖](docs/UPSTREAM.md)
 - [研发参考资料总导航](docs/REFERENCES.md)
 - [系统架构草案](docs/ARCHITECTURE.md)

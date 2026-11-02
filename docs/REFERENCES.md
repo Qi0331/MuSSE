@@ -105,14 +105,21 @@
 | [ESP32-S3 I2S 音频驱动](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/i2s.html) | M2：数字麦克风和功放 |
 | [ESP32-S3 I2C 驱动](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/i2c.html) | M2：OLED 等 I2C 外设 |
 
-## 四、后续需要由项目组补充的资料（目前没有准确公开链接）
+## 四、这次已识别的 LED 驱动及 Flash 烧录资料
+
+- [Holtek HT16K33A 产品与数据手册](https://holtek.com.cn/page/vg/HT16K33A) — **这次实物照片中两颗芯片的型号一致**，工作电压 4.5–5.5V，支持 I²C 通信；整板电平和地址仍需查证。
+- [乐鑫 ESP32-S3 Flash Download Tool 中文指南](https://docs.espressif.com/projects/esp-test-tools/zh_CN/latest/esp32s3/production_stage/tools/flash_download_tool.html) — PC 工具使用与芯片选择；别把“下载器”误认为“固件”。
+- [ESP32-S3 esptool 烧录与合并镜像](https://docs.espressif.com/projects/esptool/en/release-v4/esp32s3/esptool/basic-commands.html) — 不同芯片的合并镜像、烧录地址解释。
+- [上传的两个 ZIP 离线审查记录](FLASH_FILES.md) — 哈希、文件列表、目标芯片及**不兼容的 ESP32 固件警告**。
+
+## 五、后续需要由项目组补充的资料（目前没有准确公开链接）
 
 - **开发板与电子器件原厂手册**：ESP32-S3 开发板准确 PCB 版型，以及 **INMP441、MAX98357、OLED 控制器、LED 灯阵、扭动开关**的实际供应商规格书；拿到实物型号后再填精确链接，避免混用不同模块版本。
 - **软工集市、iWiki**：接口文档、访问授权、数据使用边界目前待确认；不得把私人访问地址或访问令牌放入 Public 仓库。
 - **MuSSE 后端**：待选技术栈与服务部署方式确定后，再记录实际 API、部署与安全文档。
 - **硬件电路图**：只有在实物供电、引脚和驱动能力核验后，才能把接线图标注为“正式可用”。
 
-## 五、维护规则（供组员和 Agent）
+## 六、维护规则（供组员和 Agent）
 
 1. 新增资料记录**标题、来源、准确链接、适用阶段**；含版本依赖时记录 tag/commit。
 2. 区分 **上游原始源码**、**第三方社区文档**、**乐鑫官方硬件文档**。

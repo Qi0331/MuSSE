@@ -36,3 +36,17 @@
 - [参考板 GPIO 配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.h)、[构建配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.json)、[板级代码](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/compact_wifi_board.cc)
 - [上游自定义开发板中文指南](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/custom-board_zh.md)、[小智社区的接线指南](https://xiaozhi.dev/docs/usage/hardware-guide/)
 - [上游 MCP 协议](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-protocol_zh.md)、[上游 MCP 控制用法](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-usage_zh.md)
+
+## 2026-11-02：外部教程的固件包核验（不适配当前主控）
+
+团队提供 `v2.5.2_bread-compact-esp32-128x32.zip`。已对 ZIP 进行**离线列表、镜像头与 SHA-256 检查，不执行程序或刷写**：
+
+- ZIP SHA-256：`e8d8b9dc7e3a68b2c3cc71864268b31d7ac06b81ba2119c5c1c97aa2587de513`，与[上游 v2.5.2 发布记录](https://github.com/78/xiaozhi-esp32/releases/tag/v2.5.2)一致。
+- ZIP 只包含 `merged-binary.bin`（3,415,609 字节），为合并镜像；解析可见普通 ESP32 的 0x1000 引导镜像，0x8000 分区表及 0x10000 应用部分。
+- **关键不匹配**：上游 [`bread-compact-esp32/config.json`](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-esp32/config.json) 的 `target: "esp32"`，不是 `esp32s3`；实际主控可见 `ESP32-S3-N16R8`。
+- **不可将这个教程提供的 ESP32 固件刷到 ESP32-S3。** 不要误认为名称中的 `128x32` 表示兼容一切 OLED 或 ESP32 系列。
+- 候选正确目标是 [`bread-compact-wifi/config.json`](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.json)，`target: "esp32s3"`，并且默认 OLED 128×32；但**仍未核验 PCB、引脚或真实音频外设，不构成可直接烧录的判断**。
+
+另一压缩包 `flash_download_tool_3.9.7.zip` 是 Flash 下载器：归档内含同名 Windows EXE、中文/英文 PDF 使用手册和版本说明。离线检查哈希 `4fc5464df6aa6462da8f32fd01ff868b779215a9a123e6ffc5e8b80ee3da908d`。未执行 EXE，亦未证实它来源于乐鑫官网；实际烧录应优先从[乐鑫官方烧录文档](https://docs.espressif.com/projects/esp-test-tools/zh_CN/latest/esp32s3/production_stage/tools/flash_download_tool.html)取工具。文件/校验信息仅供团队定位错误安装包，不将这两个 ZIP 或 EXE 上传公共仓库。
+
+详见 [固件/烧录文件分析](FLASH_FILES.md)。
