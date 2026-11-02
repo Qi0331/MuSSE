@@ -7,7 +7,8 @@
 1. 根目录 `README.md`：目标和入口。
 2. `docs/STATUS.md`：**唯一权威的当前完成状态**与最近任务。
 3. `docs/HARDWARE.md`、`docs/UPSTREAM.md`、`docs/ARCHITECTURE.md`：硬件、上游基线和系统边界。
-4. `docs/DECISIONS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`：决策、证据与近期交接。
+4. `docs/REFERENCES.md`：按阶段查阅已核对的上游、社区和官方开发文档；不要仅凭链接就判断硬件已兼容。
+5. `docs/DECISIONS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`：决策、证据与近期交接。
 6. 查看 GitHub Issues / PR，确认用户实际指派的任务；没有明确任务不擅自扩展范围。
 
 ## 当前事实（2026-11-02）
