@@ -1,0 +1,32 @@
+# credentials / local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials/
+
+# platform / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# ESP-IDF build artifacts (once used)
+build/
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# local recordings and exports
+recordings/
+local-data/
+*.log
