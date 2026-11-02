@@ -7,8 +7,9 @@
 - **本次新证据**：ESP 模组丝印为 `ESP32-S3-N16R8`，有两个 USB-C/BOOT/RST；LED 矩阵背面明确有两颗 Holtek HT16K33A，原厂要求 4.5–5.5V；**仍未核验 GPIO 5V 安全性**。
 - **固件审查**：上传的 `v2.5.2_bread-compact-esp32-128x32.zip` 与上游 ZIP SHA-256 匹配，但目标为普通 ESP32，**不适用 ESP32-S3**；另一 ZIP 为含 EXE 的烧录工具，尚未运行或证实官方来源。参见 [FLASH_FILES](FLASH_FILES.md)。
 - **当前任务入口**：[Issue #1 主板核验](https://github.com/Qi0331/MuSSE/issues/1)、[Issue #2 USB 检测](https://github.com/Qi0331/MuSSE/issues/2)、[Issue #11 LED 电平/地址/供电验证](https://github.com/Qi0331/MuSSE/issues/11)、[Issue #4 固件准备](https://github.com/Qi0331/MuSSE/issues/4)。
-- **没有做过**：任何硬件通电、USB 测试、烧录或语音功能验证；不能把代码计划视为实测结果。
-- **下一位 Agent**：首先核对 [Issue #1 开发板实物型号](https://github.com/Qi0331/MuSSE/issues/1)，再做 [#2 USB 枚举](https://github.com/Qi0331/MuSSE/issues/2) 和 [#10 最小实验](https://github.com/Qi0331/MuSSE/issues/10)。LED [#11](https://github.com/Qi0331/MuSSE/issues/11) 两颗芯片已确认，继续核对 5V 上拉和供电；在通过电气检查前**不许接线**。不要将普通 ESP32 目标固件刷入 S3。
+- **新增 Windows 实证**：组员提供设备管理器截图，显示 `USB-Enhanced-SERIAL CH343 (COM6)`，该观察已记入 [TEST_LOG](TEST_LOG.md)；未通过拔插确认设备对应，未进行芯片通信、烧录或外设测试。
+- **仍未做过**：ESP32-S3 只读芯片连接测试、固件编译/烧录、LED 矩阵驱动运行及语音功能验证。
+- **下一位 Agent**：首先核对 [Issue #1 开发板实物型号](https://github.com/Qi0331/MuSSE/issues/1)，先用拔插确认 [#2 CH343 设备对应](https://github.com/Qi0331/MuSSE/issues/2)，再做 [#10 最小实验](https://github.com/Qi0331/MuSSE/issues/10)。LED [#11](https://github.com/Qi0331/MuSSE/issues/11) 两颗芯片已确认，继续核对 5V 上拉和供电；在通过电气检查前**不许接线**。不要将普通 ESP32 目标固件刷入 S3。
 - **参考源**：[docs/REFERENCES.md](REFERENCES.md)，重要技术路径以锁定版本的上游实现为准。
 - **权限边界**：Public 仓库不上传个人/校园敏感信息。涉及真实硬件刷写、敏感外部操作前需得到明确授权。
 
