@@ -3,7 +3,7 @@
 ## 2026-11-03 最新覆盖：iWiki 单数据源（优先于下方 B+C 路线）
 
 - 用户确认 V1 采用 **iWiki 唯一持久化数据源**，只做被动查询日程/逾期；**暂缓 Vue 网页、CloudBase、独立数据库、主动提醒与推送**。
-- 已实现：`software/musse-iwiki/` 的任务/日程/目标/笔记业务逻辑、Markdown 模板、25 项离线测试、MCP stdio 服务；真实 iWiki 读取未联调，远程写入默认关闭。
+- 已实现：`software/musse-iwiki/` 的任务/日程/目标/笔记业务逻辑、Markdown 模板、29 项离线测试、MCP stdio 服务；真实 iWiki 读取未联调，远程写入默认关闭。
 - 未完成：真实 iWiki MCP 工具契约/鉴权/读写联调；小智接入点与 `xiaozhi-client` 桥接联调；持续在线部署。
 - 桥接依赖：Windows 常开时可用；关机后工具失效。本覆盖不改变 M0/M1 硬件、固件与显示状态。
 - 详见 [PRODUCT_V1](PRODUCT_V1.md)、[DECISIONS D-013](DECISIONS.md) 与 `software/musse-iwiki/reports/BATCH1_REPORT.md`。
