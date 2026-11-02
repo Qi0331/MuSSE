@@ -1,0 +1,20 @@
+{
+  "mcpEndpoint": "wss://api.xiaozhi.me/mcp/<从控制台获取，勿提交真实值>",
+  "mcpServers": {
+    "musse-iwiki": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:\\Users\\Lenovo\\MuSSE-Lab\\musse-readonly\\software\\musse-iwiki\\src\\mcp\\server.ts"
+      ],
+      "env": {
+        "MUSSE_IWIKI_STORE": "iwiki",
+        "MUSSE_ALLOW_UNVERIFIED_IWIKI": "0",
+        "MUSSE_ENABLE_REMOTE_IWIKI_WRITE": "0",
+        "IWIKI_MCP_URL": "https://ssemarket.cn/iwiki-api/mcp",
+        "IWIKI_TOOL_READ": "<需授权后从 tools/list 确认>",
+        "IWIKI_TOOL_WRITE": "<需授权后从 tools/list 确认>"
+      }
+    }
+  }
+}
