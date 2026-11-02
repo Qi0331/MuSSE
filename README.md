@@ -21,16 +21,15 @@
 | 负责固件 | [UPSTREAM](docs/UPSTREAM.md) → HARDWARE → [TEST_LOG](docs/TEST_LOG.md) |
 | 负责规划 | [ROADMAP](docs/ROADMAP.md) → [DECISIONS](docs/DECISIONS.md) → [HANDOFF](docs/HANDOFF.md) |
 
-## 当前已知硬件（来源：套装商品清单，尚未实物核验）
+## 当前硬件状态（2026-11-02）
 
-- ESP32-S3 N16R8 开发板
-- INMP441 数字麦克风、MAX98357 音频功放、扬声器
-- 0.91 英寸四针 OLED、三个轻触开关
-- 面包板、跳线、USB 数据线
+**已经到货**：ESP32-S3 N16R8、面包板、足量跳线、按钮、Type-C 线，以及一块**创乐博 MAKEROBOT 16×16 I²C LED 矩阵**（接口标记 `+5V / GND / SDA / SCL`）。
 
-**候选**固件是小智 v2.5.2 的 `bread-compact-wifi`。具体板型、引脚、电压、外设兼容性以及是否能刷写，均以实物和测试为准。
+**尚未到货**：INMP441 麦克风、MAX98357 功放、扬声器、0.91 英寸 OLED。
 
-下一步：提供开发板正反面及丝印照片；核验后先仅连接 USB，在 Windows 上确认设备识别情况，再安排外设接线与烧录。
+**最优先**：核验开发板和 USB → 最小程序与按键；另一路调查矩阵驱动与电平安全，**未核验前不接矩阵**。语音模块到货后，再在确认兼容的前提下试用候选 `v2.5.2/bread-compact-wifi` 固件。详见 [分阶段开发路线](docs/ROADMAP.md)。
+
+目前没有任何硬件上电/烧录/录放音实测通过记录。“已到货”不代表已验证。
 
 ## 文档索引
 
