@@ -8,6 +8,7 @@ REQUIRED = [
     "README.md", "AGENTS.md", "CONTRIBUTING.md", "SECURITY.md",
     "docs/STATUS.md", "docs/HARDWARE.md", "docs/UPSTREAM.md",
     "docs/ARCHITECTURE.md", "docs/ROADMAP.md", "docs/DECISIONS.md",
+    "docs/REFERENCES.md",
     "docs/TEST_LOG.md", "docs/HANDOFF.md",
     ".github/PULL_REQUEST_TEMPLATE.md", ".github/copilot-instructions.md",
     ".github/workflows/docs-check.yml",
