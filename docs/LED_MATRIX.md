@@ -34,11 +34,13 @@ ESP32-S3 GPIO 是 3.3V 逻辑；`+5V` 的印字不自动说明 SDA/SCL 上拉电
 
 暂时**不要**接 `+5V`、`SDA`、`SCL` 到 ESP32-S3 进行试验。
 
-## 资料线索（不是本板芯片证据）
+## 已核对的通用原理参考（**非这块板的型号证据**）
 
-- 创乐博的 [16×16 点阵树莓派教学视频](https://www.bilibili.com/video/BV1Lu4m1F7D6/) 包含第 43 节；需要进一步判断是否同一 PCB 或驱动版本。
-- 其他品牌 [Pridopia 16×16 I²C LED 矩阵](https://www.meiyagroup.com.tw/product/41-%E6%A8%B9%E8%8E%93%E6%B4%BE-raspberry-pi-led-matrix-16x16-%E6%93%B4%E5%85%85%E6%9D%BF/) 使用双 HT16K33 芯片，只能帮助理解可行设计，**不能套用到 MAKEROBO 板**。
-- [I²C 电平、上拉和电压风险说明](https://sg.cytron.io/tutorial/i2c-device-not-detected-fix)。
+- [乐鑫 ESP32-S3 GPIO 与供电设计](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html)：确认主控工作电压和引脚注意事项。
+- [Grove HT16K33 驱动介绍](https://wiki.seeedstudio.com/cn/Grove-LED_Matrix_Driver-HT16K33/)：这是**别的模块**使用的驱动，不能据此宣称本板也是 HT16K33。
+- [另一厂商 16×16 I²C 矩阵](https://www.meiyagroup.com.tw/product/41-%E6%A8%B9%E8%8E%93%E6%B4%BE-raspberry-pi-led-matrix-16x16-%E6%93%B4%E5%85%85%E6%9D%BF/)：说明 16×16 可能由多个驱动器组成，但不能照搬地址或像素布局。
+
+截至 2026-11-02，尚未找到**能确认对应此 MAKEROBO PCB 修订**的原理图和芯片资料。等拿到另一面近照再确认厂家的驱动程序和实际供电要求。
 
 ## 可执行的下一步
 
