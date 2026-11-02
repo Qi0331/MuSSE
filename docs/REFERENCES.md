@@ -118,3 +118,11 @@
 2. 区分 **上游原始源码**、**第三方社区文档**、**乐鑫官方硬件文档**。
 3. 链接存在不代表教程适合当前实物。任何接线/烧录结论须以实际板型和测试证据为准。
 4. 只把真实用到且合法公开的资料提交到仓库；外部网页可能改版或失效，定期复核。
+
+## 六、在手创乐博 LED 矩阵的专项资料
+
+- [乐鑫 ESP32-S3 硬件设计与 GPIO 电平指南](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html)：核对 ESP32-S3 的 3.3V 电源/管脚条件。
+- [乐鑫 ESP32-S3 I²C 驱动](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2c.html)：在完成电气核验后参考扫描与通信程序。
+- [创乐博厂商网站](https://www.loborobot.com/)：厂商线索，并非**已核实的本款 16×16 LED 矩阵产品说明页**；仍需具体板卡原理图/驱动 IC/可靠样例。
+- 用户实物照片显示 `+5V/GND/SDA/SCL`，不构成驱动芯片、I²C 地址或逻辑电平已确认的证据。
+- 电平安全与潜在附加器件列于 [HARDWARE](HARDWARE.md) 和 [矩阵调查 Issue #8](https://github.com/Qi0331/MuSSE/issues/8)。
