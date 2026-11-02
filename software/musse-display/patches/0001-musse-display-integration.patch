@@ -1,0 +1,1961 @@
+diff --git a/main/CMakeLists.txt b/main/CMakeLists.txt
+index 633ef85..7d77cef 100644
+--- a/main/CMakeLists.txt
++++ b/main/CMakeLists.txt
+@@ -41,9 +41,17 @@ set(SOURCES "audio/audio_codec.cc"
+             "device_state_machine.cc"
+             "assets.cc"
+             "main.cc"
++            "musse_display/musse_display_service.cc"
++            "musse_display/src/frame_buffer.cpp"
++            "musse_display/src/emotion.cpp"
++            "musse_display/src/emotion_renderer.cpp"
++            "musse_display/src/animation_controller.cpp"
++            "musse_display/src/state_adapter.cpp"
++            "musse_display/src/display_sink.cpp"
++            "musse_display/src/pipeline.cpp"
+             )
+ 
+-set(INCLUDE_DIRS "." "display" "display/lvgl_display" "display/lvgl_display/jpg" "audio" "audio/demuxer" "protocols")
++set(INCLUDE_DIRS "." "display" "display/lvgl_display" "display/lvgl_display/jpg" "audio" "audio/demuxer" "protocols" "musse_display" "musse_display/include")
+ 
+ # Add board common files
+ list(APPEND SOURCES
+diff --git a/main/application.cc b/main/application.cc
+index 31de205..5aa2a38 100644
+--- a/main/application.cc
++++ b/main/application.cc
+@@ -7,6 +7,7 @@
+ #include "display.h"
+ #include "mcp_server.h"
+ #include "mqtt_protocol.h"
++#include "musse_display_service.h"
+ #include "settings.h"
+ #include "system_info.h"
+ #include "text_glyph_payload.h"
+@@ -672,6 +673,8 @@ void Application::InitializeProtocol() {
+             if (cJSON_IsString(emotion)) {
+                 Schedule([display, emotion_str = std::string(emotion->valuestring)]() {
+                     display->SetEmotion(emotion_str.c_str());
++                    musse::integration::MusseDisplayService::GetInstance().OnEmotion(
++                        emotion_str.c_str());
+                 });
+             }
+         } else if (strcmp(type->valuestring, "mcp") == 0) {
+@@ -755,6 +758,7 @@ void Application::Alert(const char* status, const char* message, const char* emo
+     auto display = Board::GetInstance().GetDisplay();
+     display->SetStatus(status);
+     display->SetEmotion(emotion);
++    musse::integration::MusseDisplayService::GetInstance().OnAlertEmotion(emotion);
+     display->SetChatMessage("system", message);
+     if (!sound.empty()) {
+         audio_service_.PlaySound(sound);
+@@ -762,6 +766,7 @@ void Application::Alert(const char* status, const char* message, const char* emo
+ }
+ 
+ void Application::DismissAlert() {
++    musse::integration::MusseDisplayService::GetInstance().OnAlertDismissed();
+     last_error_message_.clear();
+     if (GetDeviceState() == kDeviceStateIdle) {
+         auto display = Board::GetInstance().GetDisplay();
+@@ -1003,6 +1008,7 @@ void Application::HandleStateChangedEvent() {
+     auto display = board.GetDisplay();
+     auto led = board.GetLed();
+     led->OnStateChanged();
++    musse::integration::MusseDisplayService::GetInstance().OnDeviceState(new_state);
+ 
+     switch (new_state) {
+         case kDeviceStateUnknown:
+diff --git a/main/boards/bread-compact-wifi/compact_wifi_board.cc b/main/boards/bread-compact-wifi/compact_wifi_board.cc
+index 28b8c56..d5b78fe 100644
+--- a/main/boards/bread-compact-wifi/compact_wifi_board.cc
++++ b/main/boards/bread-compact-wifi/compact_wifi_board.cc
+@@ -8,6 +8,7 @@
+ #include "mcp_server.h"
+ #include "lamp_controller.h"
+ #include "led/single_led.h"
++#include "musse_display_service.h"
+ #include "assets/lang_config.h"
+ 
+ #include <esp_log.h>
+@@ -162,6 +163,7 @@ public:
+         InitializeSsd1306Display();
+         InitializeButtons();
+         InitializeTools();
++        musse::integration::MusseDisplayService::GetInstance().Start();
+     }
+ 
+     virtual Led* GetLed() override {
+diff --git a/main/musse_display/freertos_event_lock.h b/main/musse_display/freertos_event_lock.h
+new file mode 100644
+index 0000000..37b6ad5
+--- /dev/null
++++ b/main/musse_display/freertos_event_lock.h
+@@ -0,0 +1,25 @@
++#pragma once
++
++#include "freertos/FreeRTOS.h"
++#include "musse/display/event_queue.h"
++
++namespace musse::integration {
++
++/**
++ * FreeRTOS critical-section lock for the event queue.
++ *
++ * Only task-context producers/consumers are supported. The critical section
++ * is extremely short (array copy + index update); it never renders, logs or
++ * performs I/O. ISR producers would require portENTER_CRITICAL_ISR and a
++ * separately reviewed queue, which this firmware does not use.
++ */
++struct FreeRtosCriticalLock {
++    portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
++
++    void lock() { portENTER_CRITICAL(&mux); }
++    void unlock() { portEXIT_CRITICAL(&mux); }
++};
++
++using FirmwareEventQueue = musse::display::BasicEventQueue<FreeRtosCriticalLock>;
++
++}  // namespace musse::integration
+diff --git a/main/musse_display/include/musse/display/animation_controller.h b/main/musse_display/include/musse/display/animation_controller.h
+new file mode 100644
+index 0000000..72d280a
+--- /dev/null
++++ b/main/musse_display/include/musse/display/animation_controller.h
+@@ -0,0 +1,31 @@
++#pragma once
++
++#include <cstdint>
++
++#include "musse/display/emotion.h"
++#include "musse/display/emotion_renderer.h"
++#include "musse/display/frame_buffer.h"
++
++namespace musse::display {
++
++/**
++ * Drives the renderer with caller-supplied time.
++ *
++ * The controller resets the animation origin whenever the expression changes,
++ * so a transition always starts from frame zero. It never blocks.
++ */
++class AnimationController {
++public:
++    void setEmotion(Emotion emotion, std::uint32_t nowMs);
++    Emotion emotion() const { return emotion_; }
++
++    FrameBuffer frame(std::uint32_t nowMs) const;
++    std::uint32_t elapsed(std::uint32_t nowMs) const;
++
++private:
++    EmotionRenderer renderer_;
++    Emotion emotion_ = Emotion::Idle;
++    std::uint32_t startMs_ = 0;
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/color.h b/main/musse_display/include/musse/display/color.h
+new file mode 100644
+index 0000000..a4507db
+--- /dev/null
++++ b/main/musse_display/include/musse/display/color.h
+@@ -0,0 +1,32 @@
++#pragma once
++
++#include <cstdint>
++
++namespace musse::display {
++
++struct Rgb {
++    std::uint8_t r = 0;
++    std::uint8_t g = 0;
++    std::uint8_t b = 0;
++};
++
++constexpr bool operator==(const Rgb& a, const Rgb& b) {
++    return a.r == b.r && a.g == b.g && a.b == b.b;
++}
++
++constexpr bool operator!=(const Rgb& a, const Rgb& b) {
++    return !(a == b);
++}
++
++namespace color {
++constexpr Rgb Black{0, 0, 0};
++constexpr Rgb White{255, 255, 255};
++constexpr Rgb Cyan{0, 210, 255};
++constexpr Rgb Green{0, 255, 160};
++constexpr Rgb Amber{255, 200, 0};
++constexpr Rgb Orange{255, 120, 40};
++constexpr Rgb Red{255, 0, 0};
++constexpr Rgb DimRed{80, 0, 0};
++}  // namespace color
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/display_sink.h b/main/musse_display/include/musse/display/display_sink.h
+new file mode 100644
+index 0000000..475831c
+--- /dev/null
++++ b/main/musse_display/include/musse/display/display_sink.h
+@@ -0,0 +1,123 @@
++#pragma once
++
++#include <cstddef>
++#include <cstdint>
++
++#include "musse/display/frame_buffer.h"
++
++namespace musse::display {
++
++/**
++ * Optional logical-to-physical pixel order adapter.
++ *
++ * The real HT16K33A / WS2812B order is NOT encoded here: it must be verified
++ * against the physical module before being used. RowMajor is the neutral
++ * default for tests and previews.
++ */
++class PixelMapper {
++public:
++    virtual ~PixelMapper() = default;
++    virtual int index(int x, int y) const = 0;
++    virtual bool validate() const { return true; }
++};
++
++class RowMajorMapper final : public PixelMapper {
++public:
++    int index(int x, int y) const override { return y * FrameBuffer::kWidth + x; }
++};
++
++class ColumnMajorMapper final : public PixelMapper {
++public:
++    int index(int x, int y) const override { return x * FrameBuffer::kHeight + y; }
++};
++
++/**
++ * Replaceable output sink.
++ *
++ * Implementations must not allocate or block in drawFrame: it is called from
++ * the caller's render loop. Return false on failure; callers count failures
++ * and keep running.
++ */
++class DisplaySink {
++public:
++    virtual ~DisplaySink() = default;
++
++    virtual bool begin() { return true; }
++    virtual bool drawFrame(const FrameBuffer& frame) = 0;
++    virtual void end() {}
++
++    /**
++     * Brightness is a logical 0..255 request. Hardware sinks must clamp it to
++     * their verified current budget; see docs/DESIGN.md.
++     */
++    virtual void setBrightness(std::uint8_t brightness) { brightness_ = brightness; }
++    std::uint8_t brightness() const { return brightness_; }
++
++protected:
++    std::uint8_t brightness_ = 255;
++};
++
++/** Stores the last RGB frame. Useful for tests and offline preview. */
++class RgbSink : public DisplaySink {
++public:
++    bool drawFrame(const FrameBuffer& frame) override;
++    const FrameBuffer& lastFrame() const { return lastFrame_; }
++    int frameCount() const { return frameCount_; }
++
++private:
++    FrameBuffer lastFrame_;
++    int frameCount_ = 0;
++};
++
++/**
++ * Converts RGB to a 1-bit-per-pixel buffer using luma thresholding.
++ * Pixel order is row-major unless a mapper is supplied.
++ */
++class MonochromeSink : public DisplaySink {
++public:
++    static constexpr int kThreshold = 32;
++
++    explicit MonochromeSink(const PixelMapper* mapper = nullptr, int threshold = kThreshold);
++    bool drawFrame(const FrameBuffer& frame) override;
++
++    bool bit(int x, int y) const;
++    int frameCount() const { return frameCount_; }
++
++private:
++    const PixelMapper* mapper_;
++    int threshold_;
++    std::uint8_t bits_[FrameBuffer::kPixelCount / 8] = {};
++    int frameCount_ = 0;
++};
++
++/** Mock sink that can simulate output failures. */
++class MockSink : public DisplaySink {
++public:
++    bool begin() override;
++    bool drawFrame(const FrameBuffer& frame) override;
++    void end() override;
++
++    void failOnFrame(int frameNumber) { failOnFrame_ = frameNumber; }
++    void failAlways(bool fail) { failAlways_ = fail; }
++    void failBegin(bool fail) { failBegin_ = fail; }
++
++    int beginCount() const { return beginCount_; }
++    int beginFailures() const { return beginFailures_; }
++    int endCount() const { return endCount_; }
++    int frameCount() const { return frameCount_; }
++    int failureCount() const { return failureCount_; }
++    const FrameBuffer& lastFrame() const { return lastFrame_; }
++
++private:
++    int beginCount_ = 0;
++    int endCount_ = 0;
++    int frameCount_ = 0;
++    int failureCount_ = 0;
++    int failOnFrame_ = -1;
++    bool failAlways_ = false;
++    bool failBegin_ = false;
++    int beginFailures_ = 0;
++    FrameBuffer lastFrame_;
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/emotion.h b/main/musse_display/include/musse/display/emotion.h
+new file mode 100644
+index 0000000..9b6e30e
+--- /dev/null
++++ b/main/musse_display/include/musse/display/emotion.h
+@@ -0,0 +1,22 @@
++#pragma once
++
++#include <cstdint>
++
++namespace musse::display {
++
++/** Logical expressions rendered by MuSSE on the 16x16 matrix. */
++enum class Emotion : std::uint8_t {
++    Idle = 0,
++    Listening,
++    Thinking,
++    Speaking,
++    Error,
++};
++
++constexpr int kEmotionCount = 5;
++
++const char* emotionName(Emotion emotion);
++/** Parses a MuSSE expression name; returns false when unknown. */
++bool parseEmotion(const char* name, Emotion& out);
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/emotion_renderer.h b/main/musse_display/include/musse/display/emotion_renderer.h
+new file mode 100644
+index 0000000..9a03a34
+--- /dev/null
++++ b/main/musse_display/include/musse/display/emotion_renderer.h
+@@ -0,0 +1,29 @@
++#pragma once
++
++#include <cstdint>
++
++#include "musse/display/emotion.h"
++#include "musse/display/frame_buffer.h"
++
++namespace musse::display {
++
++/**
++ * Stateless expression renderer.
++ *
++ * The renderer only depends on the expression and an externally supplied
++ * millisecond clock. It performs no sleeping, allocation or I/O, so identical
++ * inputs always produce identical frames (deterministic for tests/preview).
++ *
++ * Animation periods (ms):
++ *   Idle      3000 (blink 160 ms at the start of each period)
++ *   Listening 1200 (sound-level bars)
++ *   Thinking  1500 (three dots, 500 ms per dot)
++ *   Speaking   250 (mouth open/close)
++ *   Error      600 (border flash)
++ */
++class EmotionRenderer {
++public:
++    FrameBuffer render(Emotion emotion, std::uint32_t timeMs) const;
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/event.h b/main/musse_display/include/musse/display/event.h
+new file mode 100644
+index 0000000..98c81f5
+--- /dev/null
++++ b/main/musse_display/include/musse/display/event.h
+@@ -0,0 +1,31 @@
++#pragma once
++
++#include <cstdint>
++
++namespace musse::display {
++
++enum class EventType : std::uint8_t {
++    DeviceState = 1,
++    Emotion = 2,
++    Thinking = 3,
++    AlertEmotion = 4,
++    AlertDismiss = 5,
++    AlertProgress = 6,
++};
++
++/**
++ * Fixed-size event used by the firmware bridge and host scheduling tests.
++ * text is only used for emotion events and is always NUL-terminated.
++ * seq is assigned by the queue; producers may leave it zero.
++ */
++struct Event {
++    EventType type = EventType::DeviceState;
++    std::uint8_t value = 0;
++    std::uint32_t timeMs = 0;
++    std::uint32_t seq = 0;
++    char text[32] = {};
++};
++
++constexpr int kEventTextCapacity = 32;
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/event_dispatch.h b/main/musse_display/include/musse/display/event_dispatch.h
+new file mode 100644
+index 0000000..2bd9e86
+--- /dev/null
++++ b/main/musse_display/include/musse/display/event_dispatch.h
+@@ -0,0 +1,33 @@
++#pragma once
++
++#include "musse/display/event.h"
++#include "musse/display/state_adapter.h"
++
++namespace musse::display {
++
++/**
++ * Applies one event to the adapter. Shared by the firmware render task and
++ * the host event-ordering tests, so the tested logic is the production logic.
++ */
++inline bool applyEvent(StateAdapter& adapter, const Event& event) {
++    switch (event.type) {
++        case EventType::DeviceState:
++            adapter.onDeviceState(static_cast<DeviceState>(event.value));
++            return true;
++        case EventType::Emotion:
++            return adapter.onEmotionName(event.text, event.timeMs);
++        case EventType::Thinking:
++            adapter.setThinking(event.value != 0, event.timeMs);
++            return true;
++        case EventType::AlertEmotion:
++            return adapter.onAlertEmotion(event.text, event.timeMs);
++        case EventType::AlertProgress:
++            return adapter.onAlertEmotion(event.text, event.timeMs);
++        case EventType::AlertDismiss:
++            adapter.onAlertDismissed();
++            return true;
++    }
++    return false;
++}
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/event_queue.h b/main/musse_display/include/musse/display/event_queue.h
+new file mode 100644
+index 0000000..2e34368
+--- /dev/null
++++ b/main/musse_display/include/musse/display/event_queue.h
+@@ -0,0 +1,173 @@
++#pragma once
++
++#include <cstdint>
++#include <mutex>
++
++#include "musse/display/event.h"
++
++namespace musse::display {
++
++/**
++ * Bounded event queue with a protected "critical" lane.
++ *
++ * Problem being solved: a flood of ordinary emotion events must never push a
++ * critical control event (latest device state, error entry, AlertDismiss,
++ * Thinking on/off) out of the queue.
++ *
++ * Design:
++ *  - Ordinary events (Emotion, AlertProgress) go into a 16-entry FIFO ring.
++ *    When full, the OLDEST ordinary event is dropped and counted.
++ *  - Critical events go into one slot per kind (DeviceState, Thinking,
++ *    AlertEmotion, AlertDismiss). A slot always keeps the NEWEST event of its
++ *    kind (merge, counted), so it can never be overflowed by ordinary events.
++ *  - pop() returns the event with the smallest sequence number across both
++ *    lanes, so global arrival order is preserved as closely as possible.
++ *    Ties favour the critical event.
++ *
++ * Locking is a policy template:
++ *  - host tests: std::mutex (multi-producer safe, no unbounded spinning);
++ *  - firmware: portMUX critical section (short, task context only).
++ *
++ * ISR producers are NOT supported by this queue; use an ISR-safe queue or
++ * defer to a task if that is ever needed.
++ */
++template <class LockPolicy>
++class BasicEventQueue {
++public:
++    static constexpr int kEmotionCapacity = 16;
++    static constexpr int kControlSlotCount = 4;
++
++    BasicEventQueue() = default;
++    BasicEventQueue(const BasicEventQueue&) = delete;
++    BasicEventQueue& operator=(const BasicEventQueue&) = delete;
++
++    void push(const Event& event) {
++        lock_.lock();
++        Event stored = event;
++        stored.seq = nextSeq_++;
++        ++pushed_;
++
++        const int slot = controlSlot(stored.type);
++        if (slot >= 0) {
++            if (slots_[slot].occupied) {
++                ++merged_;
++            }
++            slots_[slot].event = stored;
++            slots_[slot].occupied = true;
++            lock_.unlock();
++            return;
++        }
++
++        if (emotionCount_ == kEmotionCapacity) {
++            emotionHead_ = (emotionHead_ + 1) % kEmotionCapacity;
++            --emotionCount_;
++            ++dropped_;
++        }
++        emotions_[emotionTail_] = stored;
++        emotionTail_ = (emotionTail_ + 1) % kEmotionCapacity;
++        ++emotionCount_;
++        lock_.unlock();
++    }
++
++    bool pop(Event& event) {
++        lock_.lock();
++
++        int bestSlot = -1;
++        std::uint32_t bestSeq = 0xFFFFFFFFu;
++        for (int i = 0; i < kControlSlotCount; ++i) {
++            if (slots_[i].occupied && slots_[i].event.seq < bestSeq) {
++                bestSeq = slots_[i].event.seq;
++                bestSlot = i;
++            }
++        }
++
++        // Strictly smaller: on an equal sequence, critical wins.
++        const bool emotionWins =
++            emotionCount_ > 0 && emotions_[emotionHead_].seq < bestSeq;
++
++        if (bestSlot >= 0 && !emotionWins) {
++            event = slots_[bestSlot].event;
++            slots_[bestSlot].occupied = false;
++            lock_.unlock();
++            return true;
++        }
++        if (emotionWins) {
++            event = emotions_[emotionHead_];
++            emotionHead_ = (emotionHead_ + 1) % kEmotionCapacity;
++            --emotionCount_;
++            lock_.unlock();
++            return true;
++        }
++
++        lock_.unlock();
++        return false;
++    }
++
++    int size() const {
++        lock_.lock();
++        int size = emotionCount_;
++        for (const auto& slot : slots_) {
++            if (slot.occupied) {
++                ++size;
++            }
++        }
++        lock_.unlock();
++        return size;
++    }
++
++    std::uint32_t dropped() const {
++        lock_.lock();
++        const auto value = dropped_;
++        lock_.unlock();
++        return value;
++    }
++
++    std::uint32_t merged() const {
++        lock_.lock();
++        const auto value = merged_;
++        lock_.unlock();
++        return value;
++    }
++
++    std::uint32_t pushed() const {
++        lock_.lock();
++        const auto value = pushed_;
++        lock_.unlock();
++        return value;
++    }
++
++private:
++    struct Slot {
++        Event event{};
++        bool occupied = false;
++    };
++
++    static int controlSlot(EventType type) {
++        switch (type) {
++            case EventType::DeviceState: return 0;
++            case EventType::Thinking: return 1;
++            case EventType::AlertEmotion: return 2;
++            case EventType::AlertDismiss: return 3;
++            case EventType::Emotion:
++            case EventType::AlertProgress:
++                return -1;
++        }
++        return -1;
++    }
++
++    mutable LockPolicy lock_;
++    Event emotions_[kEmotionCapacity] = {};
++    int emotionHead_ = 0;
++    int emotionTail_ = 0;
++    int emotionCount_ = 0;
++    Slot slots_[kControlSlotCount] = {};
++    std::uint32_t nextSeq_ = 1;
++    std::uint32_t dropped_ = 0;
++    std::uint32_t merged_ = 0;
++    std::uint32_t pushed_ = 0;
++};
++
++/** Host implementation: mutex-protected, no unbounded spinning. */
++using EventQueue = BasicEventQueue<std::mutex>;
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/frame_buffer.h b/main/musse_display/include/musse/display/frame_buffer.h
+new file mode 100644
+index 0000000..87b2779
+--- /dev/null
++++ b/main/musse_display/include/musse/display/frame_buffer.h
+@@ -0,0 +1,46 @@
++#pragma once
++
++#include <cstddef>
++#include <cstdint>
++
++#include "musse/display/color.h"
++
++namespace musse::display {
++
++/**
++ * Fixed 16x16 RGB888 frame buffer.
++ *
++ * Coordinates: origin at top-left, x to the right, y downwards.
++ * Out-of-range writes are rejected (return false) and never touch memory.
++ * Out-of-range reads return black.
++ */
++class FrameBuffer {
++public:
++    static constexpr int kWidth = 16;
++    static constexpr int kHeight = 16;
++    static constexpr std::size_t kPixelCount =
++        static_cast<std::size_t>(kWidth) * static_cast<std::size_t>(kHeight);
++
++    FrameBuffer();
++
++    void clear(Rgb color = color::Black);
++
++    bool setPixel(int x, int y, Rgb color);
++    Rgb pixel(int x, int y) const;
++
++    bool fillRect(int x, int y, int width, int height, Rgb color);
++    bool drawRect(int x, int y, int width, int height, Rgb color);
++    bool drawLine(int x0, int y0, int x1, int y1, Rgb color);
++    bool fillCircle(int centerX, int centerY, int radius, Rgb color);
++
++    Rgb* data() { return pixels_; }
++    const Rgb* data() const { return pixels_; }
++
++    bool operator==(const FrameBuffer& other) const;
++    bool operator!=(const FrameBuffer& other) const { return !(*this == other); }
++
++private:
++    Rgb pixels_[kPixelCount];
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/noop_sink.h b/main/musse_display/include/musse/display/noop_sink.h
+new file mode 100644
+index 0000000..4f9585d
+--- /dev/null
++++ b/main/musse_display/include/musse/display/noop_sink.h
+@@ -0,0 +1,30 @@
++#pragma once
++
++#include <atomic>
++
++#include "musse/display/display_sink.h"
++
++namespace musse::display {
++
++/**
++ * Sink used when no electrically verified LED hardware is available.
++ *
++ * It only counts frames; it never touches GPIO, I2C, RMT or any hardware.
++ * The counter is atomic because the firmware render task and diagnostics may
++ * read it from different tasks.
++ */
++class NoopSink final : public DisplaySink {
++public:
++    bool drawFrame(const FrameBuffer& frame) override {
++        (void)frame;
++        frames_.fetch_add(1, std::memory_order_relaxed);
++        return true;
++    }
++
++    int frames() const { return frames_.load(std::memory_order_relaxed); }
++
++private:
++    std::atomic<int> frames_{0};
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/pipeline.h b/main/musse_display/include/musse/display/pipeline.h
+new file mode 100644
+index 0000000..8489f82
+--- /dev/null
++++ b/main/musse_display/include/musse/display/pipeline.h
+@@ -0,0 +1,66 @@
++#pragma once
++
++#include <cstdint>
++
++#include "musse/display/animation_controller.h"
++#include "musse/display/display_sink.h"
++#include "musse/display/emotion.h"
++#include "musse/display/state_adapter.h"
++
++namespace musse::display {
++
++/**
++ * End-to-end software pipeline:
++ *   state/emotion -> StateAdapter -> AnimationController -> EmotionRenderer
++ *   -> DisplaySink
++ *
++ * Sink lifecycle:
++ *   - begin() failure marks the pipeline Failed, records it, and suppresses
++ *     drawFrame(). It does not retry automatically.
++ *   - The owner may call retrySinkBegin() to return to NotStarted, after which
++ *     the next render() attempts begin() again.
++ *
++ * render() is non-blocking and never touches hardware by itself.
++ */
++class DisplayPipeline {
++public:
++    enum class SinkState : std::uint8_t {
++        NotStarted = 0,
++        Running,
++        Failed,
++    };
++
++    explicit DisplayPipeline(DisplaySink& sink);
++
++    StateAdapter& adapter() { return adapter_; }
++    AnimationController& animation() { return animation_; }
++    DisplaySink& sink() { return *sink_; }
++
++    /**
++     * Replaces the output sink. Ends the previous sink if it was running and
++     * resets the sink lifecycle so the new sink gets begin(). Returns false
++     * when the same sink is supplied.
++     */
++    bool setSink(DisplaySink& sink);
++
++    bool render(std::uint32_t nowMs);
++
++    /** Allows a new begin() attempt after a failure. */
++    bool retrySinkBegin();
++
++    SinkState sinkState() const { return sinkState_; }
++    int framesRendered() const { return framesRendered_; }
++    int sinkFailures() const { return sinkFailures_; }
++    int initFailures() const { return initFailures_; }
++
++private:
++    StateAdapter adapter_;
++    AnimationController animation_;
++    DisplaySink* sink_;  // replaceable; see setSink()
++    SinkState sinkState_ = SinkState::NotStarted;
++    int framesRendered_ = 0;
++    int sinkFailures_ = 0;
++    int initFailures_ = 0;
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/start_gate.h b/main/musse_display/include/musse/display/start_gate.h
+new file mode 100644
+index 0000000..aa787d0
+--- /dev/null
++++ b/main/musse_display/include/musse/display/start_gate.h
+@@ -0,0 +1,49 @@
++#pragma once
++
++#include <atomic>
++#include <cstdint>
++
++namespace musse::display {
++
++/**
++ * One-shot start gate with explicit failure/retry semantics.
++ *
++ * States:
++ *   NotStarted -> Starting -> Running
++ *                        \-> Failed -> Starting (retry allowed)
++ *
++ * Concurrent callers: exactly one CAS winner moves to Starting; other callers
++ * return false until the winner marks Running or Failed.
++ */
++class StartGate {
++public:
++    enum class State : int {
++        NotStarted = 0,
++        Starting,
++        Running,
++        Failed,
++    };
++
++    bool beginStart() {
++        State expected = state_.load(std::memory_order_acquire);
++        while (expected == State::NotStarted || expected == State::Failed) {
++            if (state_.compare_exchange_weak(expected, State::Starting,
++                                             std::memory_order_acq_rel,
++                                             std::memory_order_acquire)) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    void markRunning() { state_.store(State::Running, std::memory_order_release); }
++    void markFailed() { state_.store(State::Failed, std::memory_order_release); }
++
++    State state() const { return state_.load(std::memory_order_acquire); }
++    bool running() const { return state() == State::Running; }
++
++private:
++    std::atomic<State> state_{State::NotStarted};
++};
++
++}  // namespace musse::display
+diff --git a/main/musse_display/include/musse/display/state_adapter.h b/main/musse_display/include/musse/display/state_adapter.h
+new file mode 100644
+index 0000000..f8ceef1
+--- /dev/null
++++ b/main/musse_display/include/musse/display/state_adapter.h
+@@ -0,0 +1,118 @@
++#pragma once
++
++#include <cstdint>
++
++#include "musse/display/emotion.h"
++
++namespace musse::display {
++
++/**
++ * MuSSE-local mirror of the upstream device states.
++ *
++ * Names intentionally match xiaozhi v2.5.2 `main/device_state.h`, but this
++ * enum is owned by MuSSE so the core library can be unit-tested on Windows
++ * without pulling in ESP-IDF headers.
++ *
++ * There is no Thinking state upstream. Thinking is a separate explicit
++ * business event (see setThinking) and is never inferred from Connecting.
++ */
++enum class DeviceState : std::uint8_t {
++    Unknown = 0,
++    Starting,
++    WifiConfiguring,
++    Idle,
++    Connecting,
++    Listening,
++    Speaking,
++    Notifying,
++    Upgrading,
++    Activating,
++    AudioTesting,
++    FatalError,
++};
++
++const char* deviceStateName(DeviceState state);
++
++/**
++ * Converts upstream AI emotion names to MuSSE expressions.
++ *
++ * Negative AI emotions (sad/angry/crying/...) map to Idle, NOT Error: they
++ * are conversational emotions, not device failures. Unknown names return
++ * false and callers must not change the current display.
++ */
++bool mapUpstreamEmotion(const char* name, Emotion& out);
++
++/** True for Alert icon names that mean a device/business error. */
++bool isAlertErrorEmotion(const char* name);
++/** True for Alert icon names that are progress notices, not errors. */
++bool isAlertProgressEmotion(const char* name);
++
++/**
++ * Resolves the expression to display with this priority:
++ *   1. sticky device/business error (setError / onAlertEmotion)
++ *   2. explicit Thinking event (setThinking)
++ *   3. temporary AI emotion (onEmotionName, TTL)
++ *   4. device state mapping
++ *
++ * Unknown/empty/null emotion names are ignored and never overwrite a valid
++ * state. Connecting maps to Idle, never Thinking.
++ */
++class StateAdapter {
++public:
++    static constexpr std::uint32_t kDefaultEmotionTtlMs = 3000;
++
++    explicit StateAdapter(std::uint32_t emotionTtlMs = kDefaultEmotionTtlMs);
++
++    void onDeviceState(DeviceState state);
++    DeviceState deviceState() const { return deviceState_; }
++
++    /**
++     * AI/LLM emotion. Known names become a temporary expression with TTL.
++     * Returns false and leaves all state unchanged for unknown/empty/null.
++     */
++    bool onEmotionName(const char* name, std::uint32_t nowMs);
++
++    /**
++     * Upstream Alert() emotion (device/business status, not AI mood).
++     * warning/cancel/cloud_off/error -> sticky Error.
++     * download/cloud_download/link   -> progress notice, no mood override.
++     * other names                    -> AI mapping.
++     */
++    bool onAlertEmotion(const char* name, std::uint32_t nowMs);
++
++    /** DismissAlert() recovery: clears sticky error and temporary emotion. */
++    void onAlertDismissed();
++
++    void clearTemporaryEmotion();
++
++    void setThinking(bool active, std::uint32_t nowMs);
++    bool thinking() const { return thinking_; }
++
++    void setError(bool active);
++    /** Timed device/business error; auto-clears after durationMs. */
++    void setTimedError(std::uint32_t nowMs, std::uint32_t durationMs);
++    bool error() const { return error_; }
++
++    void tick(std::uint32_t nowMs);
++    Emotion resolve(std::uint32_t nowMs);
++
++    std::uint32_t emotionTtlMs() const { return emotionTtlMs_; }
++
++private:
++    bool temporaryEmotionActive(std::uint32_t nowMs) const;
++
++    DeviceState deviceState_ = DeviceState::Unknown;
++    bool thinking_ = false;
++    bool error_ = false;
++    bool errorTimed_ = false;
++    std::uint32_t errorUntilMs_ = 0;
++    bool hasTemporaryEmotion_ = false;
++    Emotion temporaryEmotion_ = Emotion::Idle;
++    std::uint32_t temporaryEmotionUntilMs_ = 0;
++    std::uint32_t emotionTtlMs_;
++};
++
++/** Pure device-state to expression mapping (public for tests). */
++Emotion emotionForDeviceState(DeviceState state);
++
++}  // namespace musse::display
+diff --git a/main/musse_display/musse_display_service.cc b/main/musse_display/musse_display_service.cc
+new file mode 100644
+index 0000000..1b657c9
+--- /dev/null
++++ b/main/musse_display/musse_display_service.cc
+@@ -0,0 +1,129 @@
++#include "musse_display_service.h"
++
++#include <cstring>
++
++#include <esp_log.h>
++#include <esp_timer.h>
++
++namespace musse::integration {
++namespace {
++
++constexpr const char* kTag = "MusseDisplay";
++constexpr int kFrameIntervalMs = 50;  // 20 fps software loop
++// ESP-IDF xTaskCreate() takes the stack depth in BYTES.
++constexpr UBaseType_t kTaskStackBytes = 4096;
++constexpr UBaseType_t kTaskPriority = 3;
++
++std::uint32_t nowMs() {
++    return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
++}
++
++}  // namespace
++
++MusseDisplayService& MusseDisplayService::GetInstance() {
++    static MusseDisplayService instance;
++    return instance;
++}
++
++bool MusseDisplayService::Start() {
++    if (!gate_.beginStart()) {
++        // Already starting/running, or another caller won the race.
++        return gate_.running();
++    }
++
++    const BaseType_t created = xTaskCreate(
++        TaskEntry, "musse_display", kTaskStackBytes, this, kTaskPriority, nullptr);
++    if (created != pdPASS) {
++        gate_.markFailed();
++        ESP_LOGE(kTag, "failed to create render task; call Start() again to retry");
++        return false;
++    }
++
++    gate_.markRunning();
++    ESP_LOGI(kTag, "engine started; sink=Noop (no hardware output)");
++    return true;
++}
++
++bool MusseDisplayService::SetSink(display::DisplaySink& sink) {
++    if (gate_.running() && enabled()) {
++        // Avoid swapping the sink while the render task is using it.
++        return false;
++    }
++    return pipeline_.setSink(sink);
++}
++
++void MusseDisplayService::OnDeviceState(DeviceState state) {
++    display::Event event;
++    event.type = display::EventType::DeviceState;
++    event.value = static_cast<std::uint8_t>(state);
++    event.timeMs = nowMs();
++    enqueue(event);
++}
++
++void MusseDisplayService::OnEmotion(const char* emotion) {
++    enqueueEmotion(display::EventType::Emotion, emotion, nowMs());
++}
++
++void MusseDisplayService::OnAlertEmotion(const char* emotion) {
++    const display::EventType type =
++        display::isAlertErrorEmotion(emotion)
++            ? display::EventType::AlertEmotion
++            : display::EventType::AlertProgress;
++    enqueueEmotion(type, emotion, nowMs());
++}
++
++void MusseDisplayService::OnAlertDismissed() {
++    display::Event event;
++    event.type = display::EventType::AlertDismiss;
++    event.timeMs = nowMs();
++    enqueue(event);
++}
++
++void MusseDisplayService::SetThinking(bool active) {
++    display::Event event;
++    event.type = display::EventType::Thinking;
++    event.value = active ? 1 : 0;
++    event.timeMs = nowMs();
++    enqueue(event);
++}
++
++void MusseDisplayService::enqueueEmotion(display::EventType type, const char* text,
++                                         std::uint32_t timeMs) {
++    display::Event event;
++    event.type = type;
++    event.timeMs = timeMs;
++    if (text != nullptr) {
++        std::strncpy(event.text, text, display::kEventTextCapacity - 1);
++    }
++    enqueue(event);
++}
++
++void MusseDisplayService::enqueue(display::Event event) {
++    // Bounded, critical-section protected, never blocks on I/O, never allocates.
++    // Critical events go to protected slots; emotions may be dropped when full.
++    queue_.push(event);
++}
++
++void MusseDisplayService::TaskEntry(void* arg) {
++    static_cast<MusseDisplayService*>(arg)->Run();
++}
++
++void MusseDisplayService::Run() {
++    for (;;) {
++        display::Event event;
++        // Drain in sequence order so state/emotion/alert ordering is preserved.
++        while (queue_.pop(event)) {
++            display::applyEvent(pipeline_.adapter(), event);
++        }
++
++        if (enabled_.load(std::memory_order_relaxed)) {
++            pipeline_.render(nowMs());
++            frames_.store(pipeline_.framesRendered(), std::memory_order_relaxed);
++            failures_.store(pipeline_.sinkFailures(), std::memory_order_relaxed);
++        }
++
++        vTaskDelay(pdMS_TO_TICKS(kFrameIntervalMs));
++    }
++}
++
++}  // namespace musse::integration
+diff --git a/main/musse_display/musse_display_service.h b/main/musse_display/musse_display_service.h
+new file mode 100644
+index 0000000..945b337
+--- /dev/null
++++ b/main/musse_display/musse_display_service.h
+@@ -0,0 +1,75 @@
++#pragma once
++
++#include <atomic>
++#include <cstdint>
++
++#include "device_state.h"
++#include "freertos/FreeRTOS.h"
++#include "freertos/task.h"
++#include "freertos_event_lock.h"
++#include "musse/display/event_dispatch.h"
++#include "musse/display/event_queue.h"
++#include "musse/display/noop_sink.h"
++#include "musse/display/pipeline.h"
++#include "musse/display/start_gate.h"
++
++namespace musse::integration {
++
++/**
++ * Firmware bridge between real xiaozhi events and the MuSSE pipeline.
++ *
++ * - Event callbacks only enqueue a fixed-size event (no rendering, no heap).
++ * - Critical events (state, Thinking, Alert error, AlertDismiss) use dedicated
++ *   slots and can never be dropped by an emotion flood; ordinary emotions use
++ *   a bounded FIFO and may be dropped when full.
++ * - One low-priority task drains events in sequence order, applies them with
++ *   the same applyEvent() used by host tests, and renders into a sink.
++ * - Start() has explicit failure/retry semantics via StartGate.
++ * - No GPIO / I2C / RMT access.
++ */
++class MusseDisplayService {
++public:
++    static MusseDisplayService& GetInstance();
++
++    /** Returns false if task creation fails; a later call can retry. */
++    bool Start();
++
++    void SetEnabled(bool enabled) { enabled_.store(enabled, std::memory_order_relaxed); }
++    bool enabled() const { return enabled_.load(std::memory_order_relaxed); }
++
++    /**
++     * Replace the output sink. Intended before Start() or while disabled;
++     * returns false if the task is running with rendering enabled.
++     */
++    bool SetSink(display::DisplaySink& sink);
++
++    void OnDeviceState(DeviceState state);
++    void OnEmotion(const char* emotion);
++    void OnAlertEmotion(const char* emotion);
++    void OnAlertDismissed();
++    void SetThinking(bool active);
++
++    int framesRendered() const { return frames_.load(std::memory_order_relaxed); }
++    int sinkFailures() const { return failures_.load(std::memory_order_relaxed); }
++    std::uint32_t droppedEmotions() const { return queue_.dropped(); }
++    std::uint32_t mergedCriticalEvents() const { return queue_.merged(); }
++    bool running() const { return gate_.running(); }
++
++private:
++    MusseDisplayService() = default;
++
++    static void TaskEntry(void* arg);
++    void Run();
++    void enqueueEmotion(display::EventType type, const char* text, std::uint32_t nowMs);
++    void enqueue(display::Event event);
++
++    display::NoopSink sink_;
++    display::DisplayPipeline pipeline_{sink_};
++    FirmwareEventQueue queue_;
++    display::StartGate gate_;
++    std::atomic<bool> enabled_{true};
++    std::atomic<int> frames_{0};
++    std::atomic<int> failures_{0};
++};
++
++}  // namespace musse::integration
+diff --git a/main/musse_display/src/animation_controller.cpp b/main/musse_display/src/animation_controller.cpp
+new file mode 100644
+index 0000000..299f3e0
+--- /dev/null
++++ b/main/musse_display/src/animation_controller.cpp
+@@ -0,0 +1,20 @@
++#include "musse/display/animation_controller.h"
++
++namespace musse::display {
++
++void AnimationController::setEmotion(Emotion emotion, std::uint32_t nowMs) {
++    if (emotion != emotion_) {
++        emotion_ = emotion;
++        startMs_ = nowMs;
++    }
++}
++
++FrameBuffer AnimationController::frame(std::uint32_t nowMs) const {
++    return renderer_.render(emotion_, elapsed(nowMs));
++}
++
++std::uint32_t AnimationController::elapsed(std::uint32_t nowMs) const {
++    return nowMs - startMs_;  // unsigned arithmetic also handles wraparound
++}
++
++}  // namespace musse::display
+diff --git a/main/musse_display/src/display_sink.cpp b/main/musse_display/src/display_sink.cpp
+new file mode 100644
+index 0000000..9fa950b
+--- /dev/null
++++ b/main/musse_display/src/display_sink.cpp
+@@ -0,0 +1,72 @@
++#include "musse/display/display_sink.h"
++
++#include <cstring>
++
++namespace musse::display {
++
++bool RgbSink::drawFrame(const FrameBuffer& frame) {
++    lastFrame_ = frame;
++    ++frameCount_;
++    return true;
++}
++
++MonochromeSink::MonochromeSink(const PixelMapper* mapper, int threshold)
++    : mapper_(mapper), threshold_(threshold) {
++    std::memset(bits_, 0, sizeof(bits_));
++}
++
++bool MonochromeSink::drawFrame(const FrameBuffer& frame) {
++    std::memset(bits_, 0, sizeof(bits_));
++    for (int y = 0; y < FrameBuffer::kHeight; ++y) {
++        for (int x = 0; x < FrameBuffer::kWidth; ++x) {
++            const Rgb c = frame.pixel(x, y);
++            const int luma = (c.r * 299 + c.g * 587 + c.b * 114) / 1000;
++            if (luma < threshold_) {
++                continue;
++            }
++            const int idx = mapper_ != nullptr ? mapper_->index(x, y)
++                                               : y * FrameBuffer::kWidth + x;
++            if (idx < 0 || idx >= static_cast<int>(FrameBuffer::kPixelCount)) {
++                return false;  // mapper produced an invalid index
++            }
++            bits_[idx / 8] |= static_cast<std::uint8_t>(1u << (idx % 8));
++        }
++    }
++    ++frameCount_;
++    return true;
++}
++
++bool MonochromeSink::bit(int x, int y) const {
++    if (x < 0 || y < 0 || x >= FrameBuffer::kWidth || y >= FrameBuffer::kHeight) {
++        return false;
++    }
++    const int idx = mapper_ != nullptr ? mapper_->index(x, y)
++                                       : y * FrameBuffer::kWidth + x;
++    if (idx < 0 || idx >= static_cast<int>(FrameBuffer::kPixelCount)) {
++        return false;
++    }
++    return (bits_[idx / 8] & static_cast<std::uint8_t>(1u << (idx % 8))) != 0;
++}
++
++bool MockSink::begin() {
++    ++beginCount_;
++    if (failBegin_) {
++        ++beginFailures_;
++        return false;
++    }
++    return true;
++}
++
++bool MockSink::drawFrame(const FrameBuffer& frame) {
++    ++frameCount_;
++    if (failAlways_ || frameCount_ == failOnFrame_) {
++        ++failureCount_;
++        return false;
++    }
++    lastFrame_ = frame;
++    return true;
++}
++
++void MockSink::end() { ++endCount_; }
++
++}  // namespace musse::display
+diff --git a/main/musse_display/src/emotion.cpp b/main/musse_display/src/emotion.cpp
+new file mode 100644
+index 0000000..524f5c1
+--- /dev/null
++++ b/main/musse_display/src/emotion.cpp
+@@ -0,0 +1,30 @@
++#include "musse/display/emotion.h"
++
++#include <cstring>
++
++namespace musse::display {
++
++const char* emotionName(Emotion emotion) {
++    switch (emotion) {
++        case Emotion::Idle: return "Idle";
++        case Emotion::Listening: return "Listening";
++        case Emotion::Thinking: return "Thinking";
++        case Emotion::Speaking: return "Speaking";
++        case Emotion::Error: return "Error";
++    }
++    return "Idle";
++}
++
++bool parseEmotion(const char* name, Emotion& out) {
++    if (name == nullptr) {
++        return false;
++    }
++    if (std::strcmp(name, "Idle") == 0) { out = Emotion::Idle; return true; }
++    if (std::strcmp(name, "Listening") == 0) { out = Emotion::Listening; return true; }
++    if (std::strcmp(name, "Thinking") == 0) { out = Emotion::Thinking; return true; }
++    if (std::strcmp(name, "Speaking") == 0) { out = Emotion::Speaking; return true; }
++    if (std::strcmp(name, "Error") == 0) { out = Emotion::Error; return true; }
++    return false;
++}
++
++}  // namespace musse::display
+diff --git a/main/musse_display/src/emotion_renderer.cpp b/main/musse_display/src/emotion_renderer.cpp
+new file mode 100644
+index 0000000..2fb78f8
+--- /dev/null
++++ b/main/musse_display/src/emotion_renderer.cpp
+@@ -0,0 +1,89 @@
++#include "musse/display/emotion_renderer.h"
++
++namespace musse::display {
++namespace {
++
++std::uint32_t phase(std::uint32_t timeMs, std::uint32_t periodMs) {
++    return periodMs == 0 ? 0 : (timeMs % periodMs);
++}
++
++void eyes(FrameBuffer& frame, int lx, int ly, int lw, int lh,
++          int rx, int ry, int rw, int rh, Rgb color) {
++    frame.fillRect(lx, ly, lw, lh, color);
++    frame.fillRect(rx, ry, rw, rh, color);
++}
++
++}  // namespace
++
++FrameBuffer EmotionRenderer::render(Emotion emotion, std::uint32_t timeMs) const {
++    FrameBuffer frame;
++
++    switch (emotion) {
++        case Emotion::Idle: {
++            const Rgb c = color::Cyan;
++            const bool blinking = phase(timeMs, 3000) < 160;
++            if (blinking) {
++                eyes(frame, 3, 7, 3, 1, 10, 7, 3, 1, c);
++            } else {
++                eyes(frame, 3, 5, 3, 3, 10, 5, 3, 3, c);
++            }
++            frame.fillRect(6, 11, 4, 1, c);  // neutral mouth
++            break;
++        }
++
++        case Emotion::Listening: {
++            const Rgb c = color::Green;
++            eyes(frame, 3, 4, 3, 4, 10, 4, 3, 4, c);
++            frame.fillRect(7, 10, 2, 2, c);  // small mouth
++            const std::uint32_t p = phase(timeMs, 1200);
++            const int level = p < 600 ? static_cast<int>(p * 5 / 600)
++                                      : static_cast<int>((1200 - p) * 5 / 600);
++            frame.fillRect(1, 8 - level, 1, 2 + level, c);
++            frame.fillRect(14, 8 - level, 1, 2 + level, c);
++            break;
++        }
++
++        case Emotion::Thinking: {
++            const Rgb c = color::Amber;
++            eyes(frame, 3, 6, 2, 2, 11, 4, 2, 2, c);  // looking up/aside
++            frame.fillRect(8, 11, 1, 1, c);            // small mouth
++            const int active = static_cast<int>(phase(timeMs, 1500) / 500);
++            for (int i = 0; i < 3; ++i) {
++                if (i == active) {
++                    frame.fillRect(5 + i * 3, 1, 2, 2, c);
++                } else {
++                    frame.fillRect(5 + i * 3, 2, 1, 1, c);
++                }
++            }
++            break;
++        }
++
++        case Emotion::Speaking: {
++            const Rgb c = color::Orange;
++            eyes(frame, 3, 5, 2, 3, 11, 5, 2, 3, c);
++            const int mouthHeight = phase(timeMs, 250) < 125 ? 3 : 1;
++            frame.fillRect(5, 10, 6, mouthHeight, c);
++            break;
++        }
++
++        case Emotion::Error: {
++            const Rgb c = color::Red;
++            frame.drawLine(3, 5, 5, 7, c);
++            frame.drawLine(3, 7, 5, 5, c);
++            frame.drawLine(10, 5, 12, 7, c);
++            frame.drawLine(10, 7, 12, 5, c);
++            frame.setPixel(5, 12, c);
++            frame.setPixel(6, 11, c);
++            frame.setPixel(7, 11, c);
++            frame.setPixel(8, 11, c);
++            frame.setPixel(9, 12, c);
++            const Rgb border = phase(timeMs, 600) < 300 ? color::Red : color::DimRed;
++            frame.drawRect(0, 0, FrameBuffer::kWidth, FrameBuffer::kHeight, border);
++            break;
++        }
++    }
++
++    return frame;
++}
++
++}  // namespace musse::display
+diff --git a/main/musse_display/src/frame_buffer.cpp b/main/musse_display/src/frame_buffer.cpp
+new file mode 100644
+index 0000000..924cfce
+--- /dev/null
++++ b/main/musse_display/src/frame_buffer.cpp
+@@ -0,0 +1,234 @@
++#include "musse/display/frame_buffer.h"
++
++#include <algorithm>
++#include <cstdint>
++#include <cstring>
++
++namespace musse::display {
++namespace {
++
++bool clipLine(int64_t& x0, int64_t& y0, int64_t& x1, int64_t& y1,
++              int width, int height) {
++    // Liang-Barsky clipping in double precision. Coordinates are 32-bit, so
++    // differences (<= 2^32) are exactly representable in a 53-bit mantissa.
++    double ax = static_cast<double>(x0);
++    double ay = static_cast<double>(y0);
++    double bx = static_cast<double>(x1);
++    double by = static_cast<double>(y1);
++    const double dx = bx - ax;
++    const double dy = by - ay;
++
++    double t0 = 0.0;
++    double t1 = 1.0;
++    constexpr double kEps = 1e-6;  // tolerate 32-bit coordinate rounding
++    auto clipTest = [&](double p, double q) {
++        if (p == 0.0) {
++            return q >= 0.0;
++        }
++        const double r = q / p;
++        if (p < 0.0) {
++            if (r > t1 + kEps) return false;
++            if (r > t0) t0 = r;
++        } else {
++            if (r < t0 - kEps) return false;
++            if (r < t1) t1 = r;
++        }
++        return true;
++    };
++
++    if (!clipTest(-dx, ax)) return false;
++    if (!clipTest(dx, (width - 1) - ax)) return false;
++    if (!clipTest(-dy, ay)) return false;
++    if (!clipTest(dy, (height - 1) - ay)) return false;
++    if (t0 > t1 + 1e-9) return false;
++    if (t0 > t1) {
++        // Corner-touching lines can land on the same t with rounding noise.
++        t0 = t1 = (t0 + t1) * 0.5;
++    }
++
++    auto clampInt = [](double value, int maxValue) -> int64_t {
++        if (value <= 0.0) return 0;
++        if (value >= maxValue) return maxValue;
++        return static_cast<int64_t>(value + 0.5);
++    };
++
++    x0 = clampInt(ax + t0 * dx, width - 1);
++    y0 = clampInt(ay + t0 * dy, height - 1);
++    x1 = clampInt(ax + t1 * dx, width - 1);
++    y1 = clampInt(ay + t1 * dy, height - 1);
++    return true;
++}
++
++}  // namespace
++
++FrameBuffer::FrameBuffer() { clear(); }
++
++void FrameBuffer::clear(Rgb color) {
++    for (std::size_t i = 0; i < kPixelCount; ++i) {
++        pixels_[i] = color;
++    }
++}
++
++bool FrameBuffer::setPixel(int x, int y, Rgb color) {
++    if (x < 0 || y < 0 || x >= kWidth || y >= kHeight) {
++        return false;
++    }
++    pixels_[static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)] = color;
++    return true;
++}
++
++Rgb FrameBuffer::pixel(int x, int y) const {
++    if (x < 0 || y < 0 || x >= kWidth || y >= kHeight) {
++        return color::Black;
++    }
++    return pixels_[static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)];
++}
++
++bool FrameBuffer::fillRect(int x, int y, int width, int height, Rgb color) {
++    if (width <= 0 || height <= 0) {
++        return false;
++    }
++
++    // 64-bit arithmetic avoids signed overflow for INT_MIN/INT_MAX inputs.
++    const int64_t xEnd = static_cast<int64_t>(x) + static_cast<int64_t>(width);
++    const int64_t yEnd = static_cast<int64_t>(y) + static_cast<int64_t>(height);
++
++    const int x0 = x <= 0 ? 0 : (x >= kWidth ? kWidth : x);
++    const int y0 = y <= 0 ? 0 : (y >= kHeight ? kHeight : y);
++    const int x1 = xEnd <= 0 ? 0 : (xEnd >= kWidth ? kWidth : static_cast<int>(xEnd));
++    const int y1 = yEnd <= 0 ? 0 : (yEnd >= kHeight ? kHeight : static_cast<int>(yEnd));
++
++    if (x0 >= x1 || y0 >= y1) {
++        return false;
++    }
++    for (int py = y0; py < y1; ++py) {
++        for (int px = x0; px < x1; ++px) {
++            pixels_[static_cast<std::size_t>(py) * kWidth + static_cast<std::size_t>(px)] = color;
++        }
++    }
++    return true;
++}
++
++bool FrameBuffer::drawRect(int x, int y, int width, int height, Rgb color) {
++    if (width <= 0 || height <= 0) {
++        return false;
++    }
++
++    const int64_t xLeft = x;
++    const int64_t xRight = static_cast<int64_t>(x) + static_cast<int64_t>(width) - 1;
++    const int64_t yTop = y;
++    const int64_t yBottom = static_cast<int64_t>(y) + static_cast<int64_t>(height) - 1;
++
++    bool drawn = false;
++    auto hline = [&](int64_t fromX, int64_t toX, int64_t atY) {
++        if (atY < 0 || atY >= kHeight) {
++            return;
++        }
++        const int64_t a = std::max<int64_t>(fromX, 0);
++        const int64_t b = std::min<int64_t>(toX, kWidth - 1);
++        for (int64_t px = a; px <= b; ++px) {
++            drawn |= setPixel(static_cast<int>(px), static_cast<int>(atY), color);
++        }
++    };
++    auto vline = [&](int64_t fromY, int64_t toY, int64_t atX) {
++        if (atX < 0 || atX >= kWidth) {
++            return;
++        }
++        const int64_t a = std::max<int64_t>(fromY, 0);
++        const int64_t b = std::min<int64_t>(toY, kHeight - 1);
++        for (int64_t py = a; py <= b; ++py) {
++            drawn |= setPixel(static_cast<int>(atX), static_cast<int>(py), color);
++        }
++    };
++
++    hline(xLeft, xRight, yTop);
++    hline(xLeft, xRight, yBottom);
++    vline(yTop, yBottom, xLeft);
++    vline(yTop, yBottom, xRight);
++    return drawn;
++}
++
++bool FrameBuffer::drawLine(int x0, int y0, int x1, int y1, Rgb color) {
++    int64_t cx0 = x0;
++    int64_t cy0 = y0;
++    int64_t cx1 = x1;
++    int64_t cy1 = y1;
++
++    if (!clipLine(cx0, cy0, cx1, cy1, kWidth, kHeight)) {
++        return false;
++    }
++
++    int px0 = static_cast<int>(cx0);
++    int py0 = static_cast<int>(cy0);
++    const int px1 = static_cast<int>(cx1);
++    const int py1 = static_cast<int>(cy1);
++
++    int dx = px1 > px0 ? px1 - px0 : px0 - px1;
++    int dy = py1 > py0 ? py1 - py0 : py0 - py1;
++    const int sx = px0 < px1 ? 1 : -1;
++    const int sy = py0 < py1 ? 1 : -1;
++    int err = dx - dy;
++
++    bool drawn = false;
++    while (true) {
++        drawn |= setPixel(px0, py0, color);
++        if (px0 == px1 && py0 == py1) {
++            break;
++        }
++        const int e2 = 2 * err;
++        if (e2 > -dy) {
++            err -= dy;
++            px0 += sx;
++        }
++        if (e2 < dx) {
++            err += dx;
++            py0 += sy;
++        }
++    }
++    return drawn;
++}
++
++bool FrameBuffer::fillCircle(int centerX, int centerY, int radius, Rgb color) {
++    if (radius < 0) {
++        return false;
++    }
++
++    const int64_t r2 = static_cast<int64_t>(radius) * static_cast<int64_t>(radius);
++    const int64_t rawX0 = static_cast<int64_t>(centerX) - radius;
++    const int64_t rawX1 = static_cast<int64_t>(centerX) + radius + 1;
++    const int64_t rawY0 = static_cast<int64_t>(centerY) - radius;
++    const int64_t rawY1 = static_cast<int64_t>(centerY) + radius + 1;
++
++    const int x0 = rawX0 <= 0 ? 0 : (rawX0 >= kWidth ? kWidth : static_cast<int>(rawX0));
++    const int x1 = rawX1 <= 0 ? 0 : (rawX1 >= kWidth ? kWidth : static_cast<int>(rawX1));
++    const int y0 = rawY0 <= 0 ? 0 : (rawY0 >= kHeight ? kHeight : static_cast<int>(rawY0));
++    const int y1 = rawY1 <= 0 ? 0 : (rawY1 >= kHeight ? kHeight : static_cast<int>(rawY1));
++
++    bool drawn = false;
++    for (int py = y0; py < y1; ++py) {
++        const int64_t dy = static_cast<int64_t>(py) - centerY;
++        const int64_t dy2 = dy * dy;
++        if (dy2 > r2) {
++            continue;
++        }
++        for (int px = x0; px < x1; ++px) {
++            const int64_t dx = static_cast<int64_t>(px) - centerX;
++            const int64_t dx2 = dx * dx;
++            if (dx2 > r2) {
++                continue;
++            }
++            // Avoid dx2 + dy2 overflow: compare against the remaining budget.
++            if (dy2 > r2 - dx2) {
++                continue;
++            }
++            drawn |= setPixel(px, py, color);
++        }
++    }
++    return drawn;
++}
++
++bool FrameBuffer::operator==(const FrameBuffer& other) const {
++    return std::memcmp(pixels_, other.pixels_, sizeof(pixels_)) == 0;
++}
++
++}  // namespace musse::display
+diff --git a/main/musse_display/src/pipeline.cpp b/main/musse_display/src/pipeline.cpp
+new file mode 100644
+index 0000000..79d7a17
+--- /dev/null
++++ b/main/musse_display/src/pipeline.cpp
+@@ -0,0 +1,53 @@
++#include "musse/display/pipeline.h"
++
++namespace musse::display {
++
++DisplayPipeline::DisplayPipeline(DisplaySink& sink) : sink_(&sink) {}
++
++bool DisplayPipeline::setSink(DisplaySink& sink) {
++    if (sink_ == &sink) {
++        return false;
++    }
++    if (sinkState_ == SinkState::Running) {
++        sink_->end();
++    }
++    sink_ = &sink;
++    sinkState_ = SinkState::NotStarted;
++    return true;
++}
++
++bool DisplayPipeline::render(std::uint32_t nowMs) {
++    if (sinkState_ == SinkState::NotStarted) {
++        if (!sink_->begin()) {
++            sinkState_ = SinkState::Failed;
++            ++initFailures_;
++            return false;  // never call drawFrame on a failed sink
++        }
++        sinkState_ = SinkState::Running;
++    }
++
++    if (sinkState_ != SinkState::Running) {
++        return false;  // failed sinks stay stopped until retrySinkBegin()
++    }
++
++    const Emotion emotion = adapter_.resolve(nowMs);
++    animation_.setEmotion(emotion, nowMs);
++    const FrameBuffer frame = animation_.frame(nowMs);
++
++    ++framesRendered_;
++    if (!sink_->drawFrame(frame)) {
++        ++sinkFailures_;
++        return false;
++    }
++    return true;
++}
++
++bool DisplayPipeline::retrySinkBegin() {
++    if (sinkState_ != SinkState::Failed) {
++        return false;
++    }
++    sinkState_ = SinkState::NotStarted;
++    return true;
++}
++
++}  // namespace musse::display
+diff --git a/main/musse_display/src/state_adapter.cpp b/main/musse_display/src/state_adapter.cpp
+new file mode 100644
+index 0000000..b1c29cd
+--- /dev/null
++++ b/main/musse_display/src/state_adapter.cpp
+@@ -0,0 +1,225 @@
++#include "musse/display/state_adapter.h"
++
++#include <cstring>
++
++namespace musse::display {
++
++bool isAlertErrorEmotion(const char* name) {
++    if (name == nullptr) {
++        return false;
++    }
++    return std::strcmp(name, "warning") == 0 ||
++           std::strcmp(name, "cancel") == 0 ||
++           std::strcmp(name, "cloud_off") == 0 ||
++           std::strcmp(name, "error") == 0;
++}
++
++bool isAlertProgressEmotion(const char* name) {
++    if (name == nullptr) {
++        return false;
++    }
++    return std::strcmp(name, "download") == 0 ||
++           std::strcmp(name, "cloud_download") == 0 ||
++           std::strcmp(name, "link") == 0;
++}
++
++const char* deviceStateName(DeviceState state) {
++    switch (state) {
++        case DeviceState::Unknown: return "unknown";
++        case DeviceState::Starting: return "starting";
++        case DeviceState::WifiConfiguring: return "wifi_configuring";
++        case DeviceState::Idle: return "idle";
++        case DeviceState::Connecting: return "connecting";
++        case DeviceState::Listening: return "listening";
++        case DeviceState::Speaking: return "speaking";
++        case DeviceState::Notifying: return "notifying";
++        case DeviceState::Upgrading: return "upgrading";
++        case DeviceState::Activating: return "activating";
++        case DeviceState::AudioTesting: return "audio_testing";
++        case DeviceState::FatalError: return "fatal_error";
++    }
++    return "unknown";
++}
++
++bool mapUpstreamEmotion(const char* name, Emotion& out) {
++    if (name == nullptr || name[0] == '\0') {
++        return false;
++    }
++
++    // Names from 78/xiaozhi-fonts mappings/emoji.json (v2.5.2).
++    // Negative conversational emotions are deliberately NOT mapped to Error.
++    struct Entry { const char* name; Emotion emotion; };
++    static constexpr Entry kEntries[] = {
++        {"neutral", Emotion::Idle},
++        {"relaxed", Emotion::Idle},
++        {"sleepy", Emotion::Idle},
++        {"happy", Emotion::Speaking},
++        {"laughing", Emotion::Speaking},
++        {"funny", Emotion::Speaking},
++        {"loving", Emotion::Speaking},
++        {"kissy", Emotion::Speaking},
++        {"confident", Emotion::Speaking},
++        {"cool", Emotion::Speaking},
++        {"winking", Emotion::Speaking},
++        {"silly", Emotion::Speaking},
++        {"delicious", Emotion::Speaking},
++        {"thinking", Emotion::Thinking},
++        {"confused", Emotion::Thinking},
++        {"surprised", Emotion::Thinking},
++        {"sad", Emotion::Idle},
++        {"angry", Emotion::Idle},
++        {"crying", Emotion::Idle},
++        {"shocked", Emotion::Idle},
++        {"embarrassed", Emotion::Idle},
++        // Internal, non-error icon names used by upstream board code.
++        {"robot_2", Emotion::Idle},
++        {"staticstate", Emotion::Idle},
++    };
++
++    for (const auto& entry : kEntries) {
++        if (std::strcmp(name, entry.name) == 0) {
++            out = entry.emotion;
++            return true;
++        }
++    }
++    return false;
++}
++
++Emotion emotionForDeviceState(DeviceState state) {
++    switch (state) {
++        case DeviceState::Listening:
++            return Emotion::Listening;
++        case DeviceState::Speaking:
++        case DeviceState::Notifying:
++            return Emotion::Speaking;
++        case DeviceState::FatalError:
++            return Emotion::Error;
++        // Connecting is a network phase, NOT AI thinking.
++        case DeviceState::Unknown:
++        case DeviceState::Starting:
++        case DeviceState::WifiConfiguring:
++        case DeviceState::Idle:
++        case DeviceState::Connecting:
++        case DeviceState::Upgrading:
++        case DeviceState::Activating:
++        case DeviceState::AudioTesting:
++        default:
++            return Emotion::Idle;
++    }
++}
++
++StateAdapter::StateAdapter(std::uint32_t emotionTtlMs) : emotionTtlMs_(emotionTtlMs) {}
++
++void StateAdapter::onDeviceState(DeviceState state) {
++    if (state == deviceState_) {
++        return;
++    }
++    deviceState_ = state;
++    clearTemporaryEmotion();
++
++    // A real state transition ends any explicit thinking phase.
++    if (state == DeviceState::Idle || state == DeviceState::Listening ||
++        state == DeviceState::Speaking) {
++        thinking_ = false;
++    }
++}
++
++bool StateAdapter::onEmotionName(const char* name, std::uint32_t nowMs) {
++    Emotion mapped = Emotion::Idle;
++    if (!mapUpstreamEmotion(name, mapped)) {
++        // Unknown/empty/null: ignore, never overwrite a valid expression.
++        return false;
++    }
++    temporaryEmotion_ = mapped;
++    hasTemporaryEmotion_ = true;
++    temporaryEmotionUntilMs_ = nowMs + emotionTtlMs_;
++    return true;
++}
++
++bool StateAdapter::onAlertEmotion(const char* name, std::uint32_t nowMs) {
++    if (name == nullptr || name[0] == '\0') {
++        return false;
++    }
++    if (isAlertErrorEmotion(name)) {
++        setError(true);
++        return true;
++    }
++    if (isAlertProgressEmotion(name)) {
++        // Progress notification: do not turn it into a mood or an error.
++        clearTemporaryEmotion();
++        return true;
++    }
++    return onEmotionName(name, nowMs);
++}
++
++void StateAdapter::onAlertDismissed() {
++    error_ = false;
++    errorTimed_ = false;
++    clearTemporaryEmotion();
++}
++
++void StateAdapter::clearTemporaryEmotion() {
++    hasTemporaryEmotion_ = false;
++    temporaryEmotion_ = Emotion::Idle;
++    temporaryEmotionUntilMs_ = 0;
++}
++
++void StateAdapter::setThinking(bool active, std::uint32_t nowMs) {
++    (void)nowMs;
++    thinking_ = active;
++    if (active) {
++        // Explicit thinking takes precedence over a server emotion.
++        clearTemporaryEmotion();
++    }
++}
++
++void StateAdapter::setError(bool active) {
++    error_ = active;
++    errorTimed_ = false;
++    if (active) {
++        thinking_ = false;
++        clearTemporaryEmotion();
++    }
++}
++
++void StateAdapter::setTimedError(std::uint32_t nowMs, std::uint32_t durationMs) {
++    error_ = true;
++    errorTimed_ = true;
++    errorUntilMs_ = nowMs + durationMs;
++    thinking_ = false;
++    clearTemporaryEmotion();
++}
++
++void StateAdapter::tick(std::uint32_t nowMs) {
++    if (hasTemporaryEmotion_ && !temporaryEmotionActive(nowMs)) {
++        clearTemporaryEmotion();
++    }
++}
++
++bool StateAdapter::temporaryEmotionActive(std::uint32_t nowMs) const {
++    if (!hasTemporaryEmotion_) {
++        return false;
++    }
++    return static_cast<std::int32_t>(nowMs - temporaryEmotionUntilMs_) < 0;
++}
++
++Emotion StateAdapter::resolve(std::uint32_t nowMs) {
++    tick(nowMs);
++    if (error_ && errorTimed_ &&
++        static_cast<std::int32_t>(nowMs - errorUntilMs_) >= 0) {
++        error_ = false;
++        errorTimed_ = false;
++    }
++    if (error_) {
++        return Emotion::Error;
++    }
++    if (thinking_) {
++        return Emotion::Thinking;
++    }
++    if (temporaryEmotionActive(nowMs)) {
++        return temporaryEmotion_;
++    }
++    return emotionForDeviceState(deviceState_);
++}
++
++}  // namespace musse::display
