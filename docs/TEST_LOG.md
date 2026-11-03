@@ -1,5 +1,20 @@
 # 实验与测试日志
 
+## 2026-11-03 T-20261103-11 — 官方 iWiki 单文档 read_doc 实机响应结构
+
+- **执行者/来源**：用户 Windows PowerShell，Node.js v22.23.2，手动选择自己新建的非敏感测试文档，在程序第二次交互中输入 `YES` 后执行**一次** `read_doc({doc_id})`。
+- **离线检查**：`node --test tests/probe-read-structure.test.mjs` → 3/3 通过，0 失败。
+- **用户回传的脱敏真实结果**：`success:true`；`structuredContent:"absent"`；仅一条文本内容块，经 JSON 解析字段 `ok:boolean`、`data.doc_id:string`、`data.title:string`、`data.content:string`。未回传正文、真实 ID 值或 Token。`success:true` 是本地探针的有限判断，不能证明内层 `ok === true`。
+- **结论**：**实际只读文档调用与返回形状已确认**；Markdown 任务表格式、任务统计、真实语音业务调用仍待验证。
+
+## 2026-11-03 T-20261103-12 — S2-A 业务读取适配器开发侧合成验证
+
+- **代码**：新增 `src/store/official-iwiki-read.ts`，只允许显式文档 ID 映射的 `read_doc`，要求 `ok:true`、`data.doc_id` 匹配和 `data.content` 为字符串；任何写入/列表/未知映射直接拒绝，原始远端错误正文不向业务层冒泡。
+- **测试环境**：开发侧隔离 Node.js v22.16.0，以 `--experimental-strip-types` 运行本适配器五项合成测试；5/5 通过，0 失败。注意 Node 22.16.0 默认不接受 TypeScript 扩展名，必须显式启用类型剥离；用户本机 Node.js v22.23.2 未运行此批。
+- **待测**：`tests/probe-task-queries.test.mjs` 和 `tools/probe-task-queries.mjs --live` 已加入功能分支，但本轮尚未执行 Windows 实测；不得据此宣布真实待办/逾期查询可用。
+- **未做**：未读取用户私人任务数据、未更改 iWiki 文档、未启动业务 MCP 服务、未开放写入、未变更原有 Windows 桥接或硬件。
+
+
 ## 2026-11-03 T-20261103-09 — S2-A Windows 真实查询工具发现验收
 
 - **执行者/来源**：用户直接在 Windows PowerShell 执行并回传命令输出（不是 ChatGPT 远程执行）。
