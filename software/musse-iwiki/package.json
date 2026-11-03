@@ -12,6 +12,7 @@
     "mcp": "node src/mcp/server.ts",
     "inspect:readonly": "node tools/inspect-readonly.mjs",
     "probe:read-shape": "node tools/probe-read-structure.mjs",
-    "probe:task-queries": "node tools/probe-task-queries.mjs"
+    "probe:task-queries": "node tools/probe-task-queries.mjs",
+    "probe:goal-notes": "node tools/probe-goal-notes.mjs"
   }
 }
