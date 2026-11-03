@@ -1,5 +1,14 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-03 S2-A 最新完成：真实 iWiki 任务表只读查询闭环通过（仅 Windows 测试流程）
+
+- 用户在 Windows PowerShell/Node v22.23.2 对 PR #24 的严格只读适配器与任务统计程序进行本地测试：`node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs` **7/7 通过**。
+- 用户本人通过 `node tools/probe-task-queries.mjs --live` 授权读取自建、虚构的 iWiki 测试任务表一次，脚本返回 `validatedTaskTable=true`、`taskCount=3`、`todoCount=2`、`doneCount=1`、`archivedCount=0`、`todayCount=0`、`upcoming7DaysCount=1`、`overdueCount=1`。与预先提供的三行虚构样例一致；统计路径报告 `remoteReadCalls=1`、`remoteWriteCalls=0`。
+- **验收结论**：S2-A 的**独立 Windows 本地真实文档读取、Markdown 任务解析与任务/日程数量统计通过**。这是用户直接回传的程序输出；未独立审查服务端调用追踪，也不意味着小智云端语音已连接本仓库 13 个业务工具。
+- **后续 S2-B**：在不修改原有 Windows 桥接的前提下，先用设备原有官方 iWiki 查询工具对这篇纯虚构文档做语音读取验证，检查实际工具调用证据；若需自然语言任务业务工具，再评估只读业务 MCP 的安全接入，不开放写入。未启用云端/新固件。
+- 功能分支 `feat/iwiki-s2a-readonly-contract` / 草稿 PR #24；`main` 未合并。详见 [S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
 ## 2026-11-03 S2-A 最新实测：iWiki 单文档读取结构已确认（任务业务仍待验收）
 
 - 用户在 Windows Node.js v22.23.2 通过 `probe-read-structure.mjs --live` **一次成功调用官方 `read_doc`**，针对用户自行创建的测试文档 ID。真实响应为 `content[0].text` 承载的 JSON，形状含 `ok:boolean`、`data.doc_id:string`、`data.title:string`、`data.content:string`；没有独立 `structuredContent`。脱敏输出仅记录类型，不记录 `ok` 值、私人正文或文档 ID。
