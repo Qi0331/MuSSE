@@ -1,5 +1,8 @@
 # musse-iwiki（V1 第一批）
 
+> **S2-A 读取接口续报（2026-11-03）**：用户已在 Windows 用官方 `read_doc` 读取自己创建的测试文档，验证了文本结果块里的 `{ok:boolean,data:{doc_id,title,content}}` 结构。新增严格只读的 [官方 iWiki 存储适配器](src/store/official-iwiki-read.ts) 与 [虚构任务表模板、验收步骤](docs/S2A_TASK_TEST_TEMPLATE.md)。这只是开发与测试通道，**尚未把真实任务查询接入小智语音，现有生产桥接不变、远程写入仍禁用**。
+
+
 > **S2-A 续报（2026-11-03）**：用户 Windows 实测官方 iWiki `tools/list` 成功，27 个发现工具，六个指定查询工具的 schema 输入字段已确认；不是任务业务的真实读取验收。本分支另有单文档只读响应形状检查器 `tools/probe-read-structure.mjs`（仅当用户主动执行 `--live` 并选定测试文档时请求一次 `read_doc`）。详细步骤见 [S2-A 交接](docs/S2A_READONLY_HANDOFF.md)。
 
 
