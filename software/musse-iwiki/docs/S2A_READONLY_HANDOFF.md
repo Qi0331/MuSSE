@@ -1,0 +1,62 @@
+# S2-A：iWiki 官方 MCP 查询工具契约只读检查
+
+> 状态：2026-11-03 工具草案与 3 项脱敏/防越权离线测试完成；**尚未在用户 Windows 执行真实连接**，不代表任务业务 MCP 已联调。用户原有 ESP32 → 小智 → Windows → iWiki 语音知识库查询仍已实测成功。
+
+## 目标及范围
+
+这一步只获取官方 iWiki MCP 的查询工具元数据（`initialize` + `tools/list`），用以确认与任务业务层适配所需的真实工具名及入参字段。
+
+**不做**：调用 `tools/call`、读取任何知识库文档或空间列表、创建/修改/删除 iWiki 内容、连接 MuSSE 任务业务 MCP、部署云端、修改 ESP32、重装 Windows `xiaozhi-client`、改动现有配置。
+
+结果只输出六种已知查询工具是否出现及**参数字段名称、必填字段名称**。不输出完整 schema、描述文本、任何示例值、其他工具名称、URL、Token、私人文档或原始错误响应。字段名仍应在公开转发前人工检查。
+
+## 离线验证（安全，默认不触碰私人文件或网络）
+
+在有 Node.js >= 22.18 的电脑中，从该 GitHub 功能分支进入 `software/musse-iwiki`，执行：
+
+```powershell
+node --test tests/inspect-readonly.test.mjs
+node tools/inspect-readonly.mjs
+```
+
+第二条不带 `--live` 时只打印帮助，不读取本机配置，也不连接网络。现有 `npm test` 已纳入新增测试，但历史 29 项全套回归在此 PR 阶段尚未重新运行。
+
+## 实机只读检查（下一步，须用户在 Windows 明确执行）
+
+保持现有正常工作的小智桥接配置原样，不复制、不改写任何凭证。在单独的 PowerShell 窗口，从该分支仓库的 `software/musse-iwiki` 目录运行：
+
+```powershell
+node tools/inspect-readonly.mjs --live
+```
+
+脚本默认只在**内存中**读取以下本机私有文件：
+
+`$HOME\MuSSE-MCP-Local\musse-bridge\xiaozhi.config.json`
+
+若本机路径不同，可传入 `--config <私有配置文件本地路径>`。该参数是**文件路径而不是 Token**；不要把凭证放到命令行参数里。脚本严格要求 `mcpServers.iwiki.url` 为 `https://ssemarket.cn/iwiki-api/mcp`，且使用本机既有 Bearer 凭证。
+
+输出示例（以下完全为合成结构，不代表真实工具参数）：
+
+```json
+{
+  "inspection": "S2-A tools/list only; no documents read and no write tools called",
+  "totalAdvertisedTools": 27,
+  "queries": [
+    {"name":"list_spaces","present":true,"fields":[],"required":[]}
+  ]
+}
+```
+
+**注意**：这是结构示意；实际运行输出会包含六种查询工具，参数名称以实测为准。`totalAdvertisedTools` 仅统计当前 `tools/list` 响应的工具数；如果服务端采用分页，当前客户端尚未处理后续游标，不能据此断言全量。
+
+失败时只输出通用信息，不打印原始 HTTP 响应。这个检查不保证 MCP 客户端的其他日志路径全部安全，也不能替代写权限服务端拒写的独立验收。
+
+## 下一阶段的决策门槛
+
+1. 获取上述**脱敏摘要**，确认工具名和真实参数字段；不需要用户提供 Token。
+2. 判断能否利用 `list_docs` / `read_doc` 满足任务、日程、目标、笔记只读查询；**优先复用官方 MCP**，不要默认增加第二个运行中的业务服务。
+3. 如确实需要把 iWiki 文档映射到 `WikiStore.read(path)`，另行实现**显式参数映射**与响应解析，不猜测空间 ID / 文档 ID / 内容字段的形态。
+4. 后续仅用**虚构的、用户指定的测试文档**做读取验收，并在报告中只记录通过/失败及结构性信息，不记录真实文档文本。
+5. 业务写入继续关闭；任何真实 iWiki 写入、权限负向测试均需要单独明确授权。
+
+对应架构决策为 D-013 / D-014；当前已完成的通用语音查询见 [运行手册](../../../docs/IWIKI_LOCAL_MCP_RUNBOOK.md)。
