@@ -1,5 +1,8 @@
 # musse-iwiki（V1 第一批）
 
+> **S2-A 续报（2026-11-03）**：用户 Windows 实测官方 iWiki `tools/list` 成功，27 个发现工具，六个指定查询工具的 schema 输入字段已确认；不是任务业务的真实读取验收。本分支另有单文档只读响应形状检查器 `tools/probe-read-structure.mjs`（仅当用户主动执行 `--live` 并选定测试文档时请求一次 `read_doc`）。详细步骤见 [S2-A 交接](docs/S2A_READONLY_HANDOFF.md)。
+
+
 > **S2-A 只读契约检查草案（2026-11-03，尚未实机执行）**：新增 [S2-A 执行与交接](docs/S2A_READONLY_HANDOFF.md) 和 `tools/inspect-readonly.mjs`。默认不读取配置或发请求；显式 `--live` 才在本机使用已有私有配置，仅调用 MCP 初始化和工具发现，输出脱敏的六个查询工具参数名称。它**不是**任务管理已接入 iWiki 的证据，真实写入仍关闭。
 
 
