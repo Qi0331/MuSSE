@@ -1,5 +1,14 @@
 # 实验与测试日志
 
+## 2026-11-03 T-20261103-13 — iWiki 真实测试任务表只读查询成功（用户 Windows 验收）
+
+- **执行者/环境**：用户直接操作 Windows PowerShell，Node.js v22.23.2，`feat/iwiki-s2a-readonly-contract` 分支。
+- **离线回归**：`node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs` → **7 tests / 7 pass / 0 fail**。
+- **实机读验证**：用户在自己的 iWiki **专用虚构任务表文档**上执行 `node tools/probe-task-queries.mjs --live`；输入正确测试文档 ID 并以 `YES` 显式确认。脱敏报告 `validatedTaskTable=true`，`remoteReadCalls=1`，`remoteWriteCalls=0`。
+- **真实汇总数值**：总任务 **3**；未完成 **2**；已完成 **1**；已归档 **0**；当天到期 **0**；未来 7 天到期 **1**；逾期 **1**。完全符合预设虚构 Markdown 任务表。原始任务正文、私人 Token 及文档 ID 未加入仓库。
+- **结论**：S2-A 业务只读验收通过（一次真实远程读取、程序内存解析和任务日期计算）。**仍未**进行 MuSSE 设备自然语言任务查询、业务 MCP 运行部署、正式账号数据管理、真实写入或服务端只读负向测试。不得以此报告代替 S2-B 设备语音证据。
+
+
 ## 2026-11-03 T-20261103-11 — 官方 iWiki 单文档 read_doc 实机响应结构
 
 - **执行者/来源**：用户 Windows PowerShell，Node.js v22.23.2，手动选择自己新建的非敏感测试文档，在程序第二次交互中输入 `YES` 后执行**一次** `read_doc({doc_id})`。
