@@ -1,5 +1,14 @@
 # S2-A：iWiki 官方 MCP 查询工具契约只读检查
 
+## S2-A 真实虚构任务表读取与统计验收完成（2026-11-03，用户回传）
+
+- 用户 Windows Node.js **v22.23.2**：`node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs` → **7/7 通过**。
+- 用户手工在自己的 iWiki 专用测试文档保存此前提供的**三行虚构任务表**，随后运行 `node tools/probe-task-queries.mjs --live`，交互输入该测试文档的 `page-...` ID、确认 `YES`；获得 `validatedTaskTable:true`，总任务 3、待办 2、完成 1、归档 0、今日到期 0、未来七天到期 1、逾期 1，与预期一致。
+- 脚本输出 `remoteReadCalls:1`、`remoteWriteCalls:0`，结果只含聚合数量，不含任务内容、文档标识或 Token。该字段是**本地代码统计**，不是服务端独立审计。
+- **现在已验证**：官方 `read_doc` 实际成功返回任务 Markdown，严格适配器解析真实 `{ok:true,data:{doc_id,content}}`，现有任务业务层可在内存执行列表、今日/未来七天/逾期筛选。这是单文档、单次远端读取场景。
+- **尚未验证**：小智设备调用本仓库的任务业务工具、真实目标和笔记文档、iWiki 写入及并发冲突、长期运行与实际服务端写权限拒绝。S2-B 应先测试现有官方六个只读工具的语音任务表检索与工具调用证据，再考虑是否增加业务 MCP 服务。用户无需重复当前 S2-A 的检查。
+
+
 ## 2026-11-03 用户 Windows 实测：真实 read_doc 响应结构确认（最新覆盖）
 
 - 用户从本 PR 分支检出 `c60da2c`，新增 `probe-read-structure.test.mjs` 在 Windows Node.js v22.23.2 下 **3/3 通过**。
