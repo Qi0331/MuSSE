@@ -1,5 +1,8 @@
 # musse-iwiki（V1 第一批）
 
+> **S2-A 只读契约检查草案（2026-11-03，尚未实机执行）**：新增 [S2-A 执行与交接](docs/S2A_READONLY_HANDOFF.md) 和 `tools/inspect-readonly.mjs`。默认不读取配置或发请求；显式 `--live` 才在本机使用已有私有配置，仅调用 MCP 初始化和工具发现，输出脱敏的六个查询工具参数名称。它**不是**任务管理已接入 iWiki 的证据，真实写入仍关闭。
+
+
 > **实际部署状态更新（2026-11-03）**：MuSSE 已通过**独立 Windows `xiaozhi-client` → iWiki 官方远程 MCP** 完成实际知识库读取与设备语音查询，见 [本地桥接运行手册](../../docs/IWIKI_LOCAL_MCP_RUNBOOK.md)。注意：这**不是**运行本目录 `src/mcp/server.ts`；本目录的 29 项离线测试、任务/日程/长期目标/笔记业务层没有因此变成已完成的远程验收。下方「状态」「配置真实 iWiki」描述的是本目录第一批业务实现本身，仍然有效。
 
 
