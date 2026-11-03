@@ -1,5 +1,12 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S4-C 完成仓库代码交接，下一步 S4-D 需单独批准
+
+- 当前分支 `feat/iwiki-s2a-readonly-contract`，草稿 PR #24，未合并。一个未部署的入口 `software/musse-iwiki/src/mcp/server-readonly.ts` 提供 S4-B 四项任务/日程 + S4-C `goal_query`、`note_query`，合计 6 项只读工具。保留既有官方 iWiki MCP 生产配置、现行 Muse 提示词和旧 `server.ts` 不变。
+- 数据继续只保存在 iWiki。新工具复用 `OfficialIwikiReadStore` / 官方 `read_doc`，绝不调用写入工具。未来 S4-D 经批准后，本机私有环境需要 `MUSSE_IWIKI_PRIVATE_CONFIG_FILE`、必需 `MUSSE_IWIKI_TASK_DOC_ID`、可选 `MUSSE_IWIKI_NOTES_DOC_ID` 与 `MUSSE_IWIKI_GOAL_DOC_IDS`（JSON，例如 `{"G-001":"page-FAKE"}`，**仅假值示意，切勿入库真实值**）。目标查询需要给定已映射目标 ID，不自动枚举空间；缺映射报错，不回报不存在的空数据。
+- `tests/s4b-readonly.test.ts` 已修正原“四工具总数”断言，保留对 S4-B 四项工具的覆盖；新增 `tests/s4c-readonly.test.ts` 检查六工具、禁止写入、参数边界、映射和最新笔记排序。隔离 Node 22.16 以依赖替身运行 S4-C 4/4，通过语法检查，但**没有**完整仓库全量回归、真实账户读取或设备验证。
+- 下一步仅在用户明确批准后推进 S4-D Windows 桥接集成；优先在完整仓库与 Node>=22.18 做最小测试，随后才考虑真实只读集成。S5 受控写入另行授权。原 S2-B 繁琐人工验收已取消，不恢复。
+
 ## 2026-11-04 S4-B 仓库代码交接（覆盖下方 S4-A 待审记录）
 
 - 已按用户批准的方案 B，新增 `software/musse-iwiki/src/mcp/server-readonly.ts` 和只读协议、工具白名单；只实现任务及今日/近期/逾期日程四个只读工具，不修改旧 13 工具服务、Muse 提示词或现有 Windows 桥接。
