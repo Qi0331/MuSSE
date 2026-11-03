@@ -1,6 +1,6 @@
 import { MusseError } from "../types.ts";
 import type { TaskService } from "../service/task-service.ts";
-import { READONLY_TASK_TOOLS, callReadonlyTaskTool } from "./tools-readonly.ts";
+import { READONLY_TOOLS, callReadonlyTool } from "./tools-readonly.ts";
 
 /** One request at a time, compatible with the existing minimal line-delimited stdio MCP server. */
 export async function handleReadonlyRpc(
@@ -23,7 +23,7 @@ export async function handleReadonlyRpc(
     case "ping":
       return result({});
     case "tools/list":
-      return result({ tools: READONLY_TASK_TOOLS });
+      return result({ tools: READONLY_TOOLS });
     case "tools/call": {
       try {
         const params = request.params;
@@ -35,7 +35,7 @@ export async function handleReadonlyRpc(
           throw new MusseError("VALIDATION_ERROR", "tool name is required");
         }
         const args = tool.arguments === undefined ? {} : tool.arguments;
-        const value = await callReadonlyTaskTool(
+        const value = await callReadonlyTool(
           service,
           tool.name,
           args as Record<string, unknown>,

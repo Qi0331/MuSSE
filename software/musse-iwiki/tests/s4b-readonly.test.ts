@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { handleReadonlyRpc } from "../src/mcp/readonly-protocol.ts";
-import { callReadonlyTaskTool, READONLY_TASK_TOOLS } from "../src/mcp/tools-readonly.ts";
+import { READONLY_TOOLS } from "../src/mcp/tools-readonly.ts";
 import type { TaskService } from "../src/service/task-service.ts";
 
 function fakeService() {
@@ -22,12 +22,13 @@ function rpc(id: number, name: string, args: unknown = {}) {
   return { jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments: args } };
 }
 
-test("S4-B lists exactly four task/schedule read tools", async () => {
-  const names = READONLY_TASK_TOOLS.map((tool) => tool.name);
-  assert.deepEqual(names, ["task_query", "schedule_today", "schedule_upcoming", "schedule_overdue"]);
+test("S4-B task/schedule tools remain published after S4-C", async () => {
+  const names = READONLY_TOOLS.map((tool) => tool.name);
+  assert.deepEqual(names.slice(0, 4), ["task_query", "schedule_today", "schedule_upcoming", "schedule_overdue"]);
+  assert.equal(names.length, 6);
   const { service } = fakeService();
   const reply = await handleReadonlyRpc(service, { jsonrpc: "2.0", id: 1, method: "tools/list" });
-  assert.deepEqual((reply?.result as { tools: unknown[] }).tools.length, 4);
+  assert.equal((reply?.result as { tools: unknown[] }).tools.length, 6);
   assert.equal(JSON.stringify(reply).includes("task_create"), false);
   assert.equal(JSON.stringify(reply).includes("note_create"), false);
 });
