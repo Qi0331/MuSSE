@@ -30,3 +30,11 @@ dependencies.lock
 recordings/
 local-data/
 *.log
+
+# Local xiaozhi-client MCP runtime (private tokens, call traces, canary logs)
+xiaozhi.config.json
+xiaozhi.config.backup.json
+xiaozhi.config.before-*.json
+mcp-canary*.log
+tool-calls.jsonl
+*.musse-original.bak
