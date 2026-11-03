@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-03 S2-A 开发草案（仅功能分支，未完成真实验收）
+
+- 已在独立分支准备 `software/musse-iwiki/tools/inspect-readonly.mjs` 与 3 项离线安全测试，使用已有 `IwikiMcpClient` 对官方 iWiki MCP 仅执行 `initialize` / `tools/list` 并输出脱敏的查询工具入参字段。默认不连接、不读取本地配置；`--live` 才由用户在 Windows 手动执行。
+- 本批离线新增测试 3/3 通过（Node 22.16.0 隔离执行）；历史 29 项未在本轮重新执行。本地真实 MCP 契约、任务业务读取及语音查询任务/日程/目标均**未因这次代码提交而完成**，需用户在私有 Windows 环境继续验证。
+- 绝不改动现有 `xiaozhi-client`、设备固件、云部署和知识库数据；D-013/D-014 的只读、被动查询决策保持。见 [S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
 ## 2026-11-03 最终覆盖：Windows 本地 iWiki MCP 语音查询全链路已验证
 
 - **最新里程碑**：用户亲自回传小智 MCP WebSocket `1/1` 已连接、iWiki MCP `1/1`、约 27 个工具成功发现，以及 `list_spaces` 实际调用 `ok: true` 返回 41 个可访问空间；随后用户确认 MuSSE 设备端语音查询 iWiki **成功**。此前的“未绑定设备”“尚未完成语音闭环”“未连接真实 iWiki”均仅为历史阶段记录，不代表当前状态。用户确认普通双向语音正常；没有要求或执行新烧录。
