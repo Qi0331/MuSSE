@@ -30,7 +30,14 @@ export class OfficialIwikiReadStore implements WikiStore {
       throw new UnavailableError("iWiki document ID mapping is invalid");
     }
 
-    const result: unknown = await this.client.callTool("read_doc", { doc_id: id });
+    let result: unknown;
+    try {
+      result = await this.client.callTool("read_doc", { doc_id: id });
+    } catch {
+      // The generic MCP client can include raw server response text in errors.
+      // Do not let it propagate to the stdio business server or public logs.
+      throw new MusseError("IWIKI_READ_FAILED", "iWiki read_doc request failed");
+    }
     if (!result || typeof result !== "object" ||
         (result as Record<string, unknown>).isError === true) {
       throw new MusseError("IWIKI_TOOL_ERROR", "iWiki read_doc returned an error");
