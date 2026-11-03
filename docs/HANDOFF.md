@@ -1,5 +1,12 @@
 # MuSSE 最新交接（2026-11-03 硬件阶段）
 
+## 2026-11-03 S2-A 用户实测续报（PR #24 功能分支）
+
+- 用户在 Windows Node v22.23.2 上成功运行只读契约检查，获得 27 个总工具、六个查询工具的入参字段与必填项；详见 [S2-A 文档](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。不需要再重复第一轮 `tools/list` 验收。
+- 本分支新增 `tools/probe-read-structure.mjs` 与三项离线测试，供**用户明确选择非敏感测试文档**后执行一次 `read_doc`，只记录结构，不输出内容。尚未运行用户 Windows 的真实读取，也不准据此宣称任务业务可用。
+- 下一阶段核对读取响应结构和任务数据模型。Token 只在本机现有配置使用，不能进入 GitHub；如无合适测试文档，暂停真实读取并等待用户选择。
+
+
 ## 2026-11-03 S2-A 只读工具契约检查草案（仅 PR 功能分支）
 
 - 为恢复 iWiki 任务业务第二阶段而新增 `software/musse-iwiki/tools/inspect-readonly.mjs`、测试与 [安全运行说明](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。本轮只开发、离线验证和准备 Windows 本机执行步骤；未访问任何私人 Token/空间/文档，也未运行真实第三方 MCP 联调。
