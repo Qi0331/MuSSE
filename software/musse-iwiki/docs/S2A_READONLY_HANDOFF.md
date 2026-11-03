@@ -1,5 +1,40 @@
 # S2-A：iWiki 官方 MCP 查询工具契约只读检查
 
+## 2026-11-03 用户 Windows 实测：S2-A 官方 tools/list 查询契约确认
+
+- 环境：Windows PowerShell、Node.js **v22.23.2**；从 `feat/iwiki-s2a-readonly-contract` 独立克隆仓库。
+- 用户回传：`node --test tests/inspect-readonly.test.mjs` **3/3 通过**；无参数的检查器只输出帮助；`node tools/inspect-readonly.mjs --live` 成功连接真实 iWiki 官方 MCP，广告工具 **27** 个，目标 **6** 个查询工具均存在。
+- 已确认工具输入字段（来自 `tools/list`，**不是调用工具后的运行时验证**）：
+
+| 工具 | 输入字段 | JSON Schema 必填 |
+| --- | --- | --- |
+| `list_spaces` | `q` | 无 |
+| `list_docs` | `space_id`、`parent_id` | `space_id` |
+| `list_doc_tree` | 无 | 无 |
+| `search_kb` | `query`、`scope`、`space_id`、`limit` | `query` |
+| `read_doc` | `doc_id`、`doc_path` | 无（不等于可以两者都省略） |
+| `get_doc_outline` | `doc_id` | 无 |
+
+- 本次不读取文档正文，不执行 `tools/call` 或任何写入。该输出没有显示凭证及私人文档正文；只说明输出路径的脱敏情况，不是完整安全审计。
+- **阶段判断**：S2-A 的工具发现/输入字段核对已通过；`read_doc` 返回值结构、空间与文档路径映射、任务 Markdown 解析及语音业务调用仍未验证。用户的生产桥接继续保持原样。
+
+## 下一步：自选测试文档的只读响应结构检查（仅显式运行）
+
+本分支新增 `tools/probe-read-structure.mjs`，**默认只打印帮助，不读取私有配置、不联网**。用户如有**自己有权读取的非敏感测试文档**，可以从本分支 `git pull` 更新后，在 `software/musse-iwiki` 目录执行：
+
+```powershell
+node --test tests/probe-read-structure.test.mjs
+node tools/probe-read-structure.mjs
+node tools/probe-read-structure.mjs --live
+```
+
+第三条会交互询问使用 `doc_id` 还是 `doc_path`、输入该**测试文档**的标识符，然后要求再次输入大写 `YES` 确认。确认后**恰好只调用一次 `read_doc`**。它会在内存接收文档，但输出中只包含白名单内的通用字段名及其类型，不打印文档文本、ID、Token 或错误正文。如果选错文档，请在确认前退出。终端交互输入可能回显本地标识符，因此**只回传 `SAFE_READ_STRUCTURE_BEGIN` 与 `SAFE_READ_STRUCTURE_END` 之间的摘要**，不发整段终端记录。
+
+没有适合的非敏感文档时**不要执行 `--live`**，可以先人工在 iWiki 确认存在一个可读的测试文档；不要为验收修改生产文档。若读取失败，脚本只返回通用失败原因，不提供可用于推断权限/数据内容的原始响应。此探针不对当前 `xiaozhi-client` 安装或配置进行任何更改，也不执行任务业务工具。
+
+**离线新增校验**：开发侧隔离 Node.js v22.16.0 执行两份 `*.test.mjs`，6/6 通过；第二组 3 项涵盖结果脱敏、错误信息不泄露、只允许一次 `read_doc`。用户 Windows 的第三步**尚未执行**。
+
+
 > 状态：2026-11-03 工具草案与 3 项脱敏/防越权离线测试完成；**尚未在用户 Windows 执行真实连接**，不代表任务业务 MCP 已联调。用户原有 ESP32 → 小智 → Windows → iWiki 语音知识库查询仍已实测成功。
 
 ## 目标及范围
