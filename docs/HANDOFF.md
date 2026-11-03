@@ -1,5 +1,12 @@
 # MuSSE 最新交接（2026-11-03 硬件阶段）
 
+## 2026-11-03 S2-A 只读工具契约检查草案（仅 PR 功能分支）
+
+- 为恢复 iWiki 任务业务第二阶段而新增 `software/musse-iwiki/tools/inspect-readonly.mjs`、测试与 [安全运行说明](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。本轮只开发、离线验证和准备 Windows 本机执行步骤；未访问任何私人 Token/空间/文档，也未运行真实第三方 MCP 联调。
+- 下一位执行者在 Windows 下载/检出此功能分支，先执行 `node --test tests/inspect-readonly.test.mjs`；经用户选择后再用 `node tools/inspect-readonly.mjs --live` 取得**仅工具名和参数字段的脱敏摘要**。脚本不调用 `tools/call`，不会写入或读取任何 iWiki 文档正文。
+- 正式业务适配仍需依据真实输入/响应契约单独实现并测试；禁止推断当前 13 个业务工具可直接上线。原有官方 iWiki MCP 语音通用查询已成功，仍不重复首次连接排障。
+
+
 ## 2026-11-03 最新交接：本地 iWiki MCP + MuSSE 语音查询已完成（覆盖下方所有历史阶段）
 
 > **新对话从此节开始**。旧节所写“先检查 Wi-Fi/绑定”“COM7 下载模式待处理”“MCP 未实测”均为当时快照，不能重新作为待办。已验证链路的完整启动、隐私约束与恢复见 [IWIKI_LOCAL_MCP_RUNBOOK.md](IWIKI_LOCAL_MCP_RUNBOOK.md)。
