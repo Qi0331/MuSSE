@@ -1,5 +1,21 @@
 # 实验与测试日志
 
+## 2026-11-03 T-20261103-09 — S2-A Windows 真实查询工具发现验收
+
+- **执行者/来源**：用户直接在 Windows PowerShell 执行并回传命令输出（不是 ChatGPT 远程执行）。
+- **版本**：Node.js v22.23.2；已克隆功能分支 `feat/iwiki-s2a-readonly-contract`。
+- **本机结果**：`node --test tests/inspect-readonly.test.mjs` → 3/3 通过；无参数检查器 → 只显示帮助；`node tools/inspect-readonly.mjs --live` → 返回脱敏工具摘要，工具总数 27，六个查询工具均存在，字段和必填项详见 [S2-A 文档](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+- **不等于**：实际调用 `read_doc` 成功、服务端拒绝写入、任务业务完成、语音任务查询完成。无私人文档/空间内容/令牌入库。
+- **结论**：**S2-A 工具发现与 schema 输入字段验收通过**；业务读响应契约仍待核验。
+
+## 2026-11-03 T-20261103-10 — 单文档只读形状检查器离线测试
+
+- **测试环境**：隔离 Node.js v22.16.0，完全合成的 MCP 结果与文档字符串。
+- **运行**：`node --test tests/inspect-readonly.test.mjs tests/probe-read-structure.test.mjs` → **6/6 通过**（其中新加 3 项）。默认无 `--live` 的形状检查器仅输出帮助。
+- **验证**：不输出正文及任意敏感字段值；MCP 错误不输出原文；只允许显式给定 `doc_id` 或 `doc_path`，且仅调用一次 `read_doc`。
+- **局限**：没有在用户 Windows 上执行真实 `read_doc`；历史 29 项 TypeScript 业务测试本轮未重新运行。
+
+
 ## 2026-11-03 S2-A 只读工具契约检查草案（开发验证，不是 iWiki 实机测试）
 
 ### T-20261103-08 — 查询工具摘要器离线验证
