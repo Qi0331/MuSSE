@@ -1,5 +1,12 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S4-B 仓库代码交接（覆盖下方 S4-A 待审记录）
+
+- 已按用户批准的方案 B，新增 `software/musse-iwiki/src/mcp/server-readonly.ts` 和只读协议、工具白名单；只实现任务及今日/近期/逾期日程四个只读工具，不修改旧 13 工具服务、Muse 提示词或现有 Windows 桥接。
+- 底层使用原 `TaskService`、`OfficialIwikiReadStore`、官方 iWiki MCP 客户端。未来经单独授权配置 `MUSSE_IWIKI_PRIVATE_CONFIG_FILE`（仅本地私有配置路径）和 `MUSSE_IWIKI_TASK_DOC_ID`（任务表页面 ID）。不得提交实际值。
+- 最小测试 `software/musse-iwiki/tests/s4b-readonly.test.ts`；真实完整检出且 Node>=22.18 时运行 `node --test tests/s4b-readonly.test.ts`。本轮隔离工作区的 4/4 使用本地临时依赖替身，不代表正式仓库全量运行。
+- 不修改真实账号/数据、固件、云端、Windows 配置，不合并草稿 PR #24。S4-C/D 另行授权；不恢复 S2-B 三文档人工验收。
+
 ## 2026-11-04 新对话入口：S3-A 已配置，下一步 S4-A 方案待审
 
 **先读 [S4 专项交接](IWIKI_S4_HANDOFF.md) 和 [当前生效的完整角色提示词](IWIKI_S3_PROMPT_CURRENT.md)**。本节覆盖下面以 S2-B 手工验收为下一步的历史交接，不再要求创建三篇虚构测试文档或运行 `probe-goal-notes.mjs --live`。

@@ -1,5 +1,13 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 S4-B 只读任务与日程代码已加入草稿分支（尚未接入设备）
+
+- 用户已批准 S4-A 方案 B，授权范围仅为分支内 S4-B 开发与最小离线测试；Windows、真实 iWiki、ESP32、云端、提示词与 PR 合并均未授权修改。
+- 新增 `server-readonly.ts`、`readonly-protocol.ts`、`tools-readonly.ts`，只暴露 `task_query`、`schedule_today`、`schedule_upcoming`、`schedule_overdue`，工具列表与实际调用均限制白名单。底层复用 `OfficialIwikiReadStore`。
+- 未来运行需显式指定私有配置文件及任务表 `page-...` 映射；本轮未启动真实连接。
+- 隔离环境 Node v22.16.0（低于项目要求 >=22.18）借助临时依赖替身执行 4/4 新测试通过，源码语法检查通过。**未在完整仓库运行测试/全部回归，不应虚报正式验收**。
+- S4-C 目标/笔记、S4-D 设备接入和 S5 受控写入未开始；S2-A 成果保留，不恢复已取消的 S2-B 验收。
+
 ## 2026-11-04 最新状态：S3-A 提示词已由用户配置；S4 待审，S5 已定为后续目标
 
 - **当前权威入口**：[S4 新对话专项交接与待审方案](IWIKI_S4_HANDOFF.md)；[用户正在使用的 MuSSE 完整角色提示词](IWIKI_S3_PROMPT_CURRENT.md)。开发仍位于 `feat/iwiki-s2a-readonly-contract` / [草稿 PR #24](https://github.com/Qi0331/MuSSE/pull/24)，**未合并主线**。

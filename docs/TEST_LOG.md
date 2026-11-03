@@ -1,5 +1,13 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-02 — S4-B 最小离线检查
+
+- **范围**：新增四个任务/日程只读工具的白名单、MCP 请求派发、异常脱敏；没有真实 iWiki、Windows 桥接或设备访问。
+- **环境**：隔离目录 Node v22.16.0（低于项目最低 22.18）；由于容器不能直接检出完整 GitHub 仓库，运行时为原 `tools.ts`/`types.ts` 提供临时测试替身，未提交这些替身。
+- **已运行**：`node --experimental-strip-types --test tests/s4b-readonly.test.ts`，4/4 通过：只读工具列表、四种查询分发、拒写/非法参数、初始化/错误脱敏。
+- **已运行**：`node --experimental-strip-types --check` 检查新增源文件和测试语法通过；`python -m json.tool package.json` 通过。
+- **未运行**：完整仓库 `npm test`、`python scripts/check_repo.py`、Node>=22.18 原样测试、真实 iWiki 读取、Windows/语音验收。只报告实际检查结果，不重复 S2-A 或取消的 S2-B。
+
 ## 2026-11-04 T-20261104-01 — S3-A 配置变更与 S2-B 验收取消（用户陈述，非设备验收）
 
 - **证据来源**：用户在对话中确认已经把 MuSSE 新角色提示词配置到小智控制台，并逐字给出当前采用的 `# Role: Muse` 版本，已归档到 [当前提示词](IWIKI_S3_PROMPT_CURRENT.md)。
