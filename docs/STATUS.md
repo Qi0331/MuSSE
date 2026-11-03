@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-03 最新 S2-A 补充：用户真实 iWiki 工具发现通过（业务尚未验收）
+
+- 用户在 Windows v22.23.2 完成 S2-A 只读工具元数据实测：检查器离线测试 **3/3 通过**，无参数仅显示帮助；真实 `initialize/tools/list` 成功发现 27 个工具，六个指定查询工具均存在，字段分别为 `list_spaces(q)`、`list_docs(space_id, parent_id)`、`list_doc_tree()`、`search_kb(query, scope, space_id, limit)`、`read_doc(doc_id, doc_path)`、`get_doc_outline(doc_id)`。必填项只有 `list_docs.space_id`、`search_kb.query`（基于 schema）。
+- 这是**用户回传的真实工具列表证据**，不是 ChatGPT 独立连接账号，也不是 `read_doc` 实际调用成功的证据。尚未确认响应正文结构、文档路径和 ID 关系、个人任务解析、语音业务工具；不执行写入。
+- 本 PR 另外准备单文档只读形状检查器（开发侧新增测试 3/3 通过），用户尚未执行真实读取。见 [S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
 ## 2026-11-03 S2-A 开发草案（仅功能分支，未完成真实验收）
 
 - 已在独立分支准备 `software/musse-iwiki/tools/inspect-readonly.mjs` 与 3 项离线安全测试，使用已有 `IwikiMcpClient` 对官方 iWiki MCP 仅执行 `initialize` / `tools/list` 并输出脱敏的查询工具入参字段。默认不连接、不读取本地配置；`--live` 才由用户在 Windows 手动执行。
