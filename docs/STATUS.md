@@ -1,5 +1,16 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-03 最新覆盖：转入新板硬件联调，COM7 下载模式故障待定位
+
+- **当前优先级**：用户明确暂停 iWiki V1 第二阶段；此前 S2-A 工作包**尚未转交 Reasonix**。D-013（iWiki 唯一持久化数据源、被动查询）继续有效，不启动云端、网页或真实账号联调。以下硬件新进展覆盖本文件较早的“上游尚未烧录”描述；历史记录保留。
+- **与旧 COM6 主板区分**：新到货、经实物照片确认的开发板为 **YD-ESP32-23 2022-V1.3 / ESP32-S3 N16R8**，USB 转串口识别为 **FT232R / COM7**；此前 CH343/COM6 的 Hello World 和原厂备份是**另一块板**。
+- **新板只读识别（用户本机终端输出）**：esptool v5.6.0 成功识别 ESP32-S3 rev v0.2、16MB Quad 3.3V Flash、40MHz 晶振，列出 8MB PSRAM；PSRAM 最初仅为识别，随后固件日志报告已发现并初始化 8MB PSRAM，未做独立压力测试。
+- **新板真实烧录（Reasonix 本地报告，非 ChatGPT 直接审计）**：在用户明确授权**不做原厂 Flash 备份**后，复用锁定的上游 `78/xiaozhi-esp32` v2.5.2 / `bread-compact-wifi` 已有构建；在 COM7 写入 bootloader `0x0`、分区表 `0x8000`、OTA data `0xD000`、应用 `0x20000`、assets `0x800000`，**5/5 `Hash of data verified`、退出码 0**。未整片擦除、未修改 eFuse；新板原厂固件**无备份**。
+- **曾成功运行（Reasonix 日志报告）**：烧录后 App v2.5.2、8MB PSRAM / 80MHz、SKU `bread-compact-wifi`、MCP 工具注册及 `starting -> wifi_configuring` 均出现，SoftAP 配网曾启动。当时 OLED 未接导致 I²C 初始化错误，但应用继续运行。此事实不等于已完成云端绑定或语音闭环。
+- **当前阻塞（用户亲自回传终端日志）**：安装 FTDI 驱动后，`python -m serial.tools.miniterm COM7 115200 --dtr 0 --rts 0` 多次显示 `boot:0x0 (DOWNLOAD(USB/UART0)) / waiting for download`；关闭 DTR/RTS 后依旧如此。用户尝试改用板上原生 USB 口独立供电，但手机未发现 Xiaozhi 热点（无热点本身不能证明固件损坏）。**当前尚未从 Flash 启动应用，优先排查 GPIO0/BOOT、自动下载电路与外设/面包板干扰，暂不重烧**。最近一次复现时外设是否彻底全部拔除并取下裸板，现有文字回传尚不能独立确认。
+- **外设/供电**：INMP441、MAX98357 系列功放、8Ω/3W 扬声器、0.91 英寸四针 OLED、按钮等已到货；用户称相关模块已接好，但**接线未经独立验收，OLED/采音/播放/按键均未功能验证**。两个 LED 矩阵、电平转换板和外置电源在本次到货批次中由用户报告**尚未到货**（旧档案曾记录一块 HT16K33A 已持有，具体是否为同一批或另存需核对）；目前用电脑 USB，**无万用表**。不要把 5V 矩阵直接连接 3.3V GPIO，也不准把 USB 与外电源并联。
+- **新对话的单一优先任务**：保持新板完全断电后确认外设是否已全部从主板断开、是否已离开面包板；只接一个 USB/COM，在无 DTR/RTS 影响下核实 BOOT/GPIO0 的实际启动条件。若裸板依旧进入下载模式，优先查该 PCB 的原理图/按钮与自动复位电路，再考虑借万用表；**不把 `Espressif` 芯片制造商名称和 `bread-compact-wifi` 固件板型误判为冲突**。见 [TEST_LOG](TEST_LOG.md) 与 [HANDOFF](HANDOFF.md)。
+
 ## 2026-11-03 最新：iWiki 单数据源 V1 第一批
 
 - 用户确认 **iWiki 单数据源、被动查询**；原 Vue 网页 + CloudBase + 主动提醒方案暂缓（D-013，覆盖 D-011 的实施方向，历史保留）。
