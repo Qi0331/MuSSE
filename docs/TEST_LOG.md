@@ -1,5 +1,33 @@
 # 实验与测试日志
 
+## 2026-11-03 最新验收：小智云端—Windows 本地桥接—iWiki 语音查询
+
+### T-20261103-05 — Windows MCP 桥接启动、小智云端连通
+
+- **证据**：用户回传 Windows PowerShell 原始输出、浏览器本地看板截图；敏感接入点 URL 已省略。
+- **本机**：Node.js `v22.23.2`、npm `10.9.8`；`xiaozhi-client@2.3.0` 初次安装 `@discordjs/opus` 时远程预编译下载 `ETIMEDOUT`，回退构建缺少 Visual Studio C++ 工具。用户执行 `npm install -g xiaozhi-client@2.3.0 --ignore-scripts` 后安装成功、`xiaozhi --help` 正常，随后本地 `xiaozhi start` 能打开 `http://localhost:9999/dashboard`。这仅验证作为 MCP 桥接使用，跳过依赖脚本并不保证客户端自有音频功能。
+- **网络**：Windows 防火墙已建立 `MuSSE MCP - Block Inbound 9999` 的 TCP 入站阻止规则（Any/True/Block）；用户报告本机 `127.0.0.1:9999` 可正常访问。服务仍监听 `0.0.0.0:9999`，应保留防火墙规则。
+- **协议**：真实小智 MCP WebSocket 连接建立，日志显示端点连接 `1/1`、MCP 初始化、未加载 iWiki 时工具 `0`。本次未触碰 ESP32 固件。
+- **结论**：**通过（Windows MCP 启动及小智云端接入）**。
+
+### T-20261103-06 — 本地令牌日志泄露发现及定向修补
+
+- **证据**：用户提供假 Token 复测前后的终端日志；不上传完整日志。
+- **首次假 Token**：iWiki `Authorization` 的假令牌原样出现在 `转换配置` 日志，检查结果 `IWikiTokenLeaked=True`；小智接入点的完整假令牌 `False`（但日志仍含部分脱敏片段）。
+- **修补**：用户通过受限匹配脚本修改全局 npm 安装包 `dist/backend/WebServer.js` 和 `dist/backend/WebServerLauncher.js` 各 1 处，将打印整个 `config` 对象的 `console.log` 改为不包含配置的固定消息；两份原文件均在本地备份为 `.musse-original.bak`。
+- **复测**：假 Token 再次启动，日志呈现 `MCP config converted [details redacted]`；`mcp-canary-retest.log` 中 `XiaoZhiTokenLeaked=False` 且 `IWikiTokenLeaked=False`。预期的 `127.0.0.1:9` 连接拒绝不是 MCP 故障。用户恢复了真实配置前的备份。
+- **局限**：仅验证所测运行路径，不构成全局安全审计；更新/重装依赖可覆盖补丁，未验证权限 Token 的服务端拒写。
+- **结论**：**通过（已发现的完整令牌泄露点修补与假令牌复测）**。
+
+### T-20261103-07 — 真实 iWiki 服务读取与 MuSSE 语音查询
+
+- **证据**：用户提供 iWiki 工具三页截图、`list_spaces` 实际测试结果截图，并回复“成功”确认设备语音查询。
+- **服务**：本地看板显示小智接入点 1 个、iWiki MCP `1/1`，约 27 个工具发现成功，含 `search_kb`、`read_doc`、`list_spaces`、`list_docs`。工具列表含写入项，UI 开关后续最终状态未单独截图验收。
+- **真实读取**：用户在本地管理 UI 直接调用 `list_spaces`，返回 `ok: true`，说明有 41 个当前账号可访问的空间；公开文档不记空间 ID、名称或个人内容。
+- **端到端**：用户随后确认 ESP32-S3 的 MuSSE 语音查询 iWiki 成功；未提供可公开逐条对应的设备请求/工具调用追踪。因此标记为**用户实测成功报告**，不伪称由仓库独立审计完整云端调用日志。
+- **结论**：**通过（本地真实查询有截图、设备语音成功由用户确认）**。本次没有对 iWiki 执行写入，也没有测试 `software/musse-iwiki/` 第一批任务/目标业务层的远程操作。
+
+
 ## 2026-11-03 最新进展：启动故障恢复报告（历史故障详情仍保留）
 
 ### T-20261103-04 — COM7 启动异常恢复及模块配置状态（用户口头报告）

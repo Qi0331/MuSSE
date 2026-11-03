@@ -1,5 +1,17 @@
 # MuSSE 最新交接（2026-11-03 硬件阶段）
 
+## 2026-11-03 最新交接：本地 iWiki MCP + MuSSE 语音查询已完成（覆盖下方所有历史阶段）
+
+> **新对话从此节开始**。旧节所写“先检查 Wi-Fi/绑定”“COM7 下载模式待处理”“MCP 未实测”均为当时快照，不能重新作为待办。已验证链路的完整启动、隐私约束与恢复见 [IWIKI_LOCAL_MCP_RUNBOOK.md](IWIKI_LOCAL_MCP_RUNBOOK.md)。
+
+- **设备现状**：用户确认新 ESP32-S3 `YD-ESP32-23 2022-V1.3`（FT232R/COM7，而非旧 CH343/COM6）已正常连接小智官方云端、绑定此前的 MuSSE 智能体、双向语音正常。上游固件仍为 `v2.5.2/bread-compact-wifi`；本轮没有任何新烧录/外设接线。历史 `DOWNLOAD` 问题用户报告已恢复，根因未知。
+- **新增已完成的工作**：Windows 下 `xiaozhi-client@2.3.0` 经 `--ignore-scripts` 安装成功；在 `$HOME\MuSSE-MCP-Local\musse-bridge` 运行 `xiaozhi start`；小智 MCP 接入点日志连接 `1/1`；iWiki 官方远程 HTTP MCP 服务 `1/1`，实际发现约 27 个工具。本地 `list_spaces` 真实调用 `ok:true` 返回 41 个可访问空间；用户确认 MuSSE 设备通过语音查询成功。
+- **下次开机**：普通 PowerShell 运行 `Set-Location "$HOME\MuSSE-MCP-Local\musse-bridge"`，随后 `xiaozhi start`，保持窗口/电脑网络运行；`http://localhost:9999/dashboard` 查状态。无需再次安装、重新配网、重新绑定或烧录。电脑离线/睡眠时仅 iWiki MCP 不可用，不影响原有普通语音。
+- **技术边界**：这次是直接桥接 `https://ssemarket.cn/iwiki-api/mcp`，**并未运行**本仓库 `software/musse-iwiki/src/mcp/server.ts`。它的第一批 29 项离线测试与任务/目标/笔记业务层不能算已经远程实测；S2-A 仍暂停。没有腾讯云 Lighthouse/CloudBase/独立 Web 服务或 24/7 部署。
+- **安全**：本机入站 TCP 9999 已被 Windows 防火墙阻止，本机访问正常。假 iWiki Token 曾被 npm 包配置日志完整打印，用户已修复 `dist/backend/WebServer.js`、`dist/backend/WebServerLauncher.js` 各 1 处；二次假令牌复测两项均 `False`，并非全面安全认证。安装包重装会丢失补丁。只读 Token 的写权限拒绝未独立核验，默认发现的写入工具应关闭（推荐只留 6 个查询工具）；最终 UI 开关状态仍待确认。Public 仓库只可记录脱敏结论，绝不可提交接入点、Token、私有配置、测试日志/备份、空间名称和私人知识数据。
+- **新对话约束**：本地语音查询已完成；由用户选择下个开发任务。除非用户要求，不要自动迁移腾讯云、制作开机自启、增加主动提醒、写入 iWiki、扩展业务 MCP、重刷固件或重新排查旧启动故障。保持 MuSSE 与 Muse 私人 Agent 隔离。
+
+
 ## 2026-11-03 最新跨对话交接：启动已恢复，下一步核对小智联网与设备绑定（最高优先级）
 
 > 本节覆盖下面 2026-11-03“COM7 下载模式异常（尚未解决）”旧快照；旧排障文字仅作历史证据，下一对话**不应默认故障仍存在**。

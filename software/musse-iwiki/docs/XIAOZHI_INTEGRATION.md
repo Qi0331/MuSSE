@@ -1,5 +1,8 @@
 # 小智接入方案
 
+> **2026-11-03 真实联调更新（优先于下方第一批方案阶段说明）**：用户已在 Windows 通过 `xiaozhi-client@2.3.0` 将小智云端接入点直接连接至 iWiki 官方远程 `https://ssemarket.cn/iwiki-api/mcp`，MCP 服务 `1/1`、约 27 个工具、`list_spaces` 实际返回 `ok:true`，用户确认 MuSSE 语音查询成功。**实际运行并非本仓库下方示例的 stdio MCP Server**，因此原第一批任务/目标/笔记适配的真实写入、权限、冲突处理仍未验证。下一次 Windows 开机的完整两条命令、安全补丁与复测注意事项见 [Windows 本地 iWiki MCP 手册](../../../docs/IWIKI_LOCAL_MCP_RUNBOOK.md)。本页下方保留为第一批原始方案说明。
+
+
 ## 1. 结论摘要
 
 - 没有公开证据表明小智控制台能直接填写 iWiki 远程 MCP URL 并代理工具。
