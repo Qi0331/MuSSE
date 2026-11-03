@@ -1,5 +1,41 @@
 # 实验与测试日志
 
+## 2026-11-03 新到货 ESP32-S3（COM7）首次烧录与当前故障
+
+### T-20261103-01 — 新主板 COM7 识别与只读 Flash 信息
+
+- **证据等级**：用户本人回传 Windows 设备管理器截图和 PowerShell 原始输出；公开归档不保存 MAC/唯一标识。
+- **硬件**：新 `YD-ESP32-23 2022-V1.3`、ESP32-S3 N16R8；与此前 CH343/COM6 旧板不同。FT232R 驱动安装后呈 `USB Serial Port (COM7)`。
+- **命令**：`python -m esptool --chip esp32s3 -p COM7 flash-id`（esptool v5.6.0）。
+- **结果**：连接成功，ESP32-S3 rev v0.2、40MHz 晶振、16MB Quad Flash、3.3V Flash、识别信息包含 8MB PSRAM。只读过程正常结束；此项不证明 PSRAM 运行时压力稳定性。
+- **结论**：**通过（串口和 Flash 识别）**。
+
+### T-20261103-02 — 小智 v2.5.2 新板首次烧录（Reasonix 报告）
+
+- **证据等级**：用户转交的 Reasonix CLI Windows 本地执行报告；ChatGPT 未直接读取原始二进制与原机串口日志。
+- **本地源码/构建**：`C:\Users\Lenovo\MuSSE-Lab\xiaozhi-esp32-v2.5.2`；`78/xiaozhi-esp32` tag `v2.5.2`、commit `49b4380`，`BREAD_COMPACT_WIFI`；ESP-IDF v6.1.0，ESP32-S3 / DIO / 80MHz / 16MB，Octal 8MB PSRAM。复用既有构建，未重建；有记录的 4 个文件 SHA-256 被报告与旧构建记录一致。
+- **写入**：COM7 / 460800，`write-flash --flash-mode dio --flash-freq 80m --flash-size 16MB`；bootloader `0x0`、partition table `0x8000`、OTA data `0xD000`、应用 `0x20000`、assets `0x800000`。五个文件均 `Hash of data verified`，退出码 0。
+- **用户授权边界**：明确跳过原厂 Flash 备份；无全片擦除、eFuse 修改。**新板无原厂备份，不能承诺恢复原厂程序。**
+- **烧录后启动日志（Reasonix 报告）**：应用 2.5.2、PSRAM 8MB/80MHz、SKU `bread-compact-wifi`、MCP 工具注册、`starting -> wifi_configuring`，SoftAP 配网服务启动。OLED 当时未接，日志有 `i2c transaction failed` / `Failed to initialize display`；固件继续运行。
+- **本地脱敏材料（未入仓库）**：`C:\Users\Lenovo\MuSSE-Lab\reports\XIAOZHI_V252_FLASH_COM7_20261103.md`、`xiaozhi_v252_com7_boot_20261103.log`。
+- **结论**：**烧录校验通过、曾从 Flash 启动小智进入配网（按 Reasonix 报告）；未验证 OLED/音频/云端绑定/语音闭环**。
+
+### T-20261103-03 — 外设接入后 ROM 下载模式异常（仍未解决）
+
+- **证据等级**：用户本人在对话中多次回传 PowerShell 终端原始输出。
+- **前提**：用户表示 OLED、INMP441、功放和扬声器已装好、接好；实际引脚连接未经独立逐项核验。后续曾按建议检查 BOOT 和尝试断开外设，但最后一次是否已彻底脱离面包板、所有外设全部断开的状态**没有独立证据，不应写成“裸板故障已确证”**。
+- **命令**：`python -m serial.tools.miniterm COM7 115200`，随后 `python -m serial.tools.miniterm COM7 115200 --dtr 0 --rts 0`；后者输出 `forcing DTR inactive` / `forcing RTS inactive`。
+- **实际日志（多次）**：
+  ```text
+  ESP-ROM:esp32s3-20210327
+  rst:0x1 (POWERON),boot:0x0 (DOWNLOAD(USB/UART0))
+  waiting for download
+  ```
+- **附加用户观察**：仅把线改插开发板原生 `USB` 端口独立供电时，手机未搜索到 Xiaozhi 热点；未获取该次原生 USB 启动日志，因此“无热点”不直接证明 Flash 镜像损坏。
+- **分析**：ROM 下载模式发生在应用执行前；常见条件为复位期间 GPIO0 被保持低电平，可能与 BOOT 按钮、外设/面包板接线、自动下载电路等有关。尚无 GPIO0 实测电压（用户无万用表）；**不能据此判定板坏、也不能判定烧错固件**。上游 `bread-compact-wifi` 是固件板型配置；`Espressif` 是芯片厂商，两者没有名称冲突。
+- **结论**：**未通过正常启动 / 根因未定位**。优先在断电、外设完全隔离且只保留单 USB 的前提下核实启动条件；若确实裸板复现，查 `YD-ESP32-23` 的 BOOT/GPIO0/FT232R 自动下载电路与原理图，必要时借万用表。禁止直接把 GPIO0 短接 3V3、禁止无依据重复烧录/全擦。
+- **关联状态**：最新权威进度见 [STATUS](STATUS.md)，交接见 [HANDOFF](HANDOFF.md)。
+
 > 本文区分**用户亲自执行并回传终端输出**和**Reasonix CLI 在另一台 Windows 电脑执行后转述的报告**。后者未由仓库维护方访问原机或独立复验二进制文件。以下记录不等于板上应用运行成功，且不含 MAC、密钥等唯一标识。
 
 ## 使用方法
