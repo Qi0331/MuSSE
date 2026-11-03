@@ -1,5 +1,14 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-03 最新交接覆盖：MuSSE → 小智云端 → Windows MCP → iWiki 语音查询已成功（最高优先级）
+
+- **已实测完成**：用户确认新 ESP32-S3 已完成小智配网、绑定既有 `MuSSE` 智能体并可正常双向语音；`xiaozhi-client v2.3.0` 在 Windows 本地连接小智接入点（WebSocket 1/1）和 iWiki 远程 MCP（服务 1/1）。用户截图展示约 27 个 iWiki 工具，`list_spaces` 真实返回 `ok:true` 与 41 个可访问空间；用户随后报告设备端语音查询成功。**不再把小智绑定、语音闭环和 iWiki 接入视作未完成任务**。
+- **已完成的是第三方远程 MCP 直连桥接**：`ESP32 → 小智官方云端 → Windows xiaozhi-client → https://ssemarket.cn/iwiki-api/mcp`，不是运行本仓库 `software/musse-iwiki/src/mcp/server.ts` 的任务/日程/笔记工具；后者真实远程读写与冲突处理仍未验收（29 项仅离线测试）。
+- **启动入口**：Windows PowerShell 执行 `Set-Location "$HOME\MuSSE-MCP-Local\musse-bridge"` 和 `xiaozhi start`，保持窗口运行且电脑不睡眠，浏览器 `http://localhost:9999/dashboard` 检查连接。完整操作与安全边界见 [Windows 本地 iWiki MCP 运行手册](docs/IWIKI_LOCAL_MCP_RUNBOOK.md)。
+- **安全**：本机 TCP 9999 已配置 Windows 入站阻止规则，本机仍可访问；早期假 Token 测试确证 iWiki Authorization 曾进入日志，用户已在安装包的 `WebServer.js`、`WebServerLauncher.js` 修复两处，假令牌复测两项均为 False。补丁仅在本机，不得将真实配置、备份、日志或私人知识库数据入库；重新安装客户端可能覆盖补丁。iWiki 只读令牌的服务端写权限**未做负向验证**，工具启用开关最终状态待核实。
+- **当前策略**：Windows 本地版本先用，不部署腾讯云；原有 MuSSE 语音工作正常，不重刷固件、不再重复以前 COM7 下载模式排障；D-013 单 iWiki 数据源与被动查询保持。若用户开启新对话，先读最新 [STATUS](docs/STATUS.md)、[HANDOFF](docs/HANDOFF.md)、[TEST_LOG](docs/TEST_LOG.md) 和运行手册，再等待用户的新任务。下面章节是历史快照。
+
+
 ## 2026-11-03 最新交接覆盖：COM7 启动问题已由用户报告恢复（优先于下面排障快照）
 
 - 用户在本次硬件联调对话中明确表示“已经好了。目前的模块都配置好了”。因此此前反复出现的 `boot:0x0 (DOWNLOAD(USB/UART0))` **不再视为当前未解决的阻塞**；但**恢复时具体做了什么、根因是什么、裸板测试是否执行**均未回传，不能倒推为 GPIO0、FT232R 或某条外设线故障已确诊。
