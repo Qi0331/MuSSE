@@ -1,0 +1,15 @@
+# Local runtime material. Never commit credentials, raw logs or copied npm packages.
+xiaozhi.config*.json
+!config/xiaozhi.config.example.json
+.env
+.env.*
+*.log
+*.jsonl
+*.bak
+*.musse-original.bak
+node_modules/
+npm-prefix/
+sandbox/
+private/
+secrets/
+canary-output/
