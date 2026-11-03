@@ -132,3 +132,18 @@
 - **已知证据**：iWiki 官方公告（Markdown、冲突合并、权限、Token 预留）；SSE_MARKET 平台 MCP 文档（MCP 2025-06-18、Streamable HTTP、Bearer PAT，但属于论坛工具）；`xiaozhi-client` npm 元数据/README。iWiki 具体工具名/参数/版本条件写入**未公开**。
 - **风险**：桥接单点（Windows 关机即失效）、iWiki 工具契约未知、WYSIWYG 可能改格式、Token 与权限管理、无官方托管桥接。
 - **复查条件**：获得真实 iWiki 授权并完成 `initialize/tools/list` 联调；小智控制台直连第三方 MCP 能力确认；`xiaozhi-client` 版本/配置 schema 核对；用户改为需要主动提醒。
+
+
+## D-014 — 本地 Windows MCP 桥接完成首版验收，暂不云端部署
+
+- **日期**：2026-11-03
+- **状态**：Windows 本地版已通过用户实测；24/7 及云迁移未启动
+- **背景**：用户选择先做不上云版本；小智官方账号下 MuSSE 智能体已可与 ESP32-S3 正常语音交互，学院 iWiki 提供 Streamable HTTP MCP。
+- **决定**：
+  1. 采用 `xiaozhi-client@2.3.0` 在用户 Windows 本地桥接**小智云端 MCP 接入点 → iWiki 官方远程 MCP**（`https://ssemarket.cn/iwiki-api/mcp`），暂不增加腾讯云 Lighthouse、CloudBase、数据库或全天候主机。
+  2. 该路线目前只承诺**被动语音查询**，使用专用只读 iWiki Token，并尽量在 UI 禁用写入工具；不启用记忆写入、任务更改、网页抓取或自动提醒。
+  3. `software/musse-iwiki/` 第一批任务/目标业务 MCP 与第三方 iWiki 远程服务严格区分；该目录的 29 个离线测试不自动变成真实远程能力验收，S2-A 继续暂停。
+  4. 手动启动方式、Windows 防火墙 TCP 9999 限制、已知 npm 包日志泄露点与本机补丁复测证据，统一见 [本地 MCP 手册](IWIKI_LOCAL_MCP_RUNBOOK.md)。
+- **依据**：用户本机 `xiaozhi start` 成功、小智 WebSocket `1/1`、iWiki 服务 `1/1` 与约 27 个工具、`list_spaces` 真实 `ok:true`（41 个可访问空间）截图；用户明确确认语音查询成功。假令牌日志先发现 iWiki Authorization 被打印，修复两处后复测完整令牌不再出现。
+- **风险/未验收**：电脑关机或睡眠即断桥接；服务监听 `0.0.0.0:9999`，本机已有入站阻止规则但不等于全域安全审计；iWiki 只读 Token 的写权限拒绝未做负向测试；UI 工具开关最终状态待确认；本地 npm 更新可能覆盖修补。公共仓库不得上传私人配置、密钥、真实知识库内容或原始日志。
+- **复查条件**：用户明确选择 24/7 云端迁移、改为写入/任务业务联调、自动启动、权限要求变化或升级 `xiaozhi-client`。
