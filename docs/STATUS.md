@@ -1,5 +1,13 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-03 S2-A 最新实测：iWiki 单文档读取结构已确认（任务业务仍待验收）
+
+- 用户在 Windows Node.js v22.23.2 通过 `probe-read-structure.mjs --live` **一次成功调用官方 `read_doc`**，针对用户自行创建的测试文档 ID。真实响应为 `content[0].text` 承载的 JSON，形状含 `ok:boolean`、`data.doc_id:string`、`data.title:string`、`data.content:string`；没有独立 `structuredContent`。脱敏输出仅记录类型，不记录 `ok` 值、私人正文或文档 ID。
+- 本功能分支据此新增 `OfficialIwikiReadStore` 严格只读映射和合成测试：失败时拒绝解析，远程写入与文档枚举均不开放；新增测试任务表模板及单次远程读取、内存统计的后续验收工具。**尚未实测任务表解析、任务/日程语音调用，也没有将该适配器部署到现有桥接**。
+- 仅 PR #24 草稿功能分支更新；`main`、Windows `xiaozhi-client`、ESP32 固件和现有 iWiki 内容均未由 ChatGPT 修改。后续在用户手动编辑专用测试文档后再执行只读任务统计。
+- 详细说明：[S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
 ## 2026-11-03 最新 S2-A 补充：用户真实 iWiki 工具发现通过（业务尚未验收）
 
 - 用户在 Windows v22.23.2 完成 S2-A 只读工具元数据实测：检查器离线测试 **3/3 通过**，无参数仅显示帮助；真实 `initialize/tools/list` 成功发现 27 个工具，六个指定查询工具均存在，字段分别为 `list_spaces(q)`、`list_docs(space_id, parent_id)`、`list_doc_tree()`、`search_kb(query, scope, space_id, limit)`、`read_doc(doc_id, doc_path)`、`get_doc_outline(doc_id)`。必填项只有 `list_docs.space_id`、`search_kb.query`（基于 schema）。
