@@ -1,5 +1,15 @@
 # S2-A：iWiki 官方 MCP 查询工具契约只读检查
 
+## 2026-11-03 用户 Windows 实测：真实 read_doc 响应结构确认（最新覆盖）
+
+- 用户从本 PR 分支检出 `c60da2c`，新增 `probe-read-structure.test.mjs` 在 Windows Node.js v22.23.2 下 **3/3 通过**。
+- 用户在自己新建的非敏感 iWiki 测试文档上执行 `node tools/probe-read-structure.mjs --live`，以网页提供的 `page-...` ID 进行单次 `read_doc` 查询。输出中 `success: true`、`structuredContent: "absent"`；一条 MCP `content` 文本块经 JSON 解析为对象，其中字段为 `ok: boolean`、`data: { doc_id: string, title: string, content: string, ... }`。
+- **证据边界**：探针的 `success: true` 仅代表 `isError` 未标记失败；脱敏摘要没有提供内部 `ok` 的实际值，也没有验证正文是否符合任务表 Markdown 规范。完整私人文档正文与真实 ID **未上传 GitHub**。
+- 已新增 `src/store/official-iwiki-read.ts`：只有调用方显式提供逻辑文档路径到实际 `page-...` ID 的对应关系，才会调用一次 `read_doc({doc_id})`；按本次发现的 `ok === true` 与 `data.doc_id/data.content` 严格解析，不符合则失败。它**永远拒绝 write()/list()**，不导出远端错误正文，也不声称版本字段可用于并发写入。
+- 新增 `tools/probe-task-queries.mjs`：在用户手工向专用测试文档填写虚构 12 列任务表后，**只进行一次远端读取**，在内存中执行已有任务服务的只读统计；仅输出数量而不打印任务名、内容或真实 ID。详见 [测试任务表模板与手工操作](S2A_TASK_TEST_TEMPLATE.md)。
+- **验证分级**：用户 Windows 的真实 `read_doc` 响应形状已验证；官方只读存储适配器在隔离 Node.js v22.16.0 下对合成数据 5/5 测试通过（需 `--experimental-strip-types`）；任务汇总工具已提交但尚未完成用户 Windows 运行/业务端到端验收。生产桥接不受影响。
+
+
 ## 2026-11-03 用户 Windows 实测：S2-A 官方 tools/list 查询契约确认
 
 - 环境：Windows PowerShell、Node.js **v22.23.2**；从 `feat/iwiki-s2a-readonly-contract` 独立克隆仓库。
