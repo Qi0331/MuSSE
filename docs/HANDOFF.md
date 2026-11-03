@@ -1,5 +1,13 @@
 # MuSSE 最新交接（2026-11-03 硬件阶段）
 
+## 2026-11-03 S2-A 任务读统计已验收；下一阶段转 S2-B 语音查询
+
+- 用户 Windows Node v22.23.2 的严格只读适配器与任务查询合成测试 **7/7 通过**；用户亲自运行 `probe-task-queries.mjs --live` 对专用虚构任务文档进行**一次**真实 iWiki 读取，返回 `validatedTaskTable:true`、任务数 3、未完成 2、已完成 1、逾期 1、未来七天 1、今天 0；脚本报告远程读取 1、写入 0。
+- **S2-A 达标范围**：真实 `read_doc` → `OfficialIwikiReadStore` → 任务 Markdown 解析 → 本地内存只读统计。测试数据是虚构任务，不代表用户真实任务已入库。
+- **下一 S2-B**：优先在已运行的 MuSSE 设备上，用现有官方 iWiki 查询工具试读这篇测试任务表并观察 MCP 工具调用计数或脱敏证据，区别“模型凭空答对”和“真实调用”。若业务问句不能被稳定解析，再评估接入本仓库 13 个业务 MCP 工具的**只读子集**，不修改原有生产桥接、不默认提供写入功能。
+- 保留 Windows 本地手动启动、Token 保密、MCP 写入未授权、既有固件和云端不变；PR #24 保持草稿，尚未合并 `main`。
+
+
 ## 2026-11-03 S2-A 用户 read_doc 实测与下一检查
 
 - 用户已在 Windows 独立执行 3/3 新增离线测试和一次真实官方 `read_doc` 调用，返回 `structuredContent` 不存在、`content[0].text` 中嵌套 `{ok:boolean,data:{doc_id,title,content,...}}`；正文及个人标识未公开。**`ok` 的实际值未知**，不能据探针 `success:true` 猜测。
