@@ -1,5 +1,7 @@
 # MuSSE iWiki 新对话专用交接（2026-11-03，S2-A → S2-B）
 
+> **历史交接，已被 2026-11-04 决策覆盖**：用户已取消下文的 S2-B 三文档/Windows/语音专项验收。切勿按本页“紧接任务”继续操作。最新阶段、当前已配置提示词和 S4 待审方案请转至 [S4 新对话交接](IWIKI_S4_HANDOFF.md) 与 [当前提示词](IWIKI_S3_PROMPT_CURRENT.md)。S2-B 真实目标/笔记能力仍未验收；本页历史证据保留。
+
 > **本页记录可复核的当前状态。** 主仓库 `Qi0331/MuSSE`；`main` 基线 `a9ae041531c138483a1c9c2fbf3b6c2992ec0baf`。当前开发位于 `feat/iwiki-s2a-readonly-contract`，草稿 [PR #24](https://github.com/Qi0331/MuSSE/pull/24)，**未合并主线**。不要将本页的新开发草案视作生产部署。
 
 ## 1. 产品方案与已运行架构
