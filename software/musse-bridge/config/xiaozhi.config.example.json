@@ -1,0 +1,15 @@
+{
+  "mcpEndpoint": "wss://replace-me.invalid/private-endpoint",
+  "mcpServers": {
+    "iwiki": {
+      "type": "http",
+      "url": "https://ssemarket.cn/iwiki-api/mcp",
+      "headers": {
+        "Authorization": "Bearer REPLACE_WITH_YOUR_PRIVATE_READ_ONLY_IWIKI_TOKEN"
+      }
+    }
+  },
+  "webUI": {
+    "port": 9999
+  }
+}
