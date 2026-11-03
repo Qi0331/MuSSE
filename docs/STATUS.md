@@ -1,5 +1,13 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-03 S2-B 启动：用户确认 MuSSE 语音任务查询成功，长期目标与笔记待测
+
+- 用户在 S2-A 的真实 iWiki 虚构任务表只读统计通过后，进一步确认 **MuSSE 设备端语音查询测试成功**。这属于用户现场反馈，尚无对应单次 `read_doc/search_kb` 使用计数或脱敏调用轨迹；不可据此声称调用证据独立核验完毕，也不能声称本仓库 13 项业务 MCP 已部署。
+- **最小路线**：继续沿用已工作的小智智能体 → Windows `xiaozhi-client` → 官方 iWiki MCP 只读查询工具；先测试目标关联计算与快捷笔记，不启动第二个业务 MCP 服务，不动原生产配置、固件或私人知识库。
+- 本 PR 功能分支新增 [S2-B 三文档虚构样例与语音验收](../software/musse-iwiki/docs/S2B_GOAL_NOTES_ACCEPTANCE.md)、`tools/probe-goal-notes.mjs` 及合成测试。用户还未在 Windows 执行新的目标/笔记验收，**未验证完成**。只统计目标与笔记数量，不输出正文，明确拒绝写入。
+- 不实施自动提醒、CloudBase、真实账号写操作。现有 S2-A 通过结论保留。
+
+
 ## 2026-11-03 S2-A 最新完成：真实 iWiki 任务表只读查询闭环通过（仅 Windows 测试流程）
 
 - 用户在 Windows PowerShell/Node v22.23.2 对 PR #24 的严格只读适配器与任务统计程序进行本地测试：`node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs` **7/7 通过**。
