@@ -1,5 +1,13 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 当前 iWiki 阶段覆盖（优先于以下历史快照）
+
+- 新对话先阅读 `docs/IWIKI_S4_HANDOFF.md`、`docs/STATUS.md`、`docs/HANDOFF.md` 和 `docs/IWIKI_S3_PROMPT_CURRENT.md`；以用户已配置的现行 MuSSE 人设与 iWiki 只读提示词为准，不擅自修改已生效角色介绍。
+- S2-A 的真实只读任务查询和用户报告的设备语音读取成功保留。用户明确取消 S2-B 三篇虚构文档与 Windows/设备繁琐验收；目标和笔记的真实 S2-B 验收仍未完成。不要重新催促测试或虚报通过。
+- S4-A 仅是等待用户审查的**下一阶段方案**（只读业务能力接入方式），不代表自动批准修改桥接或部署自研 MCP。
+- S5 受控语音写入是已确认的**后续产品目标**，但没有当下写权限、真实数据写入或服务端部署授权；严格保持现有 Windows `xiaozhi-client`、固件、防火墙和脱敏补丁不变。
+- 当前继续使用官方 iWiki MCP，草稿 PR #24 未合并 `main`。详见 D-015。
+
 ## 2026-11-03 最新交接覆盖：MuSSE → 小智云端 → Windows MCP → iWiki 语音查询已成功（最高优先级）
 
 - **已实测完成**：用户确认新 ESP32-S3 已完成小智配网、绑定既有 `MuSSE` 智能体并可正常双向语音；`xiaozhi-client v2.3.0` 在 Windows 本地连接小智接入点（WebSocket 1/1）和 iWiki 远程 MCP（服务 1/1）。用户截图展示约 27 个 iWiki 工具，`list_spaces` 真实返回 `ok:true` 与 41 个可访问空间；用户随后报告设备端语音查询成功。**不再把小智绑定、语音闭环和 iWiki 接入视作未完成任务**。
