@@ -1,5 +1,13 @@
 # MuSSE 最新交接（2026-11-03 硬件阶段）
 
+## 2026-11-03 S2-A 用户 read_doc 实测与下一检查
+
+- 用户已在 Windows 独立执行 3/3 新增离线测试和一次真实官方 `read_doc` 调用，返回 `structuredContent` 不存在、`content[0].text` 中嵌套 `{ok:boolean,data:{doc_id,title,content,...}}`；正文及个人标识未公开。**`ok` 的实际值未知**，不能据探针 `success:true` 猜测。
+- PR #24 草稿已准备严格只读 `OfficialIwikiReadStore`，强制显式文档 ID 映射、`ok:true` 及 ID 对齐，write/list 直接拒绝。还有 `S2A_TASK_TEST_TEMPLATE.md`（虚构数据）和 `probe-task-queries.mjs`（一次远端 read_doc、内存统计、仅输出数量）。
+- 用户下一步：在自己专用的非敏感 iWiki 测试文档**手动**贴入虚构 12 列 Markdown 任务表，`git pull` 后在 `software/musse-iwiki` 运行 `node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs`，再由用户自愿执行 `node tools/probe-task-queries.mjs --live`。只回传 `SAFE_TASK_SUMMARY_BEGIN/END` 之间的数据。
+- 此步骤没有真实知识库写入授权（用户网页手动编辑自己的测试文档除外）、没有设备端业务语音验收或云端部署，现有 Xiaozhi 桥接不改。
+
+
 ## 2026-11-03 S2-A 用户实测续报（PR #24 功能分支）
 
 - 用户在 Windows Node v22.23.2 上成功运行只读契约检查，获得 27 个总工具、六个查询工具的入参字段与必填项；详见 [S2-A 文档](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。不需要再重复第一轮 `tools/list` 验收。
