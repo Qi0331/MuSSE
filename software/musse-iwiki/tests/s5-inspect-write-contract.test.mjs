@@ -4,6 +4,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { inspectS5FromFile, summarizeS5WriteToolCandidates } from "../tools/s5-inspect-write-contract.mjs";
 
 const config = {
@@ -47,6 +48,6 @@ test("S5-C simulated live discovery never invokes tools/call", async () => {
 });
 
 test("S5-C default CLI is inert and only shows help", () => {
-  const output = execFileSync(process.execPath, [new URL("../tools/s5-inspect-write-contract.mjs", import.meta.url).pathname], { encoding: "utf8" });
+  const output = execFileSync(process.execPath, [fileURLToPath(new URL("../tools/s5-inspect-write-contract.mjs", import.meta.url))], { encoding: "utf8" });
   assert.match(output, /no config read\/network/);
 });
