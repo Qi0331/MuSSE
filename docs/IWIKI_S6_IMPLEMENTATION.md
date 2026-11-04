@@ -148,3 +148,20 @@ npm run accept:s6 -- --once
 ```
 
 请只将末尾的匿名状态摘要发回，不要粘贴私人配置、令牌或原始服务错误。若任何一步写入返回 UNCERTAIN/STOPPED，先网页检查 G-999/G-998 与本机备份，**不要再次启动这个脚本**。本单次命令取代此前单独的 `preview:s6` 现场操作，但不删除原有的只读调试功能。
+## 11. 2026-11-04 真实三项集中写入验收与不确定结果
+
+用户 Windows `accept:s6 -- --once` 真实运行：三项预览/取消全部通过；任务表识别 4 条；`G-999` 的 `goal_update` 写入并精确读回成功；`G-998` 的 `goal_create` 写入并精确读回成功；第三项向 `G-998` 追加进度时已发起一次 `edit_doc`，返回 `S6_WRITE_UNCERTAIN`，整体 `STOPPED/stage_3`。机器匿名摘要：`remoteWriteCallsStarted=3`、`remoteWritesReadbackVerified=2`、`localBackupSaved=true`。不能把该结果描述为写入失败或成功，绝不可自动重跑集中脚本。
+
+新增**唯一必要的后续检查**：`npm run audit:s6-uncertain -- --read-only`。它使用私有固定作用域，仅允许 `list_docs`、`read_doc`，严格解析 `G-999`、`G-998` 和任务表，检查 `G-998` 的进度历史中验收记录是否正好一次、百分比是否与任务表一致，并仅输出匿名计数/状态。无任何远端写入、撤销或重试。
+
+如果 `thirdWriteStatus=PERSISTED_VERIFIED`，说明远端正文持久化已观察到；此前失败可能属于编辑回执/调用层，但不可武断确认原因。若 `NOT_OBSERVED_DO_NOT_RETRY` 或 `READ_ONLY_AUDIT_UNAVAILABLE`，仍不自动补写，需要先检查官方编辑工具返回契约和远端最终状态。保留测试文档及本地备份，绝不自动删除或改动 S5。
+
+建议本机执行一次（S6 工作区内）：
+
+```powershell
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw '下载失败：停止' }
+git merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '更新失败：停止' }
+npm run audit:s6-uncertain -- --read-only
+```
