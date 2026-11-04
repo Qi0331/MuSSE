@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-05 — S5 确认口令二次修复（待 Windows 同步验证）
+
+- 用户反馈新的语音日志仍将 `确认写入。` 和 `确认保存。` 传给 `musse_write_confirm`，但原进程仍返回 `S5_EXPLICIT_CONFIRMATION_REQUIRED`。因为此前提交的源码已接受这些形式，此现象说明 Windows 当前 S5 运行进程未加载对应修订；实际安装文件路径/服务重启需通过 `node tools/s5-write-bridge.mjs --status` 核查（预期 `S5_WRITE_PRESENT`）。
+- 本次单独放宽 S5 **已有待确认提案**的口令，仅允许 `确认`/`确认写入`/`确认保存` 加可选一个句号、感叹号；保持 `operationId` 匹配、120 秒有效期、独立第二轮确认、业务读回和对否定/疑问句/混合命令的拒绝。同步更新 `musse_write_confirm` 工具描述。
+- GitHub iWiki Node CI **216/216 通过，0 失败**，仓库检查通过（提交 `84365e2bd86ddaa597a47e436188a0ee0ea0f222`）。此次代码提交未写真实待办；必须 Windows 本地 fetch/merge/test/status 验证并彻底重启 xiaozhi 服务，防止运行旧进程。不可重复执行已过期确认，也不可在不知远端状态下重新创建相同待办。
+
+
 ## 2026-11-05 — S5 语音写入确认标点修复（代码已提交；Windows 未部署）
 
 - 真实设备日志显示 S5 prepare 成功后，S5 confirm 分别接收到 spokenText="保存。"、"确认保存。"、"确认写入。"，返回 S5_EXPLICIT_CONFIRMATION_REQUIRED；同一 operationId 上多次拒绝，未进入远端写入阶段。
