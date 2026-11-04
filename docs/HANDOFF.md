@@ -1,5 +1,13 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S5-E 接手（最新）
+- **先看 `docs/IWIKI_S5E_PRACTICAL_HANDOFF.md`**，最新用户明确反对过度防御。不要继续照旧 S5-D 要求 CAS、独立批准 UI 或跨重启数据库才允许考虑个人低频写入，也不要恢复 S2-B/S4-E 验收。
+- S5 PR #25 新增轻量写前二次读取/比对与写后校验、显式配置写工具的普通 iWiki 适配器、两轮语音确认、仅三工具的独立 stdio 服务器（未启用、未部署）。旧原子模式兼容仍在。
+- GitHub Node 22.23.4 完整 `npm test` **98/98 通过**，仅离线模拟；真实官方写工具契约尚缺，需要 Windows 既有官方连接上一条**仅 tools/list、不写入**的脱敏检查：`npm run inspect:s5-write -- --live`。不要把任何腾讯企业 iWiki 接口推断为 SSE_MARKET 的真实 API。
+- 语音确认仍由模型转发，不可声称独立真人认证；非原子方案最后读取到提交之间仍可能有网页竞态。用户接受以简洁易用优先。
+- 无生产配置、真实文档、现有双 MCP、Muse 人设、ESP32、Windows 安全补丁或防火墙改动；PR #24 和 #25 均 Draft 未合并。
+
+
 ## 2026-11-04 最新接手：S5-D 全量 Node CI 84/84 已通过
 - **优先读取 `docs/IWIKI_S5D_FINAL_HANDOFF.md`**。这是新于 S5-C 及 S4-D 的真实 GitHub 最新口径。S4-E 和 S2-B 额外人工验收已取消，不能恢复。
 - S5 `feat/iwiki-s5-guarded-write-design` 独立 Draft PR #25（base S4 分支），原 Draft PR #24 未动。通过 `.github/workflows/iwiki-node-tests.yml` 在完整 GitHub 工作区 Node 22.23.4 运行 `npm test` → **84/84 success**（run 41784910123）。
