@@ -93,3 +93,12 @@
 - 新增 `npm run probe:s5-existing-edit -- --edit-once`，**不再创建新文档**：终端本机询问原测试页所属的私人空间名，分别只读调用 `list_spaces` 和 `list_docs(space_id)` 定位与固定合成标题完全匹配的**唯一根级文档**，再调用 `read_doc` 校验正文恰好仍是 `MUSSE_S5F_ORIGINAL`。若发现失败、重名、不可读或正文已经变化，禁止写入。
 - 只有用户在终端明确输入 `EDIT` 才调用 **一次** `edit_doc({doc_id, content:MUSSE_S5F_UPDATED})`，之后只读复核；不重试。诊断 `errorKind` 仅允许有限错误类型 `PERMISSION/NOT_FOUND/CONFLICT/READ_ONLY/DOCUMENT_TYPE/ARGUMENT/OTHER_BUSINESS_ERROR`，不打印服务端原始 `error` 值、Token、空间 ID、文档 ID 或正文。若响应有未知结构，失败即停止。
 - 该新脚本的模拟测试与代码完成不代表真实编辑成功；正式 S5 仍保持禁用，不碰生产桥接、S4 或真实任务总表。复用一篇已经存在的隔离测试页，不向用户索要其私有 ID。
+
+## S5-F 最终结论：2026-11-04 真实编辑已验证（覆盖此前“编辑未验证”的阶段性结论）
+- 用户 Windows 独立 S5 worktree `e1f30fc` 离线 Node 测试实际 **128/128 全通过**。
+- 真实测试页面标题为 `MuSSE S5-F 自动隔离测试 8a6fc40f`，用户私有空间由用户本机选择，不提交 Token 或页面 ID。
+- 此前已通过 `create_markdown_doc` 的业务 `ok:true` 返回并由 `read_doc` 校验原始测试标记；首次 `edit_doc` 业务 `ok:false`，写后 `UNCHANGED`，具体错误值未留存。
+- 此次新探针复用原页面：`list_spaces → list_docs(space_id) → read_doc` 严格确认目标唯一且初始标记正确；用户在本机输入 `EDIT` 后仅一次 `edit_doc`，返回业务 **`ok:true`**，字段包括 `doc_id,title,new_rev_no,old_chars,new_chars`；随后 `read_doc` 的正文为 `MUSSE_S5F_UPDATED`，`outcome:EXISTING_EDIT_VERIFIED`。**当前 Token 在该私人空间对该 Markdown 测试页的创建、读取、全量改写可用**。
+- 停止 S5-F 实写探针：旧页面正文已更新，复跑旧探针必然不再满足初始标记前置条件。此次成功不等于所有文档都可写，也不代表 S5 正式语音链路已上线。
+- **S5-F 验收已完成**：后续走 S5-E 的已有默认禁用写服务与两轮语音授权流程的联调；保持 S4 只读桥接与当前生产 Token、配置、真实任务表不变。严格区分“隔离页实写证明”与“生产启用批准”。
+
