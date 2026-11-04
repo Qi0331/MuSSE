@@ -32,6 +32,43 @@ function responseObjects(response) {
   return objects;
 }
 
+/**
+ * Read-only space discovery. A visible space is NOT proof of write permission.
+ * Accept known iWiki MCP list shapes, no raw response/body/IDs are printed.
+ */
+export function extractListedSpaceNames(response) {
+  if (response?.isError === true) return [];
+  const names = new Set();
+  const envelopes = responseObjects(response);
+  for (const envelope of envelopes) {
+    if (!envelope || typeof envelope !== "object" || envelope.ok === false || envelope.success === false) continue;
+    const payloads = [envelope, envelope.data, envelope.result, envelope.data?.data];
+    for (const payload of payloads) {
+      if (!payload || typeof payload !== "object") continue;
+      const arrays = Array.isArray(payload) ? [payload] :
+        [payload.spaces, payload.items, payload.list, payload.results].filter(Array.isArray);
+      for (const arr of arrays) {
+        for (const entry of arr.slice(0, 100)) {
+          const name = entry?.name ?? entry?.space_name ?? entry?.spaceName;
+          if (typeof name !== "string" || name !== name.trim() || name.length < 1 ||
+            name.length > 200 || /[\r\n\u0000-\u001f]/.test(name)) continue;
+          names.add(name);
+        }
+      }
+    }
+  }
+  return [...names].slice(0, 100);
+}
+
+export async function listAvailableSpaceNames(client) {
+  const advertised = await client.listTools();
+  const listTool = advertised.find((t) => t?.name === "list_spaces");
+  if (!listTool) return [];
+  // Do not invent mandatory parameters: fail closed, with no tools/call.
+  if (Array.isArray(listTool.inputSchema?.required) && listTool.inputSchema.required.length) return [];
+  return extractListedSpaceNames(await client.callTool("list_spaces", {}));
+}
+
 /** Only accept exactly one page-... ID attached to an explicit success envelope. */
 export function extractConfirmedCreatedPageId(response) {
   const ids = new Set();
@@ -101,21 +138,39 @@ export async function probeS5CreateAndEdit(client, spaceName, label = `MuSSE S5-
 
 async function main(argv) {
   if (argv.length !== 1 || argv[0] !== "--create-and-write-test") {
-    process.stdout.write("Usage: node tools/s5-probe-auto-create.mjs --create-and-write-test\nPrompts for the exact iWiki space name, then creates ONE isolated page and edits it once. Does not retry.\n");
+    process.stdout.write("Usage: node tools/s5-probe-auto-create.mjs --create-and-write-test\nLists spaces read-only, lets the user choose a private space by number, then creates ONE isolated page and edits it once. Does not retry.\n");
     return;
   }
   try {
     if (!process.stdin.isTTY) throw new Error("S5F_INTERACTIVE_TERMINAL_REQUIRED");
-    const rl = createInterface({ input: process.stdin, output: process.stdout });
-    let spaceName;
-    try {
-      spaceName = (await rl.question("请输入要创建隔离测试文档的 iWiki 空间精确名称（仅在本机使用）：")).trim();
-    } finally { rl.close(); }
-    if (!spaceName || spaceName.length > 200) throw new Error("S5F_SPACE_NAME_REQUIRED");
     const configFile = join(homedir(), "MuSSE-MCP-Local", "musse-bridge", "xiaozhi.config.json");
     const config = JSON.parse(await readFile(configFile, "utf8"));
     const connection = extractConnection(config);
-    const result = await probeS5CreateAndEdit(new IwikiMcpClient(connection), spaceName);
+    const client = new IwikiMcpClient(connection);
+    // Read-only list_spaces first; no write if the service response is unrecognized.
+    const spaces = await listAvailableSpaceNames(client);
+    if (!spaces.length) {
+      process.stdout.write("S5F_SPACE_LIST_UNAVAILABLE: list_spaces returned no recognizable spaces. No write attempted.\n");
+      return;
+    }
+    process.stdout.write("iWiki 当前账号可见的空间（仅显示在本机；可见不代表可写）：\n");
+    spaces.forEach((name, i) => process.stdout.write(`${i + 1}. ${name}\n`));
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    let selected = null;
+    try {
+      const answer = (await rl.question("输入你自己的私人测试空间编号，0 取消（输入非 0 编号将执行一次真实写入）：")).trim();
+      if (answer === "0" || !/^[1-9][0-9]{0,2}$/.test(answer)) {
+        process.stdout.write("S5F_CANCELLED: no write attempted.\n");
+        return;
+      }
+      const index = Number(answer) - 1;
+      if (index < 0 || index >= spaces.length) {
+        process.stdout.write("S5F_SELECTION_INVALID: no write attempted.\n");
+        return;
+      }
+      selected = spaces[index];
+    } finally { rl.close(); }
+    const result = await probeS5CreateAndEdit(client, selected);
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } catch {
     process.stderr.write("S5F automatic test unavailable. Do not re-run after an uncertain result; inspect the test page locally.\n");
