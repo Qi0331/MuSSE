@@ -5,9 +5,9 @@
  * prepare/cancel for goal_update, goal_create and goal_record_progress.
  *
  * Optional, EXPLICITLY approved live stages:
- *   1) append a marker to G-999's existing description (edit_doc);
- *   2) create isolated G-998 (create_markdown_doc);
- *   3) append one 0%-when-unlinked progress record to G-998 (edit_doc).
+ *   1) append a marker to G999's existing description (edit_doc);
+ *   2) create isolated G998 (create_markdown_doc);
+ *   3) append one 0%-when-unlinked progress record to G998 (edit_doc).
  *
  * One separate terminal confirmation AFTER preview per live stage.
  * No delete, no retry, no S5 reconfiguration, no unauthorised write.
@@ -28,8 +28,8 @@ import { createS6GoalFlow } from "../src/goals/s6-goal-flow.ts";
 import { scanGoals, validateScope } from "../src/goals/s6-goal-discovery.ts";
 import { createOfficialS6GoalPort } from "../src/goals/s6-official-port.ts";
 
-const ORIGINAL_ID = "G-999";
-const CREATED_ID = "G-998";
+const ORIGINAL_ID = "G999";
+const CREATED_ID = "G998";
 const MARKER = " [小七 S6 一次性验收]";
 const PROGRESS_NOTE = "小七 S6 受控进度写入验收（隔离测试）";
 
@@ -110,18 +110,18 @@ export async function runS6OneShot(port, scope, options) {
   const writeFlow = createS6GoalFlow(port, scope, { ttlMs: 600_000 });
   const stages = [
     {
-      label: "修改 G-999 的说明（保留原说明并添加验收标记）",
-      confirmPhrase: "确认修改 G-999",
+      label: "修改 G999 的说明（保留原说明并添加验收标记）",
+      confirmPhrase: "确认修改 G999",
       intent: update,
     },
     {
-      label: "新建隔离目标 G-998（创建后保留，不自动删除）",
-      confirmPhrase: "确认创建 G-998",
+      label: "新建隔离目标 G998（创建后保留，不自动删除）",
+      confirmPhrase: "确认创建 G998",
       intent: create,
     },
     {
-      label: "向 G-998 追加一条进度历史（不修改任务总表）",
-      confirmPhrase: "确认记录 G-998",
+      label: "向 G998 追加一条进度历史（不修改任务总表）",
+      confirmPhrase: "确认记录 G998",
       intent: { type: "goal_record_progress", goalId: CREATED_ID, note: PROGRESS_NOTE },
     },
   ];
@@ -169,7 +169,7 @@ async function main(argv) {
   if (argv.length !== 1 || argv[0] !== "--once") {
     process.stdout.write("Usage: npm run accept:s6 -- --once\n" +
       "One interactive run: 3 read-only preview/cancel tests, then at most 3 separately approved\n" +
-      "writes affecting ONLY G-999 and new isolated G-998. Type anything else to cancel.\n");
+      "writes affecting ONLY G999 and new isolated G998. Type anything else to cancel.\n");
     return;
   }
   if (!process.stdin.isTTY) {
@@ -211,7 +211,7 @@ async function main(argv) {
         const name = "s6-g999-backup-" + Date.now() + "-" + randomUUID().slice(0, 8) + ".md";
         await writeFile(join(privateDir, name), content, { flag: "wx", mode: 0o600 });
         backupMade = true;
-        process.stdout.write("G-999 原文已独立备份在 Windows 私有目录，未改原配置。\n");
+        process.stdout.write("G999 原文已独立备份在 Windows 私有目录，未改原配置。\n");
       },
       report(event) {
         if (event.type === "dry_pass") {
@@ -244,7 +244,7 @@ async function main(argv) {
       remoteWriteCallsStarted: attempted,
       remoteWritesReadbackVerified: verified,
       localBackupSaved: backupMade,
-      warning: "Do not rerun automatically: verify G-999/G-998 in the iWiki UI if any write was started. Never paste private config or raw errors.",
+      warning: "Do not rerun automatically: verify G999/G998 in the iWiki UI if any write was started. Never paste private config or raw errors.",
     }, null, 2) + "\n");
     process.exitCode = 1;
   } finally {
@@ -252,5 +252,6 @@ async function main(argv) {
   }
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main(process.argv.slice(2));
+  process.stderr.write("S6_LEGACY_ACCEPTANCE_RETIRED: original remote writes already verified; never rerun.\n");
+  process.exitCode = 2;
 }
