@@ -1,4 +1,7 @@
 # MuSSE — Agent 工作约定
+- **新对话请优先读 S5-G 交接**：`docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`。S5-F 已实证创建/读取/编辑/写后复核，停止重复测试；继续同一 S5 Draft PR #25（base S4 PR #24），暂不启用生产写权限。源码/脱敏说明已上 GitHub，Windows 本地有运行桥接和私有 Token/文档映射与日志补丁，小智与 iWiki 在远端；未来上云需部署常驻进程与安全配置，不是上传代码即完成。下一对话先核实最新 HEAD/CI 再做语音写入链路离线整合。
+
+
 - **S5-F 已真实验收通过（2026-11-04）**：用户 Windows `npm test` 128/128 全绿。已在私人空间创建测试 Markdown 文档（`create_markdown_doc ok:true`）并 `read_doc` 校验；对唯一现有页 `MuSSE S5-F 自动隔离测试 8a6fc40f` 二次输入 `EDIT` 后成功 `edit_doc ok:true`，写后 `read_doc` 为 `UPDATED`，结果 `EXISTING_EDIT_VERIFIED`，真实返回键 `new_rev_no/old_chars/new_chars`。第一次编辑失败的业务原因未知，不再猜。**停止重复 S5-F 实写探针**。S5 生产 MCP 仍禁用、PR #25 Draft，S4 双 MCP/桥接/Token/真实任务表/ESP32 均不变。下一阶段只做已验证 `edit_doc + doc_id + content` 的 S5 适配、语音流程和独立启用前检查。详见 `docs/STATUS.md`、`docs/TEST_LOG.md` T-20261104-22。
 
 
