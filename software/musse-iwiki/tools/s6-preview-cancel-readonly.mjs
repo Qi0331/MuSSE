@@ -45,15 +45,15 @@ export async function runS6PreviewCancel(port, scope) {
   validateScope(scope);
   if (scope.mode !== "space") throw Error("S6_SCOPE_MODE_INVALID");
   const flow = createS6GoalFlow(port, scope);
-  const found = await flow.find("G-999");
-  if (found.goal.id !== "G-999" || found.documentTitle !== "G-999")
+  const found = await flow.find("G999");
+  if (found.goal.id !== "G999" || found.documentTitle !== "G999")
     throw Error("S6_TEST_GOAL_NOT_VERIFIED");
   const prepared = await flow.prepare({
     type: "goal_update",
-    goalId: "G-999",
+    goalId: "G999",
     changes: { description: "小七 S6 预览取消验收 " + randomUUID().slice(0, 8) },
   });
-  if (prepared.status !== "AWAITING_APPROVAL" || !prepared.preview.includes("G-999"))
+  if (prepared.status !== "AWAITING_APPROVAL" || !prepared.preview.includes("G999"))
     throw Error("S6_PREVIEW_UNVERIFIED");
   const canceled = flow.cancel(prepared.operationId);
   const finalStatus = flow.status(prepared.operationId);
@@ -82,7 +82,7 @@ async function main(argv) {
     const result = await runS6PreviewCancel(port, scope);
     process.stdout.write(JSON.stringify({
       inspection: "S6_PREVIEW_CANCEL_READ_ONLY",
-      goalId: "G-999",
+      goalId: "G999",
       ...result,
       readCalls: metrics.reads,
       writesAttempted: 0,
