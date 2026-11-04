@@ -22,7 +22,7 @@
     npm run migrate:s6-ids -- --plan
     if ($LASTEXITCODE -ne 0) { throw "只读预检失败，停止" }
 
-3. 只读预检会打印 renameToolVerified、目标数、任务引用数，不泄露私人 ID、正文或 Token。
+3. 预检对远端完全只读；同时在 Windows 私有目录中先保存一次 G-998/G-999 和任务表的原始快照，确保即使后面需要网页手动改标题，也有迁移前备份。预检会打印 renameToolVerified、目标数、任务引用数及不涉密备份文件名，不泄露私人 ID、正文或 Token。
 
    A. 如果 renameToolVerified 为 true：执行
 
