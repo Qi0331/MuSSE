@@ -1,4 +1,9 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-17 — S5-F 创建空间参数定位及修复
+- 用户 Windows 从 `7aa98f0` 更新至 `39877ec`，执行 `npm run inspect:s5-create -- --live` 成功，工具 `create_markdown_doc` 的说明实际指出：目标知识库空间必须用 `space_id` 或 `space_name` 指定（二选一），`parent_id` 可选，创建即发布；正文是整篇 Markdown。这里没有 `tools/call`，不属于写入。
+- 确认旧探针只有 `title/content`，缺少业务层必需的目标空间；能解释第一次 `ok:false`。尚未核验是否有写权限，不能把这个原因扩大为唯一未来错误。
+- GitHub 侧修复 `s5-probe-auto-create.mjs`，下一次由用户在本机交互输入精确空间名称；仅将 `space_name` 添加到自动创建参数。新增模拟测试证明缺空间时绝不会调用远端。真实 create/edit 重试前先完成最新 CI 核实；此处没有额外实际远端写入。
+
 ## 2026-11-04 T-20261104-16 — S5-F 首次真实创建尝试：业务拒绝
 - **最新 GitHub CI**：独立完整 `iWiki Node tests` run `41808126130` 实测 **114/114 pass、0 fail**；`Repository checks` run `41808125886` 成功。新增仅 tools/list 的创建工具元数据检测测试 2 项，**不涉及新的远程写入**。
 - 用户 Windows 独立 worktree 在 Git HTTP/1.1 fetch 成功后，从 `508e908` 快进至 `7aa98f0`，`S5F_UPDATE_SUCCESS`；原 S4 工作区未切换分支。
