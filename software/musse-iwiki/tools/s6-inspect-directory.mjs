@@ -53,6 +53,9 @@ export function summarizeS6ListShape(response) {
     arrayField,
     itemCount: items.length,
     totalPresent: Number.isSafeInteger(data.total),
+    totalEqualsItemCount: Number.isSafeInteger(data.total) && data.total === items.length,
+    totalIsZero: data.total === 0,
+    hasMoreOmitted: !Object.hasOwn(data, "has_more"),
     hasMoreExplicitFalse: data.has_more === false,
     cursorAbsent: data.next_cursor == null || data.next_cursor === "",
     sampleFields: {
