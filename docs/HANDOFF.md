@@ -1,6 +1,7 @@
 # MuSSE 最新交接（持续更新）
 
 ## 2026-11-04 S5-F 最新交接（优先于 S5-E）
+- **S5-F GitHub CI 已核实通过**：Node 全量 `npm test` **104/104**（run `41798382817`），文档检查成功（run `41798382801`）。所有新增测试仅模拟响应，不能替代真实 edit_doc 调用。
 - 用户在 Windows 已成功用独立 worktree 检出 S5 `508e908`，`npm run inspect:s5-write -- --live` 列出 27 个官方工具，确认 `edit_doc` 参数 `doc_id/content/title` 与 `append_to_doc` 参数 `doc_id/content`。只进行 `initialize/tools/list`，**未执行任何真实写入**。
 - S5 仍按 D-021 的低频方案：预览、第二轮确认、提交前复读比较、普通写入一次、写后复读。不再要求原子 CAS 或独立批准 UI 才能测试；但要确认编辑语义和响应，不虚报结果、不盲重试。
 - S5-F 分支新增独立单页隔离探针 `npm run probe:s5-edit -- --write-test`，**不得在用户另行明确授权一次真实写入之前运行**。需要用户自己在网页建立正文恰好为 `MUSSE_S5F_ORIGINAL` 的新测试页，私有 ID 仅在本机环境变量；原有任务总表绝不可作为探针目标。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
