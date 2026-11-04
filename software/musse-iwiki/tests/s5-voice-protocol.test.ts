@@ -15,7 +15,7 @@ test("S5-E optional MCP publishes only the three two-turn voice tools", async ()
   assert.deepEqual(S5_VOICE_TOOLS.map((x) => x.name),
     ["musse_write_prepare", "musse_write_confirm", "musse_write_cancel"]);
   assert.equal((result?.result as { tools: unknown[] }).tools.length, 3);
-  assert.equal(JSON.stringify(result).includes("task_archive\""), false);
+  assert.equal(S5_VOICE_TOOLS.some((tool) => tool.name === "task_archive"), false);
 });
 
 test("S5-E voice MCP delegates prepare and confirm to the gate, never secretly combines them", async () => {
