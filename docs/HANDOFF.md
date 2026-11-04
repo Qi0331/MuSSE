@@ -1,5 +1,13 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 最新接手：S5-D 全量 Node CI 84/84 已通过
+- **优先读取 `docs/IWIKI_S5D_FINAL_HANDOFF.md`**。这是新于 S5-C 及 S4-D 的真实 GitHub 最新口径。S4-E 和 S2-B 额外人工验收已取消，不能恢复。
+- S5 `feat/iwiki-s5-guarded-write-design` 独立 Draft PR #25（base S4 分支），原 Draft PR #24 未动。通过 `.github/workflows/iwiki-node-tests.yml` 在完整 GitHub 工作区 Node 22.23.4 运行 `npm test` → **84/84 success**（run 41784910123）。
+- 首次 80/81 失败的旧固定日期测试已修复；安全门禁新增 `COMMITTING`/ `UNCERTAIN` 不被超时/清理误删、阻塞同文档后续准备，单行任务字段拒绝换行，并有三项新增专项测试。
+- **仍然不允许称为语音写入完成或生产可用**：官方写契约原子 CAS 未验证、可信独立批准 UI 未实现、跨进程重启 `UNCERTAIN` 未能持久恢复。当前代码没有写 MCP 生产连接，旧 13 工具入口不得启用。维持 iWiki 唯一持久化、两个原有 MCP、Windows 补丁/防火墙、Muse 提示词、ESP32、云端配置不变。
+- 下一步 S5-E 按交接文件推进“官方只读契约证据 + 可信批准设计 + 重启恢复安全设计”，不绕过授权做真实写入。
+
+
 ## 2026-11-04 最新交接：S5-C 专项离线 26/26，生产写入仍锁定
 - 最新完整入口为 `docs/IWIKI_S5C_HANDOFF.md`。原 S4-D 任务与日程用户现场验收继续有效，用户已跳过额外 S4-E 验收，不再重复测试。S5 独立开发分支仍为 `feat/iwiki-s5-guarded-write-design`、Draft PR #25（base 为 S4 分支）；原 Draft PR #24 不动。
 - S5 核心门禁已增加真实前后值预览、已验证结果去重缓存、异步准备容量保护、预览绑定摘要和误映射笔记格式拒绝；只读官方写工具候选发现脚本 `tools/s5-inspect-write-contract.mjs` 默认无网络，显式 `--live` 也只枚举工具不执行工具调用。
