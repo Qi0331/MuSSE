@@ -1,4 +1,6 @@
 # MuSSE — Agent 工作约定
+- **当前最新 / S6 交接（2026-11-04）**：用户在 Windows 实际运行 S5-I `--install-write` 并得到安装成功回执，随后报告小七真实语音任务查询/准备/取消成功，且两轮预览确认后真实事项写入 iWiki《测试》页面；已不再卡在写入连接。**用户报告是现场证据，非 GitHub 独立远端读回**。核心固定 ID（任务总表/快捷笔记）、长期目标文件夹逐目标独立 Markdown、可信目录内自动精确查找的混合架构已确定；长期目标自动发现/写入 **尚未实现**。S6 交接 `docs/IWIKI_S6_DYNAMIC_DISCOVERY_HANDOFF.md`，新开 MuSSE 项目 S6 子对话；用户本轮只授权将进度/架构写入 GitHub，不允许直接动真实 iWiki/Windows 私人配置/令牌。曾有令牌在用户日志中意外暴露，须建议轮换，不复制秘密。PR #24/#25 保持 Draft，当前 S5 分支继续维护；不要重跑已通过的 S5 旧测试。
+
 - **S5-I 最新（2026-11-04）**：用户明确要求一站式启用可写入的 S5 语音 MCP，不再分阶段测试只读预览。S5 分支提交 `64f017a`/ `eb4d079` 新增专用写 launcher + 一键安装/回滚（私有本地严格 `edit_doc/doc_id/content` 契约、第三个服务、保留双 S4、备份、只离线 smoke）；Node CI **153/153**。**用户 Windows 尚未执行新安装或实测小智语音**。下一步只给 fetch/fast-forward + `node tools/s5-write-bridge.mjs --install-write`，用户自行重启小智后语音创建任务/明确口头确认，即进入真实写入验收。旧 notesMapping 缺失，默认只能改映射任务文档，不能宣称笔记也已可写；S5 严格确认/写前冲突/读回保护继续，不把确认视作独立身份认证。PR Draft 不合并，不更改 S4、Token/安全补丁、ESP32/云。见 docs/STATUS.md 和 TEST_LOG.md T-20261104-27。
 
 - **S5-H 新语音预览入口（2026-11-04，最新）**：S5 原分支新增可真实注册的小智独立只读预览服务、Windows `s5-preview-bridge.mjs --install-preview/--rollback-preview`、安全备份与测试。GitHub Node CI **148/148**、文档检查成功；尚未在用户 Windows 注册，尚未实际小智语音验收。用户要求直接推进现场语音，下一步仅用户运行安装命令、重启小智并报告口头预览/取消，不要再反复跑同样的本地检查。安装严格只增加第三个预览服务；协议不公开 confirm、伪造 confirm 被拒，端口没有写能力。不写生产文档，不改 S4 原服务/Token/固件/云；后续隔离实写须另行明确授权。详见 docs/STATUS.md、docs/TEST_LOG.md T-20261104-26。

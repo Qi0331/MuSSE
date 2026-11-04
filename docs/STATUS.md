@@ -1,4 +1,11 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5 真实语音写入用户验收成功；S6 架构与新对话交接（最新）
+- **用户现场确认**：Windows 从 `c09f5a4` 快进到 `deea681`，`node tools/s5-write-bridge.mjs --install-write` 返回 `S5_WRITE_INSTALLED_TASKS_ONLY_RESTART_XIAOZHI`；新“小七”语音调用任务查询、写入准备、取消均成功；之后用户明确报告**两轮语音写入成功，事项出现在 iWiki 《测试》文档**。这是用户现场报告，不冒充仓库独立保留的远端读回原始日志。S5 真实链路已不再卡在安装/MCP 同步。
+- **当前业务存储瑕疵**：正式任务尚写入标题为《测试》的页面，因为私有 `taskDocId` 指向此页；不应按文档名猜目标。先安全备份，优先**保留原 doc_id** 将旧页原位重命名为《任务总表》并移动到 `MuSSE 个人管理`，保留已有任务与固定 12 列表，确认 ID 未变；任何实际页面修改/移动需用户单独明确操作授权。
+- **最终架构决定**：短期任务 = 一个固定任务总表；快捷笔记 = 一个固定笔记文档；长期目标 = `长期目标/` 文件夹每个目标独立文档，具体待办仍归任务总表并用 `goalId + phaseId` 关联。**核心表固定 ID，长期目标未来按可信目录锚点动态发现/创建/更新**；查找必须目录限制 + 精确唯一性校验 + 读当前内容 + 二次确认 + 读回，不直接拿 `search_kb` 模糊命中做写入。S5 目前只支持 tasks/notes 写入；S6 自动发现和目标写入**尚未实现**。
+- Windows 当前私人 `notesDocId` 尚未确认，目标目录/文档真实存在与否尚未确认。用户先前意外粘贴的错误日志暴露了小智 MCP 接入点令牌和 iWiki Bearer Token，**应轮换**；仓库不得出现其真实内容。旧资料关于“尚未上线/未实测”的描述为历史，不得覆盖这条最新现场记录。
+- **新对话权威交接**：`docs/IWIKI_S6_DYNAMIC_DISCOVERY_HANDOFF.md`。PR #24/#25 继续 Draft，不合并、不改真实 iWiki/Windows 私配/Token/固件/云。用户要求本轮仅归档到 GitHub 并在 MuSSE 项目中新开 **S6 子对话**继续实现。
+
 ## 2026-11-04 S5-I｜用户明确要求直接接入可写入语音 MCP（最新）
 - 用户明确拒绝再做只读预览阶段，授权推进独立 S5 可写入服务的部署准备。已提交 `src/mcp/server-s5-write.ts`（专用可写启动器）和 `tools/s5-write-bridge.mjs`（一次性 `--install-write/--status/--rollback-write`），创建严格为 `edit_doc + doc_id + content` 的本地私有写契约，并在本地进程启动/工具列表无远端请求的 smoke 成功后，备份原桥接 JSON，追加唯一第三个 `musse_iwiki_s5_write` 条目。保留原官方 iWiki 与 S4 只读 MCP，不重配 Token、不改原映射/真实任务数据。独立 launcher 只在安装后由小智调用时在自身进程开启 S5，原 `server-s5.ts` 默认关闭的入口不变。未经下一轮用户口头明确“确认写入/确认保存”不调用 `edit_doc`；写前 read 对比、一次写、严格回执与写后 readback 仍按 S5-G 现有流程。
 - `tests/s5i-write-bridge.test.mjs` 新增 5 项：真正启动可写子进程初始化和三工具列表（含无有效准备时确认失败）、一次性安装/契约/备份/回滚、错误私有映射/契约拒绝、已有 S5 预览时拒绝重复注册、笔记可选映射。GitHub S5 开发提交 `64f017a`、`eb4d079`；Node [run 41824829014](https://github.com/Qi0331/MuSSE/actions/runs/41824829014) **153/153 pass、0 fail、0 skipped**，仓库检查 [run 41824829102](https://github.com/Qi0331/MuSSE/actions/runs/41824829102) success。
