@@ -110,3 +110,9 @@ iWiki 支持所见即所得编辑。它可能改变：
 - 长期目标采用 `长期目标/` 目录，每个实际目标一文档、目标 ID 作为内部稳定身份；具体待办只写在任务总表，目标文档仅引用任务 ID 与阶段/进度说明。
 - **S6 待实现**：可信个人空间/目录锚点内 `list_docs` / `list_doc_tree` 查找、唯一性与目标ID检查、受控创建/更新/进度记录及读回核对。不能用搜索相关度当成身份，也不能要求每个长期目标都硬编码 Windows 文档 ID。官方搜索/列表 API 存在但真实字段契约须先以只读方式验证。
 - 这些目标写入能力不属于当前已上线的 S5；当前 S5 的 `S5Document` 仅为 `tasks | notes`。参见仓库 `docs/IWIKI_S6_DYNAMIC_DISCOVERY_HANDOFF.md` 与 `docs/DECISIONS.md` D-022。
+
+## 9. S6 GitHub 首版代码状态（2026-11-04）
+
+S6 目录发现及目标创建、更新、进度记录已在 `feat/iwiki-s6-document-discovery` 实现为**独立**的目标 MCP 与离线模拟测试，尚未在 Windows 安装，未编辑任何真实 iWiki 内容。`taskDocId` 与 `notesDocId` 仍按原有固定映射；目标文档的私人 ID 不登记进静态数组。目标必须位于经私有配置确认的 `spaceId + folderId`，标题规范为 `G-001` 等，正文 `目标ID` 与标题严格一致。
+
+官方 `list_docs` 返回结构是否含父级、空间、完整分页与嵌套目录文档尚缺现场证据；代码按失败关闭设计，务必先运行新增只读结构诊断并据实核验，不得以 CI 通过冒充现场验收。具体见 `docs/IWIKI_S6_IMPLEMENTATION.md`。
