@@ -1,5 +1,20 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 S4-D 最新优先级（覆盖下方旧 S4 待审状态）
+
+- 新对话先读 `docs/IWIKI_S4D_FINAL_HANDOFF.md`、`docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`。用户现场验收：官方 `iwiki` MCP 与新 `musse_iwiki_readonly` MCP 正常，新服务六工具可见并确认被调用；任务数量、今日、近期/逾期、普通聊天自然语言场景均正常。现有 Windows 指定离线 10/10、真实任务表统计 3/2/1/0、stdio 工具白名单写入拒绝有用户终端证据；逐次原始调用日志未独立采集。
+- S4-D 的**任务/日程语音链路按用户报告通过**，不能扩大为目标/笔记已通过；两者虽有只读工具但私有文档 ID 未映射。S2-B 人工三文档验收保持取消，S5 受控写入未授权。
+- iWiki 唯一持久化；Windows 原有日志脱敏补丁、防火墙 9999 入站阻断、`xiaozhi-client@2.3.0`、ESP32 固件和 Muse 现行角色提示词不改。功能分支 `feat/iwiki-s2a-readonly-contract` / PR #24 **Draft 未合并**；不得上传私密文档 ID、Token、配置、日志，不因新对话重复部署或擅自开放写入。
+
+
+## 2026-11-04 当前 iWiki 阶段覆盖（优先于以下历史快照）
+
+- 新对话先阅读 `docs/IWIKI_S4_HANDOFF.md`、`docs/STATUS.md`、`docs/HANDOFF.md` 和 `docs/IWIKI_S3_PROMPT_CURRENT.md`；以用户已配置的现行 MuSSE 人设与 iWiki 只读提示词为准，不擅自修改已生效角色介绍。
+- S2-A 的真实只读任务查询和用户报告的设备语音读取成功保留。用户明确取消 S2-B 三篇虚构文档与 Windows/设备繁琐验收；目标和笔记的真实 S2-B 验收仍未完成。不要重新催促测试或虚报通过。
+- S4-A 仅是等待用户审查的**下一阶段方案**（只读业务能力接入方式），不代表自动批准修改桥接或部署自研 MCP。
+- S5 受控语音写入是已确认的**后续产品目标**，但没有当下写权限、真实数据写入或服务端部署授权；严格保持现有 Windows `xiaozhi-client`、固件、防火墙和脱敏补丁不变。
+- 当前继续使用官方 iWiki MCP，草稿 PR #24 未合并 `main`。详见 D-015。
+
 ## 2026-11-03 最新交接覆盖：MuSSE → 小智云端 → Windows MCP → iWiki 语音查询已成功（最高优先级）
 
 - **已实测完成**：用户确认新 ESP32-S3 已完成小智配网、绑定既有 `MuSSE` 智能体并可正常双向语音；`xiaozhi-client v2.3.0` 在 Windows 本地连接小智接入点（WebSocket 1/1）和 iWiki 远程 MCP（服务 1/1）。用户截图展示约 27 个 iWiki 工具，`list_spaces` 真实返回 `ok:true` 与 41 个可访问空间；用户随后报告设备端语音查询成功。**不再把小智绑定、语音闭环和 iWiki 接入视作未完成任务**。

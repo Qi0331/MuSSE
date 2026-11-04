@@ -24,7 +24,7 @@ import {
   normalizeProgressNote,
   parseGoal,
 } from "../markdown/goals.ts";
-import { appendNote, parseNotes } from "../markdown/notes.ts";
+import { appendNote, latestNotes, parseNotes } from "../markdown/notes.ts";
 import type { WikiStore } from "../store/wiki-store.ts";
 import { DOC_PATHS, goalPath } from "../store/wiki-store.ts";
 
@@ -442,8 +442,7 @@ export class TaskService {
       if (error instanceof NotFoundError) return [];
       throw error;
     }
-    const notes = parseNotes(doc.content);
-    return notes.slice(-limit).reverse();
+    return latestNotes(parseNotes(doc.content), limit);
   }
 }
 

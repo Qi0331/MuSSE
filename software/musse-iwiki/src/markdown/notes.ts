@@ -17,6 +17,26 @@ export function parseNotes(markdown: string): Note[] {
   return notes;
 }
 
+/** Newest by recorded timestamp, not Markdown section order.
+ * For notes created in the same minute, #2, #3 ... are later than the base heading.
+ * Nonstandard headings come last, with document-order fallback.
+ */
+export function latestNotes(notes: Note[], limit: number): Note[] {
+  const rows = notes.map((note, index) => {
+    const match = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2})(?: #(\d+))?$/.exec(note.createdAt);
+    return { note, index, stamp: match?.[1], sequence: Number(match?.[2] ?? 1) };
+  });
+  rows.sort((a, b) => {
+    if (a.stamp && b.stamp) {
+      return b.stamp.localeCompare(a.stamp) || b.sequence - a.sequence || b.index - a.index;
+    }
+    if (a.stamp) return -1;
+    if (b.stamp) return 1;
+    return b.index - a.index;
+  });
+  return rows.slice(0, limit).map(({ note }) => note);
+}
+
 /** Prevents note bodies from injecting new `##` entries. */
 function escapeHeadingLines(text: string): string {
   return text

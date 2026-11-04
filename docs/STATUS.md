@@ -1,5 +1,109 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 最新最高优先级：S4-D 任务/日程自然语言语音链路按用户现场报告通过
+
+- **用户现场回报**：原官方 `iwiki` MCP 正常，新增 `musse_iwiki_readonly` MCP 正常且六工具可见；用户确认新业务 MCP 被实际调用，四项自然语言场景（任务数量、今日安排、近期与逾期、普通聊天）均“正常”。不需要用户每次口述 MCP 或工具名。
+- **证据边界**：这是用户报告的现场验收，没有可供本代理独立复核的逐次原始工具轨迹。因此仅将 **S4-D 任务/日程语音集成标记为用户验收通过**；不宣称长期稳定性或目标/笔记也通过。
+- **此前实测**：Windows Node `v22.23.2` 上三份指定离线测试 **10/10**；官方 `read_doc` 真实读取虚构任务表 **总 3、待办 2、完成 1、归档 0**；新增 stdio MCP `--smoke` 输出 `tools=6`、`write_blocked=true`、任务统计一致。`--install` 已备份原私有配置，保留官方 iWiki 并增添本地只读业务服务。
+- **仍未验收**：当前 Windows 私有映射只有 `taskDocId`；`goal_query` 和 `note_query` 虽可见，真实目标/笔记 ID 未映射且未作端到端读取。S2-B 三文档繁琐验收已取消，不能默认恢复。S5 受控语音写入仍未授权。
+- iWiki 仍为唯一持久化数据源。生产链路：ESP32-S3 → 小智云端 MuSSE → Windows `xiaozhi-client@2.3.0` → 官方 iWiki 远程 MCP / 本地业务只读 MCP。现有 S3-A Muse 角色提示词、固件、本机补丁、防火墙保持不变。PR [#24](https://github.com/Qi0331/MuSSE/pull/24) **继续 Draft、未合并 main**。
+- **新对话交接以 [IWIKI_S4D_FINAL_HANDOFF.md](IWIKI_S4D_FINAL_HANDOFF.md) 为准**，优先于下方历史记录；勿重做已完成的 S2-A/S4-B/C/D 测试。
+
+
+## 2026-11-04 S4-D 首次真实 iWiki 任务只读成功；Windows 桥接接入脚本已准备
+
+- 用户在 Windows `Node.js v22.23.2`、`b0b0436` 工作区用 `buildReadonlyTaskService(process.env)` 构建官方 iWiki 只读 `read_doc` 客户端，终端回传 `CONFIG_OK`、`READ_ONLY_OK`、`total=3`、`todo=2`、`done=1`、`archived=0`。**这是用户实际执行的官方只读文档读取 + 业务解析**，不是模拟；尚未通过新 MCP stdio 或小智设备语音链路。
+- 分支新增 `software/musse-iwiki/tools/s4d-bridge.mjs`，提供 `--smoke`（六工具列表、真实任务查询与白名单拒绝写入，仅输出计数）、`--install`（先烟雾测试、再备份现有 Windows 私有桥接配置，添加不含 Token/页面 ID 的第二本地服务）、`--status`、`--rollback`（只移除新增服务项）。原官方 iWiki 服务始终保留。
+- 脚本在隔离 Linux Node 22.16 临时放宽本机版本门槛下，使用合成配置、模拟 MCP 子进程验证烟雾测试/安装/状态/回滚，模拟输出成功。实际正式脚本保留 Node>=22.18 门槛；用户 Windows 真实桥接**尚未安装或验收**。
+- 用户可按同一批操作拉取分支、停旧桥接、安装第二服务、重启 `xiaozhi start`、核对服务列表并做一次设备语音验证。不得分享私有日志、Token、文档 ID；S5 写入不开放，PR #24 继续草稿。
+
+## 2026-11-04 S4-D Windows 正式工作区离线检查 10/10 通过（用户实测）
+
+- 用户在 Windows PowerShell 的 `C:\Users\HONOR\MuSSE-Lab\MuSSE\software\musse-iwiki` 中克隆分支，反馈 Node.js `v22.23.2`、Git `2.54.0.windows.1`、提交 `b0b0436`。
+- 用户执行 `node --test tests/s4b-readonly.test.ts tests/s4c-readonly.test.ts tests/s4d-preflight.test.ts`，回传汇总 **tests 10 / pass 10 / fail 0 / skipped 0**。这是 Windows 上完整代码目录中的离线测试，**不是**真实 iWiki 数据读取或 MCP 桥接/设备语音实测。
+- 下一步先建立本机私有文档 ID 映射并检查原桥接配置的可用性；任何实际新增桥接服务项应先备份、审查配置，保留原官方 iWiki MCP 与日志脱敏补丁。不要上传私人配置、Token、文档 ID，也不要恢复已取消的 S2-B 人工验收。
+- GitHub PR #24 仍保持 Draft；S5 受控写入未授权，不得启用。
+
+## 2026-11-04 S4-D 接入前代码修正已提交；等待用户 Windows 离线检查
+
+- 用户要求继续推进 S4-D 并询问需要做什么。**目前仅完成仓库内接入前修正**，未读取真实 iWiki、未修改 Windows 桥接/私有配置、未改小智云端/ESP32，PR #24 仍是草稿。
+- 已修正只读 MCP 查询数组的 `structuredContent` 形状：按 MCP 对象形式包装；避免任务/笔记列表直接返回数组造成 SDK 解析不兼容。
+- 新增从 `$HOME\MuSSE-MCP-Local\musse-bridge\musse-iwiki-readonly.json` 读取本机私有页面映射的支持，官方 iWiki Token 仍从既有私有 `xiaozhi.config.json` 读取。新增 MCP 服务配置里未来只需填写非敏感代码路径，避免旧版上游转换配置时打印环境变量与真实页面 ID。兼容 S4-B/C 原环境变量映射方式，但正式部署建议仅使用私有文件。
+- 已新增 `tests/s4d-preflight.test.ts` 作为最小离线检查，覆盖假页面映射与 MCP 数组结果形状；**本轮未在完整仓库执行该新增测试**。请用户在 Windows Node>=22.18 运行精确命令，回传不含私人内容的测试摘要；待通过后再单独审查 Windows 配置与真实只读接入。
+- 数据仍唯一保存在 iWiki；S5 写入不在本轮范围，已取消的 S2-B 人工验收不恢复。
+
+## 2026-11-04 S4-C 仓库内目标与笔记只读开发已提交（尚未实际部署）
+
+- 用户授权 S4-C 并再次明确 **iWiki 为唯一持久化数据源**：不引入本地数据库。复用 S4-B 的同一个 `mcp:readonly` 入口，新增 `goal_query`、`note_query`，合计 **6 个只读工具**；写入工具仍在服务端白名单层被拒绝。
+- 目标读取复用 `TaskService.queryGoal`，以 iWiki 任务总表中的关联任务状态计算进度；笔记读取复用 `TaskService.queryNotes`。已将最近笔记由文档位置倒序改为基于标题时间和同分钟序号排序。
+- 新增 `src/mcp/document-ids.ts`：任务 ID 映射必需；笔记与已知目标的 ID 映射可选、未配置时明确报错。不枚举私有知识库、不猜测 ID、不把真实文档 ID、Token 或个人内容写入公开仓库。
+- 隔离工作区 Node v22.16.0（低于项目最低 v22.18），以临时原工具/服务依赖替身运行新增 S4-C 测试 **4/4 通过**，对新增源码进行语法检查通过。**完整检出测试/全部回归尚未执行**，不认定 Windows/设备/真实 iWiki 验收。
+- 当前生产 MuSSE 仍走既有 Windows 官方 iWiki MCP。S4-D 的桥接修改和真机验收需单独授权，S5 受控写入仍是后续目标。S2-B 的三文档人工验收保持取消。
+
+## 2026-11-04 S4-B 只读任务与日程代码已加入草稿分支（尚未接入设备）
+
+- 用户已批准 S4-A 方案 B，授权范围仅为分支内 S4-B 开发与最小离线测试；Windows、真实 iWiki、ESP32、云端、提示词与 PR 合并均未授权修改。
+- 新增 `server-readonly.ts`、`readonly-protocol.ts`、`tools-readonly.ts`，只暴露 `task_query`、`schedule_today`、`schedule_upcoming`、`schedule_overdue`，工具列表与实际调用均限制白名单。底层复用 `OfficialIwikiReadStore`。
+- 未来运行需显式指定私有配置文件及任务表 `page-...` 映射；本轮未启动真实连接。
+- 隔离环境 Node v22.16.0（低于项目要求 >=22.18）借助临时依赖替身执行 4/4 新测试通过，源码语法检查通过。**未在完整仓库运行测试/全部回归，不应虚报正式验收**。
+- S4-C 目标/笔记、S4-D 设备接入和 S5 受控写入未开始；S2-A 成果保留，不恢复已取消的 S2-B 验收。
+
+## 2026-11-04 最新状态：S3-A 提示词已由用户配置；S4 待审，S5 已定为后续目标
+
+- **当前权威入口**：[S4 新对话专项交接与待审方案](IWIKI_S4_HANDOFF.md)；[用户正在使用的 MuSSE 完整角色提示词](IWIKI_S3_PROMPT_CURRENT.md)。开发仍位于 `feat/iwiki-s2a-readonly-contract` / [草稿 PR #24](https://github.com/Qi0331/MuSSE/pull/24)，**未合并主线**。
+- **S3-A 用户反馈**：已将新版本角色介绍配置进小智控制台，并明确当前采用的是 `# Role: Muse` 的自然对话版本；iWiki 查询时机、查询方法、权限与回答原则维持完整的**只读**要求。配置动作由用户确认；目前没有新版人格自然度、唤醒开场变化或 iWiki 工具轨迹的正式验收，不宣称已全部优化成功。
+- **S2-B 用户决策**：取消三篇虚构文档准备、Windows 三文档探针和逐项语音验收，不再要求继续操作。相关功能代码与模板仍保留作为历史；长期目标及快捷笔记的**真实 S2-B 只读验收未完成**，S2-A 的已通过结果不变。
+- **S4 下一阶段仅为提议，待用户审查**：S4-A 比较最小只读业务接入路径；S4-B 任务与日程；S4-C 目标与笔记；S4-D 设备语音整合。没有实施任何新的业务 MCP 部署、Windows 桥接修改或 iWiki 写入。
+- **S5 已明确为将来的实施目标**：通过逐次确认与严格权限控制执行任务/目标/笔记的受控语音写入。**当前仍禁止写操作**；此产品决定不是当下操作授权。
+- 本次为文档与交接更新，没有重新进行 Windows/设备真机验收。保持 `xiaozhi-client@2.3.0` 的本机修补、防火墙、现有 ESP32 固件、官方 iWiki MCP、单数据源和不上云方案。
+
+## 2026-11-03 新对话状态锚点：S2-A 已通过，S2-B 目标与笔记待用户验收
+
+- 当前权威交接：[S2-B 专项交接](IWIKI_S2B_HANDOFF.md)、[S2-B 虚构数据与操作说明](../software/musse-iwiki/docs/S2B_GOAL_NOTES_ACCEPTANCE.md)。主线 `main` 仍为 `a9ae041531c138483a1c9c2fbf3b6c2992ec0baf`；最新工作只在 `feat/iwiki-s2a-readonly-contract` 的**草稿 PR #24**，没有合并。
+- 用户已在 Windows Node v22.23.2 通过真实官方 `read_doc` 读取虚构任务表，成功统计 3 条/2 未完成/1 已完成/1 逾期/1 未来七天；用户反馈 MuSSE 设备语音任务查询成功，但逐次 MCP 使用证据仍缺失。
+- S2-B 目标/笔记只读脚本与虚构三文档模板已开发并提交。**尚未有用户执行新测试或创建设定的目标与笔记测试文档的报告**，不能声称目标和笔记查询已完成。
+- 新对话先检查新脚本和本地合成测试，随后引导用户在 iWiki 网页手工准备虚构测试文档，并进行最多三次只读查询、脱敏统计及设备语音验收；不部署第二个 MCP、不开放写入、不动生产桥接。
+
+
+## 2026-11-03 S2-B 启动：用户确认 MuSSE 语音任务查询成功，长期目标与笔记待测
+
+- 用户在 S2-A 的真实 iWiki 虚构任务表只读统计通过后，进一步确认 **MuSSE 设备端语音查询测试成功**。这属于用户现场反馈，尚无对应单次 `read_doc/search_kb` 使用计数或脱敏调用轨迹；不可据此声称调用证据独立核验完毕，也不能声称本仓库 13 项业务 MCP 已部署。
+- **最小路线**：继续沿用已工作的小智智能体 → Windows `xiaozhi-client` → 官方 iWiki MCP 只读查询工具；先测试目标关联计算与快捷笔记，不启动第二个业务 MCP 服务，不动原生产配置、固件或私人知识库。
+- 本 PR 功能分支新增 [S2-B 三文档虚构样例与语音验收](../software/musse-iwiki/docs/S2B_GOAL_NOTES_ACCEPTANCE.md)、`tools/probe-goal-notes.mjs` 及合成测试。用户还未在 Windows 执行新的目标/笔记验收，**未验证完成**。只统计目标与笔记数量，不输出正文，明确拒绝写入。
+- 不实施自动提醒、CloudBase、真实账号写操作。现有 S2-A 通过结论保留。
+
+
+## 2026-11-03 S2-A 最新完成：真实 iWiki 任务表只读查询闭环通过（仅 Windows 测试流程）
+
+- 用户在 Windows PowerShell/Node v22.23.2 对 PR #24 的严格只读适配器与任务统计程序进行本地测试：`node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs` **7/7 通过**。
+- 用户本人通过 `node tools/probe-task-queries.mjs --live` 授权读取自建、虚构的 iWiki 测试任务表一次，脚本返回 `validatedTaskTable=true`、`taskCount=3`、`todoCount=2`、`doneCount=1`、`archivedCount=0`、`todayCount=0`、`upcoming7DaysCount=1`、`overdueCount=1`。与预先提供的三行虚构样例一致；统计路径报告 `remoteReadCalls=1`、`remoteWriteCalls=0`。
+- **验收结论**：S2-A 的**独立 Windows 本地真实文档读取、Markdown 任务解析与任务/日程数量统计通过**。这是用户直接回传的程序输出；未独立审查服务端调用追踪，也不意味着小智云端语音已连接本仓库 13 个业务工具。
+- **后续 S2-B**：在不修改原有 Windows 桥接的前提下，先用设备原有官方 iWiki 查询工具对这篇纯虚构文档做语音读取验证，检查实际工具调用证据；若需自然语言任务业务工具，再评估只读业务 MCP 的安全接入，不开放写入。未启用云端/新固件。
+- 功能分支 `feat/iwiki-s2a-readonly-contract` / 草稿 PR #24；`main` 未合并。详见 [S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
+## 2026-11-03 S2-A 最新实测：iWiki 单文档读取结构已确认（任务业务仍待验收）
+
+- 用户在 Windows Node.js v22.23.2 通过 `probe-read-structure.mjs --live` **一次成功调用官方 `read_doc`**，针对用户自行创建的测试文档 ID。真实响应为 `content[0].text` 承载的 JSON，形状含 `ok:boolean`、`data.doc_id:string`、`data.title:string`、`data.content:string`；没有独立 `structuredContent`。脱敏输出仅记录类型，不记录 `ok` 值、私人正文或文档 ID。
+- 本功能分支据此新增 `OfficialIwikiReadStore` 严格只读映射和合成测试：失败时拒绝解析，远程写入与文档枚举均不开放；新增测试任务表模板及单次远程读取、内存统计的后续验收工具。**尚未实测任务表解析、任务/日程语音调用，也没有将该适配器部署到现有桥接**。
+- 仅 PR #24 草稿功能分支更新；`main`、Windows `xiaozhi-client`、ESP32 固件和现有 iWiki 内容均未由 ChatGPT 修改。后续在用户手动编辑专用测试文档后再执行只读任务统计。
+- 详细说明：[S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
+## 2026-11-03 最新 S2-A 补充：用户真实 iWiki 工具发现通过（业务尚未验收）
+
+- 用户在 Windows v22.23.2 完成 S2-A 只读工具元数据实测：检查器离线测试 **3/3 通过**，无参数仅显示帮助；真实 `initialize/tools/list` 成功发现 27 个工具，六个指定查询工具均存在，字段分别为 `list_spaces(q)`、`list_docs(space_id, parent_id)`、`list_doc_tree()`、`search_kb(query, scope, space_id, limit)`、`read_doc(doc_id, doc_path)`、`get_doc_outline(doc_id)`。必填项只有 `list_docs.space_id`、`search_kb.query`（基于 schema）。
+- 这是**用户回传的真实工具列表证据**，不是 ChatGPT 独立连接账号，也不是 `read_doc` 实际调用成功的证据。尚未确认响应正文结构、文档路径和 ID 关系、个人任务解析、语音业务工具；不执行写入。
+- 本 PR 另外准备单文档只读形状检查器（开发侧新增测试 3/3 通过），用户尚未执行真实读取。见 [S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
+## 2026-11-03 S2-A 开发草案（仅功能分支，未完成真实验收）
+
+- 已在独立分支准备 `software/musse-iwiki/tools/inspect-readonly.mjs` 与 3 项离线安全测试，使用已有 `IwikiMcpClient` 对官方 iWiki MCP 仅执行 `initialize` / `tools/list` 并输出脱敏的查询工具入参字段。默认不连接、不读取本地配置；`--live` 才由用户在 Windows 手动执行。
+- 本批离线新增测试 3/3 通过（Node 22.16.0 隔离执行）；历史 29 项未在本轮重新执行。本地真实 MCP 契约、任务业务读取及语音查询任务/日程/目标均**未因这次代码提交而完成**，需用户在私有 Windows 环境继续验证。
+- 绝不改动现有 `xiaozhi-client`、设备固件、云部署和知识库数据；D-013/D-014 的只读、被动查询决策保持。见 [S2-A 交接](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
 ## 2026-11-03 最终覆盖：Windows 本地 iWiki MCP 语音查询全链路已验证
 
 - **最新里程碑**：用户亲自回传小智 MCP WebSocket `1/1` 已连接、iWiki MCP `1/1`、约 27 个工具成功发现，以及 `list_spaces` 实际调用 `ok: true` 返回 41 个可访问空间；随后用户确认 MuSSE 设备端语音查询 iWiki **成功**。此前的“未绑定设备”“尚未完成语音闭环”“未连接真实 iWiki”均仅为历史阶段记录，不代表当前状态。用户确认普通双向语音正常；没有要求或执行新烧录。

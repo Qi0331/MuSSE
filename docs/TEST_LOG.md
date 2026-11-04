@@ -1,5 +1,132 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-09 — S4-D 自然语言设备语音最终验收（用户现场报告）
+
+- **证据来源**：用户一次性提交验收结论，而非本代理抓取设备日志或独立重放；逐次原始调用轨迹、参数、延迟均未提交。结论注明 **用户现场报告**。
+- 服务：官方 `iwiki` = 正常；新增 `musse_iwiki_readonly` = 正常（六工具可见）；用户明确报告“确认调用新增业务 MCP”。
+- 自然语言验证：①任务数量 = 正常；②今日安排 = 正常；③近期及逾期任务 = 正常；④普通聊天 = 正常。这些场景测试未要求用户说工具名；不据简略结论编造各场景的确切响应内容或逐次工具名。
+- 前序 Windows 终端结果：Node 22.23.2，三份指定离线检查 `10/10`；实际 `read_doc` 测试任务表 `total=3` / `todo=2` / `done=1` / `archived=0`；`--install` 前 `--smoke` 结果 `tools=6`，`write_blocked=true`；`S4D_BRIDGE_ENTRY_INSTALLED`、`ORIGINAL_IWIKI_PRESERVED`、`PRIVATE_BACKUP_CREATED`、`S4D_BRIDGE_ENTRY_PRESENT`。
+- **结论**：S4-D **任务和日程的自然语言业务 MCP 语音链路按用户反馈验收通过**。**不代表**目标/笔记已真实联通（当前没有相关文档映射），不代表 S5 写入或官方 MCP 的远端服务端写权限已独立审计；未执行全量 `npm test` 或长期稳定性验证。
+- 不记录私人页面 ID、Token、接入点或原始知识库数据，不修改真实 iWiki、固件、云端角色、Windows 补丁、防火墙、PR 合并状态。
+
+
+## 2026-11-04 T-20261104-08 — S4-D Windows 本地业务 MCP 安装成功（用户终端证据）
+
+- 用户在 Windows 真实目录执行 `git pull --ff-only`，成功从 `b0b0436` 快进至 `64002a9`，新增 `tools/s4d-bridge.mjs`。
+- 用户执行 `node tools/s4d-bridge.mjs --install`，回报 `S4D_MCP_SMOKE_OK`、`tools=6`、`total=3`、`todo=2`、`done=1`、`write_blocked=true`、`S4D_BRIDGE_ENTRY_INSTALLED`、`ORIGINAL_IWIKI_PRESERVED`、`PRIVATE_BACKUP_CREATED`。说明本地 MCP 子进程协议与真实 iWiki 测试任务表读取通过，测试写入工具被只读白名单拒绝，脚本已写入新服务配置且备份了旧配置。
+- 用户进一步执行 `node tools/s4d-bridge.mjs --status`，回报 `S4D_BRIDGE_ENTRY_PRESENT` 和 `ORIGINAL_IWIKI_PRESERVED`。**仍未获得重启后的 xiaozhi-client 两服务连接、六工具云端可见、设备语音调用证据，S4-D 不应标记全部验收完成**。
+- 不保存或公开任何私有凭证、接入 URL、映射文档 ID 或原始配置内容。旧官方 iWiki 服务配置保留；若用户报告故障，应指导先停止桥接，`node tools/s4d-bridge.mjs --rollback` 后再启动。
+
+## 2026-11-04 T-20261104-07 — 用户实际读 iWiki 成功 + S4-D 桥接脚本离线模拟
+
+- **Windows 用户实测**：当前 `software/musse-iwiki` 工作区执行 `buildReadonlyTaskService(process.env)` 与 `service.listTasks()`；终端回传 `CONFIG_OK`、`READ_ONLY_OK`、`total=3`、`todo=2`、`done=1`、`archived=0`。说明实际 `read_doc` 访问、任务表解析和统计成功；未显示任务正文、Token 或真实页面 ID，未调用写入。
+- **脚本制作和隔离验证**：新增 `tools/s4d-bridge.mjs`。在本地容器 Node v22.16.0（低于生产门槛，测试副本临时降低版本断言）、假凭证和模拟 MCP 子进程下分别运行 `--smoke`、`--install`、`--status`、`--rollback`，终端得到 `S4D_MCP_SMOKE_OK`、`tools=6`、`write_blocked=true`、`S4D_BRIDGE_ENTRY_INSTALLED`、`S4D_BRIDGE_ENTRY_REMOVED`；生产脚本未降低 Node>=22.18 检查。与正式分支脚本内容按 32 位 FNV 哈希比对一致（`613ef46d`）。仅为隔离模拟，**不代表 Windows 客户端实际接入成功**。
+- **限制**：尚未验证 Windows `xiaozhi-client` 的新增服务热加载、工具同步、实际工具调用追踪、ESP32 语音或长期目标/笔记真实文档读取。不得把本阶段标记全通过，未恢复已取消的 S2-B 多文档人工验收。Windows 用户将自行运行脚本并回传脱敏摘要。
+
+## 2026-11-04 T-20261104-06 — S4-D Windows 私有文档映射本地成功（用户回报）
+
+- 用户在本机 PowerShell 的既有桥接目录新建 `musse-iwiki-readonly.json`，以不回显的输入方式填入其自己保存的 S2-A 测试任务表 `page-...` 文档 ID；终端显示 `MAPPING_CREATED`。
+- 用户在仓库业务目录调用 `readonlyDocumentIdsFromFile` 检查映射文件，回传 `MAPPING_OK: task only`。说明文件可读取，任务表 ID 格式通过校验；**尚未进行真实 iWiki `read_doc`**，不能认定 ID 存在、读取权限有效或文档格式可解析。
+- 未读取、记录或提交真实文档 ID、Token、iWiki 内容；未改动 Windows `xiaozhi.config.json`、日志补丁、防火墙、ESP32、云端或 PR 合并状态。
+- 下一步已指导用户在本人 Windows 上执行仅 `read_doc` 的合计数量查询，仅回传 `CONFIG_OK`、`READ_ONLY_OK` 或 `READ_ONLY_FAILED` 及汇总计数；不得打印真实任务内容或泄露私有配置。未收到该真实查询的结果前，S4-D 保持未验收。
+
+## 2026-11-04 T-20261104-05 — S4-D Windows 正式工作区离线测试（用户提供的终端回显）
+
+- **证据来源**：用户在对话中逐行提供 Windows PowerShell 命令及输出；记录的是用户执行结果，不是 ChatGPT 自行在远程 Windows 运行。
+- **环境**：Node `v22.23.2`；Git `2.54.0.windows.1`；Windows `C:\Users\HONOR`；分支 `feat/iwiki-s2a-readonly-contract`；短 SHA `b0b0436`。
+- **原样命令**：`node --test tests/s4b-readonly.test.ts tests/s4c-readonly.test.ts tests/s4d-preflight.test.ts`。
+- **用户终端结果**：`tests 10`、`pass 10`、`fail 0`、`cancelled 0`、`skipped 0`、`todo 0`；运行约 200.46 ms。
+- **范围限制**：这次是完整 Git 工作区下的指定 10 项离线单测，未执行完整 `npm test`、真实 iWiki `read_doc`、桥接聚合或 ESP32 语音验收。没有新增或修改私人配置、固件或数据。
+- **判断**：S4-D 进入私有映射与接入审查阶段，S4-B/C/D 三份预检测试按用户证据通过。不要将 S4-D 完整验收记为完成。
+
+## 2026-11-04 T-20261104-04 — S4-D 接入前代码静态审查与待测项
+
+- 对比仓库新增 MCP 协议入口与固定的上游 `xiaozhi-client v2.3.0`：上游 `src/mcp-core/transport-factory.ts` 支持 `stdio` `command/args/env`；`src/config/adapter.ts` 在服务配置转换中存在打印原始配置的路径，因此未来业务服务配置不得放置真实文档 ID、Token 等私人数据。
+- 仓库代码修正：`readonly-protocol.ts` 对列表结果统一封装对象型 `structuredContent`；`document-ids.ts` 新增本机私有 JSON 映射读取，`server-readonly.ts` 默认从 Windows 用户目录读取桥接配置和映射，不自动执行任何真实连接。
+- 新增 `tests/s4d-preflight.test.ts`，包含合成页面映射及 MCP 返回形状两个测试。**尚未实际运行完整仓库测试**，也未触碰真实 Windows、设备或账号。等待用户返回 Node 版本、功能分支提交哈希及三文件离线测试结果后补记；不得提前标记测试通过。
+
+## 2026-11-04 T-20261104-03 — S4-C 六工具离线隔离测试（非真实 iWiki 验收）
+
+- **范围**：仓库 S4-C 只读目标/笔记代码，没有触碰 Windows、用户 iWiki 数据、ESP32 或云端。测试使用合成页面 ID 和合成笔记。
+- **实际环境**：隔离临时目录 `/mnt/data/musse-s4c-check`，Node v22.16.0，低于项目 Node>=22.18；原 MCP 工具定义及服务调用等依赖用隔离替身，新映射、工具白名单与笔记排序采用同构实现，替身未提交。
+- **已运行**：`node --experimental-strip-types --test tests/s4c.test.ts`，**4/4 通过**：六只读工具且拒绝写入、目标/笔记分发和无效输入、显式 ID 映射安全校验、乱序笔记按时间及同分钟后缀排序。
+- **已运行**：`node --experimental-strip-types --check` 对新增模块及测试语法检查通过。
+- **没有执行**：正式仓库 `npm test`、`python scripts/check_repo.py`、Node>=22.18 运行、iWiki 真实读取、Windows MCP 集成、设备语音测试。不得将隔离测试误记为完整仓库回归通过，也不恢复用户已取消的 S2-B 人工验收。
+
+## 2026-11-04 T-20261104-02 — S4-B 最小离线检查
+
+- **范围**：新增四个任务/日程只读工具的白名单、MCP 请求派发、异常脱敏；没有真实 iWiki、Windows 桥接或设备访问。
+- **环境**：隔离目录 Node v22.16.0（低于项目最低 22.18）；由于容器不能直接检出完整 GitHub 仓库，运行时为原 `tools.ts`/`types.ts` 提供临时测试替身，未提交这些替身。
+- **已运行**：`node --experimental-strip-types --test tests/s4b-readonly.test.ts`，4/4 通过：只读工具列表、四种查询分发、拒写/非法参数、初始化/错误脱敏。
+- **已运行**：`node --experimental-strip-types --check` 检查新增源文件和测试语法通过；`python -m json.tool package.json` 通过。
+- **未运行**：完整仓库 `npm test`、`python scripts/check_repo.py`、Node>=22.18 原样测试、真实 iWiki 读取、Windows/语音验收。只报告实际检查结果，不重复 S2-A 或取消的 S2-B。
+
+## 2026-11-04 T-20261104-01 — S3-A 配置变更与 S2-B 验收取消（用户陈述，非设备验收）
+
+- **证据来源**：用户在对话中确认已经把 MuSSE 新角色提示词配置到小智控制台，并逐字给出当前采用的 `# Role: Muse` 版本，已归档到 [当前提示词](IWIKI_S3_PROMPT_CURRENT.md)。
+- **用户反馈**：此前版本过于照搬角色介绍，缺少自然交流感；用户已选择减少模板化表达的新版本。**未回传新版语音效果对照、单次唤醒对话或 MCP 轨迹**，本条不判定人格优化已经真机验收通过。
+- **范围调整**：用户明确取消 S2-B 三篇虚构文档、Windows 三文档探针和逐项设备语音验收。原 `probe-goal-notes.mjs` 与测试保留，不标记其真实验收通过。
+- **后续计划**：用户确认 S5 受控语音写入为将来必做目标；S4 只读业务集成**尚处待审方案阶段**。本次未运行远端读取/写入、未调整 Windows 桥接或 ESP32 固件、未执行新的完整 Node.js 测试。
+- **结论**：配置及需求变更已记录；仅为用户报告与文档归档，不构成新代码/设备端验收。
+
+## 2026-11-03 T-20261103-14 — S2-B 设备端语音任务查询（用户反馈）
+
+- **来源**：用户直接回复“可以。成功。继续”，对应此前要求 MuSSE 设备通过 iWiki 查询虚构任务表并回答总数、未完成、完成和逾期。
+- **已确认**：用户报告设备语音查询成功；S2-A 之前的 Windows 任务解析汇总 3/2/1/1 已实测。
+- **证据限制**：用户未提交本轮逐字语音回答、`search_kb/read_doc` 使用次数或脱敏 MCP 调用轨迹，因此仅记录“用户确认成功”，不能补造工具级审计或将本仓库自研业务服务标为已上线。
+- **后续验收**：新增虚构目标和快捷笔记，先以 Windows 只读三文档检查目标 2 项/完成 1 项/进度 50%、笔记 2 条，再进行设备语音核对。见 [S2-B 验收手册](../software/musse-iwiki/docs/S2B_GOAL_NOTES_ACCEPTANCE.md)。
+
+
+## 2026-11-03 T-20261103-13 — iWiki 真实测试任务表只读查询成功（用户 Windows 验收）
+
+- **执行者/环境**：用户直接操作 Windows PowerShell，Node.js v22.23.2，`feat/iwiki-s2a-readonly-contract` 分支。
+- **离线回归**：`node --test tests/official-iwiki-read.test.mjs tests/probe-task-queries.test.mjs` → **7 tests / 7 pass / 0 fail**。
+- **实机读验证**：用户在自己的 iWiki **专用虚构任务表文档**上执行 `node tools/probe-task-queries.mjs --live`；输入正确测试文档 ID 并以 `YES` 显式确认。脱敏报告 `validatedTaskTable=true`，`remoteReadCalls=1`，`remoteWriteCalls=0`。
+- **真实汇总数值**：总任务 **3**；未完成 **2**；已完成 **1**；已归档 **0**；当天到期 **0**；未来 7 天到期 **1**；逾期 **1**。完全符合预设虚构 Markdown 任务表。原始任务正文、私人 Token 及文档 ID 未加入仓库。
+- **结论**：S2-A 业务只读验收通过（一次真实远程读取、程序内存解析和任务日期计算）。**仍未**进行 MuSSE 设备自然语言任务查询、业务 MCP 运行部署、正式账号数据管理、真实写入或服务端只读负向测试。不得以此报告代替 S2-B 设备语音证据。
+
+
+## 2026-11-03 T-20261103-11 — 官方 iWiki 单文档 read_doc 实机响应结构
+
+- **执行者/来源**：用户 Windows PowerShell，Node.js v22.23.2，手动选择自己新建的非敏感测试文档，在程序第二次交互中输入 `YES` 后执行**一次** `read_doc({doc_id})`。
+- **离线检查**：`node --test tests/probe-read-structure.test.mjs` → 3/3 通过，0 失败。
+- **用户回传的脱敏真实结果**：`success:true`；`structuredContent:"absent"`；仅一条文本内容块，经 JSON 解析字段 `ok:boolean`、`data.doc_id:string`、`data.title:string`、`data.content:string`。未回传正文、真实 ID 值或 Token。`success:true` 是本地探针的有限判断，不能证明内层 `ok === true`。
+- **结论**：**实际只读文档调用与返回形状已确认**；Markdown 任务表格式、任务统计、真实语音业务调用仍待验证。
+
+## 2026-11-03 T-20261103-12 — S2-A 业务读取适配器开发侧合成验证
+
+- **代码**：新增 `src/store/official-iwiki-read.ts`，只允许显式文档 ID 映射的 `read_doc`，要求 `ok:true`、`data.doc_id` 匹配和 `data.content` 为字符串；任何写入/列表/未知映射直接拒绝，原始远端错误正文不向业务层冒泡。
+- **测试环境**：开发侧隔离 Node.js v22.16.0，以 `--experimental-strip-types` 运行本适配器五项合成测试；5/5 通过，0 失败。注意 Node 22.16.0 默认不接受 TypeScript 扩展名，必须显式启用类型剥离；用户本机 Node.js v22.23.2 未运行此批。
+- **待测**：`tests/probe-task-queries.test.mjs` 和 `tools/probe-task-queries.mjs --live` 已加入功能分支，但本轮尚未执行 Windows 实测；不得据此宣布真实待办/逾期查询可用。
+- **未做**：未读取用户私人任务数据、未更改 iWiki 文档、未启动业务 MCP 服务、未开放写入、未变更原有 Windows 桥接或硬件。
+
+
+## 2026-11-03 T-20261103-09 — S2-A Windows 真实查询工具发现验收
+
+- **执行者/来源**：用户直接在 Windows PowerShell 执行并回传命令输出（不是 ChatGPT 远程执行）。
+- **版本**：Node.js v22.23.2；已克隆功能分支 `feat/iwiki-s2a-readonly-contract`。
+- **本机结果**：`node --test tests/inspect-readonly.test.mjs` → 3/3 通过；无参数检查器 → 只显示帮助；`node tools/inspect-readonly.mjs --live` → 返回脱敏工具摘要，工具总数 27，六个查询工具均存在，字段和必填项详见 [S2-A 文档](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+- **不等于**：实际调用 `read_doc` 成功、服务端拒绝写入、任务业务完成、语音任务查询完成。无私人文档/空间内容/令牌入库。
+- **结论**：**S2-A 工具发现与 schema 输入字段验收通过**；业务读响应契约仍待核验。
+
+## 2026-11-03 T-20261103-10 — 单文档只读形状检查器离线测试
+
+- **测试环境**：隔离 Node.js v22.16.0，完全合成的 MCP 结果与文档字符串。
+- **运行**：`node --test tests/inspect-readonly.test.mjs tests/probe-read-structure.test.mjs` → **6/6 通过**（其中新加 3 项）。默认无 `--live` 的形状检查器仅输出帮助。
+- **验证**：不输出正文及任意敏感字段值；MCP 错误不输出原文；只允许显式给定 `doc_id` 或 `doc_path`，且仅调用一次 `read_doc`。
+- **局限**：没有在用户 Windows 上执行真实 `read_doc`；历史 29 项 TypeScript 业务测试本轮未重新运行。
+
+
+## 2026-11-03 S2-A 只读工具契约检查草案（开发验证，不是 iWiki 实机测试）
+
+### T-20261103-08 — 查询工具摘要器离线验证
+
+- **测试环境**：隔离 Node.js v22.16.0，运行新增 `tests/inspect-readonly.test.mjs`（使用完全虚构的 Token 和工具数据）。
+- **结果**：3 tests / 3 pass / 0 fail；验证固定官方端点与鉴权头检查、报告不输出工具描述/示例/非查询工具、只调用 `listTools` 而不调用 `callTool`。
+- **边界**：这是开发侧离线测试，不是用户 Windows 上的真实远程 MCP 调用。本批未重新执行历史 29 项业务测试，也未验证真实 Token 权限、文档读取、用户任务查询或长期稳定性。
+- **结论**：**通过（新增离线检查器三项测试）**；S2-A 真正的工具契约与读操作验收仍待完成。细则见 [S2-A 文档](../software/musse-iwiki/docs/S2A_READONLY_HANDOFF.md)。
+
+
 ## 2026-11-03 最新验收：小智云端—Windows 本地桥接—iWiki 语音查询
 
 ### T-20261103-05 — Windows MCP 桥接启动、小智云端连通
