@@ -109,3 +109,13 @@ npm run verify:s6 -- --read-only
 
 用户贴回仅 `S6_LOCAL_READ_ONLY_VERIFICATION` 匿名结构；如失败不得输出私有 JSON、令牌或完整报错。
 
+
+## 8. 非空长期目标知识库实测（2026-11-04）
+
+用户在《长期目标》独立知识库中手工创建隔离页 `G-999`，S6 只读诊断返回：固定作用域已生效；`list_docs(space_id)` 的 `docs` 数量为 1、`total` 为 1、没有继续分页游标；未提供 `has_more`、`parent_id`、`page_type`、`kind`；返回的页面含 `doc_id`、`title`、`space_id`。实际写入次数仍为 0。
+
+因此在已绑定的专用知识库模式中，允许上述经过实测的非空格式，但只有在 `total===docs.length`、无分页继续标记、列表不满 100 条、每个 `space_id` 与绑定值一致时才接受。省略的文档类型标记为 `unverified`，之后逐页通过 `read_doc` 和 `parseGoal` 检验真实目标内容及一致的目标 ID；其他类型、跨空间、重复、计数不匹配等仍然拒绝。
+
+已知限制：在大量文档、分页边界时 `total` 的正式语义尚未现场验证；这里采用不足 100 条的保守边界，而非宣称 iWiki 的全局分页契约已证实。
+
+下一步在 S6 工作区先同步最新提交，再执行 `npm run verify:s6 -- --read-only`，预计 `goalDocumentCount=1`、`taskCount=4`、`readyForReadOnly=true`、`readyForWrite=false`、`writesAttempted=0`。这会完整读取和验证 `G-999`，不会修改目标页或任务表。真实 S6 写入仍需单独明确授权。
