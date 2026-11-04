@@ -76,6 +76,44 @@ export function createS6DiagnosedReadPort(port, diag = {}) {
   };
 }
 
+/** Read-only access diagnostic. Report ONLY known categories/numeric status. */
+export function summarizeS6ToolAccessError(error) {
+  const code = error?.code;
+  const msg = typeof error?.message === "string" ? error.message : "";
+  const cause = typeof error?.cause?.code === "string" ? error.cause.code : null;
+  let category = "UNKNOWN";
+  if (["IWIKI_HTTP_ERROR", "IWIKI_RPC_ERROR", "IWIKI_PROTOCOL_ERROR",
+       "UNAVAILABLE"].includes(code)) category = code;
+  else if (error?.name === "AbortError") category = "TIMEOUT";
+  else if (error?.name === "TypeError") category = "NETWORK_OR_RESPONSE";
+  const httpStatus = code === "IWIKI_HTTP_ERROR" ?
+    Number(/^iWiki MCP HTTP (\\d{3}):/.exec(msg)?.[1] ?? 0) || null : null;
+  const rpcCode = code === "IWIKI_RPC_ERROR" ?
+    Number(/\\((-?\\d+)\\)\\s*$/.exec(msg)?.[1] ?? NaN) : NaN;
+  const allowedCause = ["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT",
+    "ENOTFOUND", "EAI_AGAIN", "EHOSTUNREACH"].includes(cause) ? cause : null;
+  return { category, httpStatus,
+    rpcCode: Number.isSafeInteger(rpcCode) ? rpcCode : null,
+    networkCause: allowedCause };
+}
+
+/** Distinguish MCP initialize failures from tools/list failures, with zero tools/call. */
+export async function verifyS6ToolAccess(client, diag = {}) {
+  diag.stage = "initialize";
+  diag.error = null;
+  try {
+    await client.initialize();
+    diag.stage = "tools_list";
+    const tools = await client.listTools();
+    if (!Array.isArray(tools)) throw Error("S6_TOOL_LIST_INVALID");
+    diag.stage = "ready";
+    return tools;
+  } catch (error) {
+    diag.error = summarizeS6ToolAccessError(error);
+    throw Error("S6_TOOL_ACCESS_FAILED");
+  }
+}
+
 export function createS6SingleEditGuard(client, control) {
   return {
     async listTools() {
@@ -229,6 +267,7 @@ async function main(args) {
   let failureStage = "local_config";
   let preflightChecks = null;
   const listDiagnostics = {};
+  const toolAccessDiagnostics = {};
   try {
     const dir = join(homedir(), "MuSSE-MCP-Local", "musse-bridge");
     const scope = JSON.parse(await readFile(join(dir, "musse-iwiki-s6-scope.json"), "utf8"));
@@ -237,6 +276,14 @@ async function main(args) {
     const connection = extractConnection(JSON.parse(await readFile(
       join(dir, "xiaozhi.config.json"), "utf8")));
     const client = new IwikiMcpClient(connection);
+    failureStage = "iwiki_initialize";
+    try {
+      await verifyS6ToolAccess(client, toolAccessDiagnostics);
+    } catch {
+      failureStage = toolAccessDiagnostics.stage === "tools_list"
+        ? "iwiki_tools_list" : "iwiki_initialize";
+      throw Error("S6_TOOL_ACCESS_FAILED");
+    }
     const guard = createS6SingleEditGuard(client, control);
     const port = createS6DiagnosedReadPort(
       createOfficialS6GoalPort(guard, ids[DOC_PATHS.tasks]), listDiagnostics);
@@ -263,7 +310,9 @@ async function main(args) {
     process.stdout.write(JSON.stringify({ ...result, backupSaved,
       listAttempts: listDiagnostics.listAttempts,
       listReadOnlyRetries: listDiagnostics.listRetries,
-      lastListError: listDiagnostics.lastListError }, null, 2) + "\n");
+      lastListError: listDiagnostics.lastListError,
+      toolAccessStage: toolAccessDiagnostics.stage ?? null,
+      toolAccessError: toolAccessDiagnostics.error ?? null }, null, 2) + "\n");
     if (result.status !== "VERIFIED" && result.status !== "PERSISTED_ACK_UNCONFIRMED" &&
         result.status !== "CANCELED_NO_WRITES") process.exitCode = 2;
   } catch (error) {
@@ -283,7 +332,9 @@ async function main(args) {
       backupSaved,
       listAttempts: typeof listDiagnostics === "object" ? listDiagnostics.listAttempts : null,
       listReadOnlyRetries: typeof listDiagnostics === "object" ? listDiagnostics.listRetries : null,
-      lastListError: typeof listDiagnostics === "object" ? listDiagnostics.lastListError : null,
+      lastListError: listDiagnostics.lastListError ?? null,
+      toolAccessStage: toolAccessDiagnostics.stage ?? null,
+      toolAccessError: toolAccessDiagnostics.error ?? null,
       writeRetryPermitted: false,
     }, null, 2) + "\n");
     process.exitCode = 1;
