@@ -129,3 +129,22 @@ npm run verify:s6 -- --read-only
 此步骤不会编辑 `G-999`，不会修改 Windows 私有配置，也不会部署写入服务。执行前把 S6 worktree 快进至最新已通过测试的分支提交；无需重跑 S5 或先前空知识库探针。
 
 真实写入下一步应由用户单独明确授权：指定隔离目标 `G-999` 的准确字段变更，在已备份正文并可核对归属的前提下，仅执行一次受控更新和 readback。未授权时，`readyForWrite:false` 持续有效；不可假称写入已现场验收。
+## 10. 一条命令完成 S6 隔离场景验收（替代多轮手动探针）
+
+用户希望减少每轮 Git 拉取/执行/贴输出。S6 新增 `npm run accept:s6 -- --once`，包含现有只读动态发现、目标/任务数据核验，以及三个业务动作 `goal_update`、`goal_create`、`goal_record_progress` 的预览+取消。这些自动步骤禁止远程修改。
+
+在**同一次终端运行**中，程序随后按顺序提供三项**独立可拒绝**的实际 iWiki 写入：① 对现有隔离目标 `G-999` 的说明保留原内容并追加 `[小七 S6 一次性验收]`，② 创建唯一隔离目标 `G-998`，③ 在 `G-998` 的进度历史里追加一条记录（若没有关联任务，进度为 0%）。每项都显示受影响的目标并要求用户输入该项的完整确认短语，任何不匹配直接停止，且已发生写入时不可直接无脑重跑。没有自动删除，用户可决定以后如何清理 `G-998`。
+
+首项真实写入前自动以独占新文件方式备份 `G-999` 原 Markdown 到 Windows 私有 bridge 目录，不覆盖原配置。每次远端写入均通过 `createS6GoalFlow` 的写前重扫描与哈希校验、一次调用、写后重扫描与精确读回；不可确认时即停机，不重试。该 CLI 是本地受控验收，不等同于小智语音通路已经部署验收；S5 保持不变。
+
+Windows S6 当前 worktree 下：
+
+```powershell
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw '下载失败，停止操作' }
+git merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '合并失败，停止操作' }
+npm run accept:s6 -- --once
+```
+
+请只将末尾的匿名状态摘要发回，不要粘贴私人配置、令牌或原始服务错误。若任何一步写入返回 UNCERTAIN/STOPPED，先网页检查 G-999/G-998 与本机备份，**不要再次启动这个脚本**。本单次命令取代此前单独的 `preview:s6` 现场操作，但不删除原有的只读调试功能。
