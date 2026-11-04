@@ -14,7 +14,8 @@ export type GoalScope =
   | { mode?: "folder"; spaceId: string; folderId: string };
 export interface GoalEntry {
   docId: string; title: string; parentId: string | null; spaceId: string;
-  kind: "markdown";
+  /** "unverified" means metadata omitted kind; read_doc + parseGoal must validate body. */
+  kind: "markdown" | "unverified";
 }
 export interface ChildListing { complete: boolean; entries: GoalEntry[] }
 export interface GoalPort {
@@ -66,7 +67,7 @@ export async function scanGoals(port: GoalPort, scope: GoalScope): Promise<Map<s
   for (const entry of result.entries) {
     if (!entry || entry.spaceId !== scope.spaceId ||
         (scope.mode !== "space" && entry.parentId !== scope.folderId) ||
-        entry.kind !== "markdown" || !PAGE.test(entry.docId) ||
+        (entry.kind !== "markdown" && entry.kind !== "unverified") || !PAGE.test(entry.docId) ||
         typeof entry.title !== "string" || !ID.test(entry.title)) {
       throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
     }
