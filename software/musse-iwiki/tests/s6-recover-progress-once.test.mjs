@@ -162,3 +162,32 @@ test("S6 scoped edit guard only permits one armed write to exact discovered page
   assert.equal(control.attempted,1);
   assert.deepEqual(called, ["edit_doc"]);
 });
+
+
+test("S6 zero-write preflight reports only structural checks for changed target", async () => {
+  const f = fixture();
+  const originalRead = f.port.readDoc;
+  f.port.readDoc = async (id) => {
+    const text = await originalRead(id);
+    return id === "page-G998"
+      ? text.replace("小七 S6 自动创建验收", "用户后来修改的目标名称")
+      : text;
+  };
+  const events = [];
+  await assert.rejects(() => recoverS6ProgressOnce(f.port, scope, f.control, {
+    ...options([], []),
+    report: (event) => events.push(event),
+  }), /S6_TEST_TARGET_CHANGED/);
+  const report = events.find((event) => event.type === "preflight_check");
+  assert.deepEqual(report.checks, {
+    goalCountTwo: true,
+    g999Present: true,
+    g999MarkerValid: true,
+    g998Present: true,
+    g998TitleValid: false,
+    g998IdValid: true,
+    progressAlreadyPresent: false,
+  });
+  assert.equal(JSON.stringify(report).includes("用户后来修改"), false);
+  assert.equal(f.control.attempted, 0);
+});
