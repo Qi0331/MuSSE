@@ -91,7 +91,7 @@ export async function buildS6IdMigrationPlan(port, scope, { manualTitles = false
     t.id !== tasks[i].id || t.goalId !== (CHANGES.find(([oldId]) => oldId === tasks[i].goalId)?.[1] ?? tasks[i].goalId)))
     stop("S6_MIGRATION_TASK_REWRITE_INVALID");
   return { docs, taskBefore, taskAfter, changedTasks, taskCount: tasks.length,
-    docCount: list.entries.length };
+    docCount: list.entries.length, manualTitles };
 }
 
 /** Fail before writes unless a dedicated rename tool exposes a verified schema. */
@@ -135,7 +135,11 @@ async function loadConnection() {
   const dir = join(homedir(), "MuSSE-MCP-Local", "musse-bridge");
   const config = JSON.parse(await readFile(join(dir, "xiaozhi.config.json"), "utf8"));
   const scope = JSON.parse(await readFile(join(dir, "musse-iwiki-s6-scope.json"), "utf8"));
-  const ids = await readonlyDocumentIdsFromFile(join(dir, "musse-iwiki-readonly.json"));
+  const mappingFile = join(dir, "musse-iwiki-readonly.json");
+  const mappingRaw = JSON.parse(await readFile(mappingFile, "utf8"));
+  if (CHANGES.some(([oldId]) => Object.hasOwn(mappingRaw.goalDocIds ?? {}, oldId)))
+    stop("S6_MIGRATION_S4_GOAL_MAPPING_PRESENT");
+  const ids = await readonlyDocumentIdsFromFile(mappingFile);
   validateScope(scope);
   const client = new IwikiMcpClient(extractConnection(config));
   const port = createOfficialS6GoalPort(client, ids[DOC_PATHS.tasks]);
@@ -147,7 +151,7 @@ async function saveBackup(dir, plan) {
   const path = join(dir, name);
   const snapshot = JSON.stringify({ kind: "S6_ID_MIGRATION_PREWRITE_BACKUP",
     docs: plan.docs.map((x) => ({ oldId: x.oldId, newId: x.newId,
-      docId: x.docId, title: x.oldId, content: x.before })),
+      docId: x.docId, title: plan.manualTitles ? x.newId : x.oldId, content: x.before })),
     taskContent: plan.taskBefore }, null, 2);
   await writeFile(path, snapshot, { flag: "wx", mode: 0o600 });
   if ((await readFile(path, "utf8")) !== snapshot) stop("S6_MIGRATION_BACKUP_FAILED");
@@ -229,10 +233,11 @@ async function main(args) {
     const plan = await buildS6IdMigrationPlan(context.port, context.scope, { manualTitles });
     const renameTool = manualTitles ? null : selectS6RenameTool(await context.client.listTools());
     if (mode === "plan") {
+      const localBackup = await saveBackup(context.dir, plan);
       process.stdout.write(JSON.stringify({ mode: "READ_ONLY_PLAN", goals: plan.docs.length,
         taskCount: plan.taskCount, taskReferencesToChange: plan.changedTasks,
         renameToolVerified: Boolean(renameTool), manualTitleOption: !renameTool,
-        writesStarted: 0 }) + "\n");
+        privateBackupSaved: true, backupFile: localBackup, writesStarted: 0 }) + "\n");
       return;
     }
     if (!manualTitles && !renameTool) stop("S6_MIGRATION_RENAME_TOOL_UNAVAILABLE");
