@@ -41,7 +41,9 @@ export function createS5VoiceFlow(
     async confirm(operationId: string, spokenText: string): Promise<{ operationId: string; status: "VERIFIED" }> {
       const saved = proposals.get(operationId);
       if (!saved) throw new S5GateError("S5_UNKNOWN_PROPOSAL");
-      if (typeof spokenText !== "string" || !["确认写入", "确认保存"].includes(spokenText.trim())) {
+      // A speech transcript may add one terminal period/exclamation mark.
+      // Preserve strict affirmative matching: no questions, negations, or vague "保存".
+      if (typeof spokenText !== "string" || !/^(?:确认写入|确认保存)[。.!！]?$/u.test(spokenText.trim())) {
         throw new S5GateError("S5_EXPLICIT_CONFIRMATION_REQUIRED");
       }
       gate.trusted.approve(operationId, saved.digest);
