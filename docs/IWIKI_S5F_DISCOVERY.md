@@ -66,3 +66,10 @@
 - 合成测试标题是 `MuSSE S5-F 自动隔离测试 e02cd7d9`，仅用于排查可能的残留隔离页；不含私人文档 ID。
 - 后续先执行 `npm run inspect:s5-create -- --live`，读取创建工具 `tools/list` 元数据，不向 iWiki 发任何写工具请求。不得原样重跑创建测试或调整生产 Token。
 
+
+## S5-F 已验证创建前置条件（2026-11-04，Windows 只读元数据）
+- 用户在独立 S5 worktree 成功 `git fetch` 快进到 `39877ec`，运行 `npm run inspect:s5-create -- --live` 并返回官方 `create_markdown_doc` 完整字段说明（仅 tools/list，不做写入）。
+- **已证实原因**：工具说明明确要求创建正式 Markdown 文档时，目标空间**必须**传 `space_id` 或 `space_name` 二选一；尽管 JSON schema 的 `required` 列表只包含 `title/content`。之前创建探针未传目标空间，与实际业务拒绝吻合。
+- 官方还说明 `content` 为完整 Markdown 正文、`parent_id` 可选、创建即发布并保留修订；网页端权限继承规则由服务端执行。故后续只在用户指定的合适测试空间创建，不默认选择公共空间，也不增加父文档。
+- **已修正代码**：`probe:s5-auto` 运行前在用户 Windows 本机交互询问**目标空间的精确名称**，仅内存使用 `space_name`；未输入合法名称时不调用创建接口；不会将名称写入仓库、配置或诊断输出。然后只创建一次合成测试文档 → 读 → 编辑一次 → 读。仍禁止不确定结果的自动重试。
+- 此次仅完成 GitHub 代码和模拟测试，修正后的真实创建/编辑**尚待 Windows 实测**。用户无需传空间名、空间 ID、Token 或私人正文。
