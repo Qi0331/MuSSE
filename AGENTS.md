@@ -1,4 +1,6 @@
 # MuSSE — Agent 工作约定
+- **S5-F 空间选择**：用户截图的“我的文档”不一定是 `space_name`，左侧多个公共/团队空间禁止自动选为试写目标。S5-F 自动探针新增只读 `list_spaces` 发现并在本机显示可见空间，用户手动选有权的私人空间编号，0 取消；无法识别不写。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 - **S5-F Windows 跨平台回归修复**：用户在 `e660f2b` 运行 npm test 为 113/115，通过前禁止真实写入。#58 命令行测试把 URL.pathname 当作 Windows 路径，已改 `fileURLToPath`；#90 任务表 `updateTaskRow` 原先丢失 CRLF，已修复保留原始分隔符并添加 CRLF+混合换行回归。最新 GitHub S5 分支代码必须重新核验 CI / Windows 测试后再实写。见 `docs/TEST_LOG.md` T-20261104-18。
 
 
