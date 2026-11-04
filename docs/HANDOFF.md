@@ -1,4 +1,10 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 新对话统一入口（S5-G）
+- 新开对话前先读 **`docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`**：包含 S4/S5 双分支和 worktree、S5-F 实写成功证据、下一阶段 S5-G 操作顺序、保护边界以及“Windows 本地桥接／GitHub 源码／小智和 iWiki 远端”部署结构。
+- GitHub 分支仍为 `feat/iwiki-s5-guarded-write-design`、Draft PR #25，base 为 S4；不要因换聊天新开 Git 分支。用户尚未授权 S5 生产启用、真实任务表写入、迁云或关停现有 Windows 两套 MCP。
+- 当前用户 Windows 已实测 128/128 于 `e1f30fc`；后来追加官方成功/失败回执离线回归，**最新 GitHub HEAD 完整 CI 和 Windows 复验仍需核实**。不要再做 S5-F 重复实写。
+
+
 ## 2026-11-04 S5-F 真实写能力最终通过（最新交接）
 - **已实证完成**：Windows 独立 S5 worktree `e1f30fc`，Node 本地测试 **128/128 全绿**；此前 `create_markdown_doc` 业务 `ok:true` 并读回初始正文；本轮 `probe:s5-existing-edit -- --edit-once` 只读定位唯一旧测试页并在用户本机二次输入 `EDIT` 后，**`edit_doc ok:true` 且写后 `readback:UPDATED` / `EXISTING_EDIT_VERIFIED`**。返回 `new_rev_no/old_chars/new_chars`，确认服务端有修订元数据。
 - 私人测试页标题 `MuSSE S5-F 自动隔离测试 8a6fc40f`；已经成功更新，不再运行原始 marker 要求的探针，也不要创建另一篇测试页。没有任何 Token、空间 ID、私人页面 ID 或正文泄漏到仓库。
