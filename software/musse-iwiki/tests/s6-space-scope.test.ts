@@ -181,7 +181,7 @@ test("S6 nonempty knowledge-base listing fails closed on incomplete counts or am
       (e: unknown) => e instanceof S6Error && e.code === "S6_SCOPE_OR_METADATA_MISMATCH");
   }
   payload = { docs: Array.from({ length: 100 }, (_, i) => ({
-    doc_id: "page-G" + i, title: "G-" + String(i).padStart(3, "0"), space_id: scope.spaceId,
+    doc_id: "page-G" + i, title: "G" + String(i).padStart(3, "0"), space_id: scope.spaceId,
   })), total: 100 };
   await assert.rejects(() => port.listDirectChildren(scope),
     (e: unknown) => e instanceof S6Error && e.code === "S6_LIST_INCOMPLETE");
