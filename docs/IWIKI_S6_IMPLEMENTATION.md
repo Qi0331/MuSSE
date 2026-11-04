@@ -165,3 +165,11 @@ git merge --ff-only FETCH_HEAD
 if ($LASTEXITCODE -ne 0) { throw '更新失败：停止' }
 npm run audit:s6-uncertain -- --read-only
 ```
+
+## 12. 不确定写入的真实只读复核结果（2026-11-04）
+
+用户 Windows 运行 `npm run audit:s6-uncertain -- --read-only`，只读结果明确：`goalCount=2`、`g999MarkerVerified=true`、`g998ExistsAndValid=true`、`matchingProgressRecords=0`、`progressMatchesCurrentTaskState=false`、`thirdWriteStatus=NOT_OBSERVED_DO_NOT_RETRY`、`taskCount=4`、`writesAttempted=0`、`writeRetryPermitted=false`。
+
+结论分层：G-999 的受控更新、G-998 的新建分别已被先前实时写入及严格读回证明；第三次 `goal_record_progress` 发起了真实 `edit_doc` 但返回 `S6_WRITE_UNCERTAIN`，后续只读没有发现预期进度记录，因此**不能判定进度写入成功**，也不能仅凭此确定失败来源是网络、业务拒绝、返回契约还是其他原因。
+
+立即保持原状：不重跑 `accept:s6`、不对 G-998 自动补写、不删除测试文档或本地备份；S5 仍按已验证链路运行。S6 功能边界：发现/读、更新及创建验收通过，进度写入仍处于失败封闭状态，不得声明 S6 全功能上线。后续如需恢复写入，应先分析官方 `edit_doc` 的错误/回执协议并设计单次明确授权的隔离诊断，不能在未确认原因前盲重试。
