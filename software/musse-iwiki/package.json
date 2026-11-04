@@ -32,6 +32,7 @@
     "preview:s6": "node tools/s6-preview-cancel-readonly.mjs",
     "accept:s6": "node tools/s6-one-shot-acceptance.mjs",
     "audit:s6-uncertain": "node tools/s6-audit-post-uncertain.mjs",
-    "recover:s6-progress": "node tools/s6-recover-progress-once.mjs"
+    "recover:s6-progress": "node tools/s6-recover-progress-once.mjs",
+    "migrate:s6-ids": "node tools/s6-migrate-goal-ids-once.mjs"
   }
 }
