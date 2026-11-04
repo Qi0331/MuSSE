@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   summarizeS6ListShape,
   summarizeS6SpacesShape,
+  summarizeS6Tool,
 } from "../tools/s6-inspect-directory.mjs";
 
 const envelope = (data) => ({
@@ -55,4 +56,23 @@ test("S6 diagnostic never fabricates success for unsuccessful upstream envelopes
   assert.equal(summarizeS6SpacesShape(envelope({})).exactMatches, 0);
   assert.equal(summarizeS6SpacesShape({ content: [{ text: '{"ok":false}' }] }).businessOk, false);
   assert.equal(summarizeS6ListShape({ isError: true }).businessOk, false);
+});
+
+
+test("S6 inspector treats omitted JSON Schema required as an empty required list", () => {
+  const info = summarizeS6Tool({
+    name: "list_spaces",
+    inputSchema: { type: "object", properties: { space_type: { type: "string" } } },
+  }, []);
+  assert.equal(info.present, true);
+  assert.equal(info.requiredKnown, true);
+  assert.equal(info.requiredOnlySupported, true);
+  assert.equal(info.requiredDefaultedEmpty, true);
+});
+
+test("S6 inspector still rejects absent or malformed tool schema", () => {
+  assert.equal(summarizeS6Tool({ name: "list_spaces" }, []).requiredOnlySupported, false);
+  assert.equal(summarizeS6Tool({ inputSchema: { required: "space_id" } }, []).requiredOnlySupported, false);
+  assert.equal(summarizeS6Tool({ inputSchema: { required: ["space_id"] } }, []).requiredOnlySupported, false);
+  assert.equal(summarizeS6Tool(null, []).present, false);
 });
