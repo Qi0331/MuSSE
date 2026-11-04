@@ -7,7 +7,7 @@ import {
 
 const goal = [
   "# 目标：小七 S6 验收",
-  "- 目标ID: G-999",
+  "- 目标ID: G999",
   "- 说明: 用于验证长期目标动态发现。",
   "",
   "## 阶段",
@@ -40,7 +40,7 @@ function fixture() {
     async callTool(name, args) {
       calls.push({ name, args });
       if (name === "list_docs") return ack({
-        docs: [{ doc_id: "page-G999", title: "G-999", space_id: scope.spaceId }], total: 1,
+        docs: [{ doc_id: "page-G999", title: "G999", space_id: scope.spaceId }], total: 1,
       });
       if (name === "read_doc") return ack({ doc_id: args.doc_id, content: goal });
       throw Error("remote mutation must never be called");
@@ -51,7 +51,7 @@ function fixture() {
     port: createS6PreviewReadOnlyPort(client, "page-TASKS", metrics) };
 }
 
-test("S6 local preview and cancel checks real-shaped G-999 without any mutation", async () => {
+test("S6 local preview and cancel checks real-shaped G999 without any mutation", async () => {
   const f = fixture();
   const result = await runS6PreviewCancel(f.port, scope);
   assert.deepEqual(result, {
@@ -63,13 +63,13 @@ test("S6 local preview and cancel checks real-shaped G-999 without any mutation"
 
 test("S6 preview-only local port hard-blocks create and edit even when called directly", async () => {
   const f = fixture();
-  await assert.rejects(() => f.port.createDoc(scope, "G-001", "secret"), /WRITE_FORBIDDEN/);
+  await assert.rejects(() => f.port.createDoc(scope, "G001", "secret"), /WRITE_FORBIDDEN/);
   await assert.rejects(() => f.port.editDoc("page-G999", "secret"), /WRITE_FORBIDDEN/);
   assert.equal(f.metrics.reads, 0);
   assert.equal(f.calls.length, 0);
 });
 
-test("S6 preview-only fails closed when pinned G-999 belongs to another space", async () => {
+test("S6 preview-only fails closed when pinned G999 belongs to another space", async () => {
   const f = fixture();
   await assert.rejects(() => runS6PreviewCancel(f.port, { mode: "space", spaceId: "space-OTHER" }));
   assert.ok(f.calls.every(({ name }) => name === "list_docs" || name === "read_doc"));
