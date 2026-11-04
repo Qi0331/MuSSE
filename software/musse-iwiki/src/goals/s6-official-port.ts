@@ -40,7 +40,7 @@ function success(response: unknown): Record<string, unknown> {
 function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
   if (!Array.isArray(payload.docs) || !Number.isSafeInteger(payload.total) ||
       payload.total !== payload.docs.length || payload.total > 1000 ||
-      payload.has_more === true || payload.next_cursor) {
+      payload.has_more !== false || payload.next_cursor) {
     throw new S6Error("S6_LIST_INCOMPLETE");
   }
   const entries: GoalEntry[] = [];
