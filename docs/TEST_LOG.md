@@ -1,4 +1,11 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-25 — S5-G Windows 本机 144/144 + 只读预检（用户实际终端证据）
+- **证据来源**：用户提供 Windows PowerShell 原始终端输出。独立 S5 worktree 中 `git -c http.version=HTTP/1.1 fetch origin feat/iwiki-s5-guarded-write-design` 成功；随后 `git merge --ff-only FETCH_HEAD` 报告 `Updating e1f30fc..c09f5a4` 与 `Fast-forward`。没有从此推断线上 S4 配置发生任何变更。
+- **真实本机完整测试**：`software/musse-iwiki` 执行 `npm test`，最终统计 `tests 144 / pass 144 / fail 0 / skipped 0`，包括 S5-G stdio JSON Lines、prepare/confirm/cancel、回执/写后读回及只读本地预检的合成测试。这是独立于 GitHub Actions 144/144 的 Windows 本地输出；测试未连远端写入。
+- **实际只读预检**：`inspection:LOCAL_READONLY_NO_MCP_CALLS_NO_CHANGES`、`nodeSupported:true`、`officialIwiki:CONFIGURED`、`s4Readonly:REGISTERED`、`taskMapping:TASK_VALID`、`notesMapping:NOT_CONFIRMED`、`s5BridgeEntry:ABSENT`、`writeContract:NOT_CONFIRMED`、`contractFile:MISSING`、`writeFlagInThisShell:NOT_SET`、`liveVoiceValidated:false`、`productionWriteAuthorized:false`。该工具不调用 MCP、无网络、不写文件。
+- **未解异常（必须实事求是）**：第一条 `git branch --show-current` 与预期分支比较触发 `WRONG_BRANCH`。后续独立命令仍继续执行，快进虽成功，但尚不确定是其他分支还是 detached HEAD；无法据此确认 worktree 处在预期本地分支。下一步仅用只读 Git 命令核实状态，禁止未经检查盲目 switch/reset/创建分支。
+- **结论**：Windows 本机离线测试/只读配置预检已完成，**S5 实际小智/ESP32 语音写入尚未接入**。不重复 S5-F 实写探针，不修改真实任务总表，不擅自增加第三个 S5 MCP、创建私有写映射、开启 S5 写权限或迁云。S4 双 MCP/安全补丁/Token/ESP32 不动，两个 PR 均留 Draft。
+
 ## 2026-11-04 T-20261104-24 — S5-G Windows 只读预检工具（开发侧，非本机实跑）
 - 增加 `software/musse-iwiki/tools/s5-local-preflight.mjs` 与 `npm run preflight:s5 -- --local-readonly`。无参数仅帮助；显式执行也只从 Windows 私有 JSON 读取信息，报告脱敏的原官方 iWiki/S4 注册、S5 注册状态、文档映射格式、`edit_doc/doc_id/content` 写契约格式与当前 Shell 开关；**不调用 iWiki、不注册 MCP、不写任何配置/生产文档、不输出 Token、真实 ID 或路径**。
 - 新增 `tests/s5g-local-preflight.test.mjs` 三项合成私有配置测试：合法配置脱敏/保留 S4、无写契约不误判准备就绪、异常契约和 S5 注册检测、不修改输入文件。GitHub S5 commit `9b6ec4f` 全量 Node CI [41819040249](https://github.com/Qi0331/MuSSE/actions/runs/41819040249) 实际输出 **144 tests / 144 pass / 0 fail / 0 skipped**；Repository checks [41819040721](https://github.com/Qi0331/MuSSE/actions/runs/41819040721) success。

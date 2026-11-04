@@ -1,4 +1,9 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-G Windows 实际离线测试已通过（当前最新）
+- 用户提交完整 Windows PowerShell 输出：`fetch` 成功，`git merge --ff-only FETCH_HEAD` 显示 `Updating e1f30fc..c09f5a4` 并快进成功；`npm test` **144/144 pass、0 fail、0 skipped**；`npm run preflight:s5 -- --local-readonly` 完成只读状态检查。S4 官方/业务 MCP 保留，正式任务文档映射格式有效，S5 MCP 未注册、私有写契约文件缺失、写入开关未设置，笔记映射尚未确认。详见 `docs/TEST_LOG.md` T-20261104-25。
+- **一个未解的 Git 分支细节**：前置命令 `git branch --show-current` 与预期不一致并触发 `WRONG_BRANCH`；成功的快进和测试不能反证该问题，需只读 `git status -sb`、`git branch --show-current`、`git rev-parse --short HEAD` 识别当前真实分支/分离 HEAD，再决定最小修复。
+- 下一目标不再是增加基础模拟测试，而是经用户批准后开展 Windows 独立 S5 写服务注册、隔离业务 Markdown 目标的语音预览/取消/单次确认与写后读回。**本阶段没有启用 S5，没有写生产表或进行真实语音验收；**原 S4 双 MCP、Token、日志补丁、ESP32、云部署/PR Draft 均不动。
+
 ## 2026-11-04 S5-G 下一轮语音联调前置步骤（最新）
 - **当前最新 S5 GitHub 开发提交 `9b6ec4f`；完整 Node CI 144/144 通过**，仓库文档 CI 通过。S5-Draft PR #25 仍基于 S4 Draft PR #24，无合并。先前 `cd88bc9` 完成 141/141 两轮 stdio 业务模拟；本次仅增加安全的 Windows 本地预检工具和 3 项测试，没有任何 Windows/真实 iWiki 操作。
 - Windows S5 独立 worktree 同步后，可在 `software/musse-iwiki` 先 `npm test`，再 `npm run preflight:s5 -- --local-readonly`；后者只在显式参数下只读本机桥接/映射/合同结构，结果无私人 ID、Token、路径或正文，且不联网、不更改。**目前还没有本地运行结果**。

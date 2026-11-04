@@ -1,4 +1,10 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-G Windows 本机回归和只读预检已完成（当前最新）
+- 用户贴出真实 PowerShell 全量输出：独立 Windows S5 工作区 fetch 成功并执行 `git merge --ff-only FETCH_HEAD`，`e1f30fc → c09f5a4`；`software/musse-iwiki` 运行 `npm test` **144 tests / 144 pass / 0 fail / 0 skipped**。此前仅 GitHub Linux CI 的 144/144，现在有独立 Windows 本机验证。
+- 手动运行 `npm run preflight:s5 -- --local-readonly`：`nodeSupported:true`、`officialIwiki:CONFIGURED`、`s4Readonly:REGISTERED`、`taskMapping:TASK_VALID`；`s5BridgeEntry:ABSENT`、`writeContract:NOT_CONFIRMED`、`contractFile:MISSING`、`writeFlagInThisShell:NOT_SET`、`notesMapping:NOT_CONFIRMED`。以上为**只读本地配置状态**，没有连接/调用 iWiki、没有写入。
+- 注意：该终端在执行 `git branch --show-current` 比较时出现 `WRONG_BRANCH`，之后快进成功且测试通过。尚未取得该工作区当前真实分支名/是否处于 detached HEAD 的输出；先只读核实，不盲目创建或切换分支。
+- **S5 核心与 Windows 离线验收已通过，但真实小智/ESP32 两轮语音写入尚未解决/验收**。后续先修正本地工作树分支状态，再由用户另行明确批准 S5 独立 MCP 私有契约/隔离目标/桥接受控注册，先测预览和取消，再测试一次隔离语音写入和写后复核。原 S4 双 MCP、Token、日志补丁、生产任务总表、ESP32、云端、两 Draft PR 不动。
+
 ## 2026-11-04 S5-G 下一轮本地预检已准备（最新）
 - **最新 S5 HEAD 功能提交 `9b6ec4f`**：新增无写入、无联网的 Windows 本地配置检查 `npm run preflight:s5 -- --local-readonly`。不注册 S5、不修改桥接/Token/映射/文档，只把已存在的双 MCP、文档映射有效性、私有 `edit_doc/doc_id/content` 字段契约与 S5 启用状态汇总成脱敏状态。无参数默认不读私有文件。真实 Windows 尚未运行。
 - GitHub Node 完整 CI [run 41819040249](https://github.com/Qi0331/MuSSE/actions/runs/41819040249) **144/144 pass、0 fail**；[文档检查 41819040721](https://github.com/Qi0331/MuSSE/actions/runs/41819040721) 成功。新增三项是合成私有配置测试，不是远端写入测试。
