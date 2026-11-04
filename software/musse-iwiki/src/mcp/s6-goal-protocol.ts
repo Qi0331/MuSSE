@@ -5,8 +5,8 @@ type Flow = ReturnType<typeof createS6GoalFlow>;
 export const S6_GOAL_TOOLS = [
   {
     name: "musse_goal_find",
-    description: "Read one G-xxx goal through exact, bounded folder discovery; never search by approximate title.",
-    inputSchema: { type: "object", properties: { goalId: { type: "string" } }, required: ["goalId"] },
+    description: "Read one Gxxx goal through exact, bounded folder discovery; never search by approximate title.",
+    inputSchema: { type: "object", properties: { goalId: { type: "string", description: "Canonical long-term goal ID like G001 or G998 (NO hyphen, not a page ID)" } }, required: ["goalId"] },
   },
   {
     name: "musse_goal_prepare",
@@ -17,7 +17,7 @@ export const S6_GOAL_TOOLS = [
         type: "object",
         properties: {
           type: { type: "string", enum: ["goal_create", "goal_update", "goal_record_progress"] },
-          goalId: { type: "string", description: "G-001 etc, not a page ID" },
+          goalId: { type: "string", description: "Use G001 / G998; NO hyphen, not a page ID" },
           title: { type: "string" }, description: { type: "string" },
           phases: { type: "array", items: { type: "object" } },
           changes: { type: "object", description: "title, description or addPhase {id,name}" },
