@@ -1,4 +1,10 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-F Windows 跨平台测试失败修复（最新）
+- 用户 Windows 独立 S5 worktree 更新到 `e660f2b` 后，115 项本地测试 113 通过、2 失败，测试门槛已拦截真实 iWiki 写入。失败原因分别是 Node CLI 测试把 `file URL.pathname` 作为 Windows 命令行路径，以及任务表编辑函数把 Windows CRLF 换行归一化，意外改动了非目标行。
+- 已在 S5 分支修复：前者使用 `fileURLToPath`，后者使 `updateTaskRow` 保留原有换行分隔符；新增混合换行/CRLF 回归测试。此次属于 Windows 兼容性与任务正文数据保真修复，并未执行生产更新。
+- 等完整 CI / Windows 复测确认通过后，才允许对用户指定私人空间的合成测试页面执行一次真实创建与编辑。详情 `docs/TEST_LOG.md` T-20261104-18。
+
+
 ## 2026-11-04 S5-F 确认创建必须指定空间（最新）
 - 用户在 Windows 实际只读检查官方 `create_markdown_doc` 元数据，证明目标空间必须 `space_id` 或 `space_name` 二选一；此条件未体现在其 `required` 数组里。此前仅传 title/content 造成 `ok:false` 的原因与此一致，无需假设是 Token 权限问题。
 - 开发分支已修改自动创建+编辑探针：交互式在 Windows 本机输入准确 `space_name`，仅对该空间尝试新建一篇合成隔离文档，继续最多一次 `edit_doc` 与读回检查；不改桥接、生产 Token、现有任务或已部署两个 MCP。见 `docs/IWIKI_S5F_DISCOVERY.md`。**修正后尚未真实写入验证**。
