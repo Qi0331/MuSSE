@@ -1,5 +1,13 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-13 — S5-E 实用普通写入适配与两轮语音协议
+- GitHub Draft PR #25 新增轻量 `check-before-write` 模式、无默认写接口的官方 iWiki 普通写入适配、两轮语音确认流程及默认禁用的独立 MCP stdio 服务。现有 S4 只读服务没有改变。
+- **实际 GitHub Actions 在完整仓库检出、Node.js 22.23.4 上执行 `npm test`：98/98 pass、0 fail**。最近成功 run `41792735125`；文档 `Repository checks` 同次成功。
+- 新增假 iWiki MCP 测试覆盖准备不写、显式二次确认、写前网页更改被识别为冲突、写后读回、严格模式兼容、映射缺失拒绝、错误写入响应不虚报、语音取消/过期，以及新服务默认禁用。不借助真实 iWiki Token/页面或生产 WebSocket。
+- **没有真实 iWiki 的工具契约/权限/远端写入测试**。非原子模式在最终读取和实际写入间存在残余竞争窗口，这是用户指定的简化取舍，不能宣称完全并发安全。对话确认不是独立可信用户身份认证。
+- PR #24/#25 保持 Draft，不合并，不触碰现有 Windows/ESP32/云端/私人映射文件；最新完整交接 `docs/IWIKI_S5E_PRACTICAL_HANDOFF.md`。
+
+
 ## 2026-11-04 T-20261104-12 — S5-D 全量 GitHub Node CI（完整工作区）
 - 新增 `.github/workflows/iwiki-node-tests.yml`，在完整 GitHub 检出的 `software/musse-iwiki` 执行 `npm test`；GitHub Actions `iWiki Node tests` **run `41784910123`，job `126424728412`，Node.js `v22.23.4`** → **84 tests / 84 pass / 0 fail**，结论 `success`。仅标准库测试；不注入密钥，不访问生产 iWiki。
 - 首次运行 run `41784471528` 的 81 项结果为 **80 pass / 1 fail**，失败是旧 `tests/service.test.ts` 对即时 `note_create` 的日期断言硬编码 `2026-11-03`，在 2026-11-04 执行失败；改为调用前后实时上海日期窗口后，整个 CI 通过。
