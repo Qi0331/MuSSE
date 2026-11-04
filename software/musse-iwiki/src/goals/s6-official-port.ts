@@ -127,7 +127,7 @@ export function createOfficialS6GoalPort(
     async readTaskTable() { return (await tasks.read(DOC_PATHS.tasks)).content; },
     async createDoc(scope, title, content) {
       validateScope(scope);
-      if (!/^G-[0-9]{3,6}$/.test(title)) throw new S6Error("S6_INVALID_GOAL_ID");
+      if (!/^G[0-9]{3,6}$/.test(title)) throw new S6Error("S6_INVALID_GOAL_ID");
       await requireTool("create_markdown_doc", ["title", "content", "space_id", "parent_id"]);
       const args: Record<string, unknown> = {
         title, content, space_id: scope.spaceId,
