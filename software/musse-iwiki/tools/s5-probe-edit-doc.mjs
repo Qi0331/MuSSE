@@ -82,7 +82,7 @@ export async function probeS5EditDoc(client, docId) {
 
 async function main(argv) {
   if (argv.length !== 1 || argv[0] !== "--write-test") {
-    process.stdout.write("Usage: node tools/s5-probe-edit-doc.mjs --write-test\\nOne real edit_doc on an isolated user-created marker page; requires explicit approval first.\\n");
+    process.stdout.write("Usage: node tools/s5-probe-edit-doc.mjs --write-test\nOne real edit_doc on an isolated user-created marker page; requires explicit approval first.\n");
     return;
   }
   try {
@@ -91,11 +91,11 @@ async function main(argv) {
     const connection = extractConnection(config);
     const docId = process.env.MUSSE_S5_TEST_DOC_ID;
     const result = await probeS5EditDoc(new IwikiMcpClient(connection), docId);
-    process.stdout.write(JSON.stringify(result, null, 2) + "\\n");
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } catch {
     // probeS5EditDoc throws only before issuing a write; post-write failures
     // are summarized separately and never reported as confirmed success.
-    process.stderr.write("S5F preflight failed; edit_doc not called. Do not paste private config or raw logs.\\n");
+    process.stderr.write("S5F preflight failed; edit_doc not called. Do not paste private config or raw logs.\n");
     process.exitCode = 1;
   }
 }
