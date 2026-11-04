@@ -38,7 +38,7 @@ export const S5_VOICE_TOOLS = [
   },
   {
     name: "musse_write_confirm",
-    description: "Commit ONLY a previous prepared change, and ONLY when the user has just explicitly said 确认写入 or 确认保存. The assistant must never invent that user utterance. If the preview is stale, tell the user and prepare again.",
+    description: "Commit ONLY the specific previous prepared change after a NEW explicit user utterance: 确认, 确认写入, or 确认保存 (optional final 。 . ! ！). Pass the ACTUAL user utterance in spokenText and the EXACT previous operationId. Never invent confirmation, never commit on a question/negation, and never retry uncertain writes.",
     inputSchema: {
       type: "object",
       properties: {

@@ -1,4 +1,44 @@
 # MuSSE 当前项目状态（唯一权威）
+
+## 2026-11-05 — S5 确认循环根因：Windows 桥接仍加载 S5F 旧源码
+
+- Windows 日志确认：`musse_iwiki_s5_write.args[0]` 仍指向 `MuSSE-S5F/.../server-s5-write.ts`，但已修正口令的新版本在 `MuSSE-S6/.../server-s5-write.ts`。这解释了 GitHub / Windows 新版 216/216 测试通过而设备仍拒绝 `确认写入。`。`s5-write-bridge.mjs --status` 返回 `S5_WRITE_ENTRY_UNEXPECTED`（不是文件已损坏）。
+- 用户 PowerShell `Get-Content -Raw | ConvertFrom-Json` 的输出出现乱码与解析失败，可能是字符编码不符，不能仅凭此认定 `xiaozhi.config.json` 损坏。用户无意间上传完整配置包含访问令牌；建议分别轮换小智和 iWiki 凭证，切勿重新传播或写入仓库。
+- 新增仅限 Windows 的 `tools/s5-repoint-write.mjs`：`--plan`（纯只读）、`--apply`（用户明确输入 `确认修复S5路径`、先私有备份，只更新 S5 服务 `args[0]`）、`--verify`（只读核验）。严格限定原 `MuSSE-S5F` 路径、目标 `MuSSE-S6` 路径、当前 node.exe、其他 S4/S6/官方服务保留；Node UTF-8 JSON 读写；不请求真实 iWiki、不输出敏感值。
+- GitHub iWiki Node 测试 218/218 通过；Repository checks 通过（提交 `97eeec4599301a7ae957059c07173d8725df6705`）。**真实 Windows 修复尚未执行**。必须先完全停止 `xiaozhi start`，fetch/merge 后先 `--plan`，然后 `--apply`、`--verify`、`node tools/s5-write-bridge.mjs --status`，最后重启服务。不要在确认远端任务表之前重复创建测试待办。
+
+
+## 2026-11-05 — S5 确认口令二次修复（待 Windows 同步验证）
+
+- 用户反馈新的语音日志仍将 `确认写入。` 和 `确认保存。` 传给 `musse_write_confirm`，但原进程仍返回 `S5_EXPLICIT_CONFIRMATION_REQUIRED`。因为此前提交的源码已接受这些形式，此现象说明 Windows 当前 S5 运行进程未加载对应修订；实际安装文件路径/服务重启需通过 `node tools/s5-write-bridge.mjs --status` 核查（预期 `S5_WRITE_PRESENT`）。
+- 本次单独放宽 S5 **已有待确认提案**的口令，仅允许 `确认`/`确认写入`/`确认保存` 加可选一个句号、感叹号；保持 `operationId` 匹配、120 秒有效期、独立第二轮确认、业务读回和对否定/疑问句/混合命令的拒绝。同步更新 `musse_write_confirm` 工具描述。
+- GitHub iWiki Node CI **216/216 通过，0 失败**，仓库检查通过（提交 `84365e2bd86ddaa597a47e436188a0ee0ea0f222`）。此次代码提交未写真实待办；必须 Windows 本地 fetch/merge/test/status 验证并彻底重启 xiaozhi 服务，防止运行旧进程。不可重复执行已过期确认，也不可在不知远端状态下重新创建相同待办。
+
+
+## 2026-11-05 — S5 语音写入确认标点修复（代码已提交；Windows 未部署）
+
+- 真实设备日志显示 S5 prepare 成功后，S5 confirm 分别接收到 spokenText="保存。"、"确认保存。"、"确认写入。"，返回 S5_EXPLICIT_CONFIRMATION_REQUIRED；同一 operationId 上多次拒绝，未进入远端写入阶段。
+- 修改 src/write/voice-flow.ts：只接受完整确认短语“确认写入”或“确认保存”，允许末尾至多一个句号或感叹号（中文/英文），仍拒绝单独“保存”、疑问句、否定句、混合取消命令。新增严格正反例测试，未扩大写入权限或跳过二次确认。
+- GitHub iWiki Node 216/216 tests pass（提交 d01243e21c84ea455e50b8d8084c5c5a712ff08d），仓库检查成功。Windows 要同步分支并重启 xiaozhi 才会生效；旧待办提案不得复用或直接重试；先检查任务总表再决定是否另行创建。
+
+
+## 2026-11-05 — S6 Gxxx 编号统一（已提交代码；Windows/iWiki 数据待迁移）
+
+- 用户决定仅把长期目标编号统一为 G001/G998/G999，无横线；模糊查找另期开发。S6 discovery / create / MCP schema 及测试已更新；真实旧数据 G-998/G-999 必须先迁移，才能启用新版 S6。
+- 一次性工具与私有备份/核验步骤见 docs/S6_GOAL_ID_MIGRATION_2026-11-05.md；GitHub 不含远端数据变更。旧 accept:s6、recover:s6-progress CLI 已退休，不得重跑。
+- 用户语音直读 G-998 在明确念出横线时通过；错误日志证明 G998 在旧版严格校验下返回 S6_INVALID_GOAL_ID，官方 iwiki 桥接断开时 S6 直接读仍成功。新格式尚需 Windows 迁移后验收。
+
+
+## 2026-11-05 S6 最新结果（覆盖下方旧开发/阻塞记录）
+- Windows 关闭代理/梯子后 iWiki MCP 只读恢复：DNS、TCP 443、Node HTTPS HEAD 200；只读审计发现 G-999 标记有效、G-998 正文有效、4 条任务且待补进度记录不存在。后经用户新一轮授权，**一次** `recover:s6-progress -- --once` 返回 `VERIFIED/ACK_AND_READBACK_VERIFIED`、`writeAttempts=1`、`progressRecordsObserved=1`、`backupSaved=true`；0% 进度已真实写入并精确读回。已完成 S6 本地 iWiki 核心业务真实验收，禁止重跑 `accept:s6` 或补写。
+- `ECONNRESET` 更可能与代理路径相关，但仅有关闭梯子成功的证据，未证明唯一原因。S6 桥接初次 PowerShell 安装错误导致配置异常，已从本地历史备份恢复官方 iWiki/S4/S5 配置（`RESTORE_STATUS=SUCCESS`）；专用 `tools/s6-safe-install.cjs` 后续提供，用户报告“都好了”。尚未取得新安装器的脱敏成功输出或独立设备级 MCP 调用记录，不虚称 S6 语音写入完整验收。
+- 保持既有 S4/S5 业务、固件、Muse 提示词、私人 ID/Token/备份不入库；本轮仅提交可公开代码与脱敏文档到 S6 Draft 分支。完整见 `docs/S6_SESSION_HANDOFF_2026-11-05.md` 与 `docs/IWIKI_S6_IMPLEMENTATION.md`。
+
+## 2026-11-04 S6 仓库代码开发完成首版，现场迁移与目录契约待验证（更新）
+- 从 S5 `d20942c` 建立 `feat/iwiki-s6-document-discovery`，新增 S6 范围锁定的目录精确查找、目标创建/标题说明更新/阶段新增/真实任务表进度记录、独立语音 MCP 门禁、只读元数据结构诊断。S6 分支 GitHub iWiki CI **167/167**，文档检查通过（以最新 HEAD CI 为准）。
+- 当前为**模拟测试及仓库代码**，不代表真实 `list_docs` 可以完整列出目录中的嵌套文档；父级、空间、分页字段待本机一次只读检查。契约无法证实时失败关闭；未部署 S6 MCP，未远程编辑/移动《测试》，未更新私人映射/令牌。用户仍需自行备份旧《测试》，原位重命名+移动，再核对 ID/12 列任务数据；若 ID 变化先暂停任务写入。
+- 实施与安全说明：`docs/IWIKI_S6_IMPLEMENTATION.md`；保留 S5 真实语音写入已验收状态，不重复 S5 探针，不动 S4/S5 服务、固件/云和既有 Draft PR。
+
 ## 2026-11-04 S5 真实语音写入用户验收成功；S6 架构与新对话交接（最新）
 - **用户现场确认**：Windows 从 `c09f5a4` 快进到 `deea681`，`node tools/s5-write-bridge.mjs --install-write` 返回 `S5_WRITE_INSTALLED_TASKS_ONLY_RESTART_XIAOZHI`；新“小七”语音调用任务查询、写入准备、取消均成功；之后用户明确报告**两轮语音写入成功，事项出现在 iWiki 《测试》文档**。这是用户现场报告，不冒充仓库独立保留的远端读回原始日志。S5 真实链路已不再卡在安装/MCP 同步。
 - **当前业务存储瑕疵**：正式任务尚写入标题为《测试》的页面，因为私有 `taskDocId` 指向此页；不应按文档名猜目标。先安全备份，优先**保留原 doc_id** 将旧页原位重命名为《任务总表》并移动到 `MuSSE 个人管理`，保留已有任务与固定 12 列表，确认 ID 未变；任何实际页面修改/移动需用户单独明确操作授权。

@@ -34,14 +34,17 @@ export function createS5VoiceFlow(
       return {
         operationId: p.operationId,
         preview: p.preview,
-        question: "需要保存这项修改吗？请明确说“确认写入”或“取消”。",
+        question: "需要保存这项修改吗？请明确说“确认”或“确认写入”；不保存请说“取消”。",
         expiresAt: p.expiresAt,
       };
     },
     async confirm(operationId: string, spokenText: string): Promise<{ operationId: string; status: "VERIFIED" }> {
       const saved = proposals.get(operationId);
       if (!saved) throw new S5GateError("S5_UNKNOWN_PROPOSAL");
-      if (typeof spokenText !== "string" || !["确认写入", "确认保存"].includes(spokenText.trim())) {
+      // Accept a short, explicit affirmative after a valid PREPARE preview.
+      // Speech transcription may append terminal punctuation. Never accept bare 保存,
+      // questions, negations, extra commands, or a model-provided approval flag.
+      if (typeof spokenText !== "string" || !/^确认(?:写入|保存)?[。.!！]?$/u.test(spokenText.trim())) {
         throw new S5GateError("S5_EXPLICIT_CONFIRMATION_REQUIRED");
       }
       gate.trusted.approve(operationId, saved.digest);

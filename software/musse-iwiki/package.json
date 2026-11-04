@@ -24,6 +24,15 @@
     "probe:s5-existing-edit": "node tools/s5-probe-existing-edit.mjs",
     "preflight:s5": "node tools/s5-local-preflight.mjs",
     "bridge:s5-preview": "node tools/s5-preview-bridge.mjs",
-    "bridge:s5-write": "node tools/s5-write-bridge.mjs"
+    "bridge:s5-write": "node tools/s5-write-bridge.mjs",
+    "mcp:s6": "node src/mcp/server-s6-write.ts",
+    "inspect:s6-dir": "node tools/s6-inspect-directory.mjs",
+    "pin:s6-scope": "node tools/s6-pin-local-scope.mjs",
+    "verify:s6": "node tools/s6-verify-readonly.mjs",
+    "preview:s6": "node tools/s6-preview-cancel-readonly.mjs",
+    "accept:s6": "node tools/s6-one-shot-acceptance.mjs",
+    "audit:s6-uncertain": "node tools/s6-audit-post-uncertain.mjs",
+    "recover:s6-progress": "node tools/s6-recover-progress-once.mjs",
+    "migrate:s6-ids": "node tools/s6-migrate-goal-ids-once.mjs"
   }
 }

@@ -1,4 +1,18 @@
 # 实验与测试日志
+
+## 2026-11-05 — Gxxx 统一格式代码检查 / 迁移测试状态
+
+- S6 源码规则更新为 ^G[0-9]{3,6}$；MCP 工具说明 G001/G998 无横线；针对旧 G-001 的拒绝及迁移任务表关联的模拟测试已提交。
+- 原 207/207 为修改前历史 Windows 测试；**本次新代码和迁移工具尚未在 Windows 完整运行 npm test，也没有真实执行 iWiki 迁移**，不能沿用历史通过数冒充本次测试结果。
+- 历史写入脚本已禁用 CLI 入口；迁移前必须在用户 Windows 上读取一次 plan 并进行私有备份。参见 docs/S6_GOAL_ID_MIGRATION_2026-11-05.md。
+
+
+## 2026-11-05 T-20261105-S6-CLOSE — iWiki 进度写入双重验收及桥接恢复（用户 Windows 现场记录）
+- **网络只读**：关闭梯子后 Node v22.23.2，HTTP/HTTPS/ALL 代理环境变量未设置，DNS 正常、TCP 443 正常、Node 对主站 HTTPS HEAD 200；`audit:s6-uncertain -- --read-only` 返回 2 个目标、4 个任务、G-999/G-998 有效、`matchingProgressRecords=0`、`writesAttempted=0`。退出码 2 是预期记录不存在的业务未完成状态，不是 MCP 连不上。
+- **唯一新授权的远端写入**：用户执行 `recover:s6-progress -- --once`，本机交互确认 `G-998` 单条 0% 记录，备份后向 iWiki 发出唯一一次 `edit_doc`。真实结果 `status=VERIFIED`、`flowResult=ACK_AND_READBACK_VERIFIED`、`writeAttempts=1`、`progressRecordsObserved=1`、`backupSaved=true`、`remoteErrorCode=null`、`toolAccessStage=ready`、`listReadOnlyRetries=0`、回执中 `ok=true`；证据足以认定本地业务写入与精确读回成功。
+- **Windows 桥接安装事故和恢复**：首版 PowerShell 安装片段在配置 `mcpServers` 为空时继续执行，最后覆盖本地配置；初次恢复选择的备份不符合完整结构，未恢复。随后扫描 4 个匿名备份，1 份符合官方 iWiki/S4/S5，恢复得到 `RESTORE_STATUS=SUCCESS`、原三服务配置保留、S6 尚未安装。此为配置恢复，不证明服务运行。
+- **后续处理**：归档仅检查本地配置并做离线 MCP initialize/tools/list 的安全安装器 `software/musse-iwiki/tools/s6-safe-install.cjs`；用户之后反馈“没问题了，都好了”。由于未收到明确的设备工具调用轨迹或单次语音确认写入读回输出，将 S6 语音接入记作用户报告正常，**不标成设备级独立验收**。脚本本地语法已检查，但不把之前 207 项测试冒充新脚本的 CI 覆盖。全程不保存/提交 Token、私有 ID、正文或备份。代理归因是高可信推断而非排他事实。
+
 ## 2026-11-04 T-20261104-28 — Windows S5 真实语音写入成功（用户反馈）与 S6 设计
 - 用户明确给出 Windows PowerShell 安装日志：`Updating c09f5a4..deea681 Fast-forward`，`S5_WRITE_INSTALLED_TASKS_ONLY_RESTART_XIAOZHI`；新“小七”智能体管理页面的 S5 工具列表启用，且设备语音中的任务查询、prepare、cancel 三项测试均由用户报告“工具调用成功”。之前管理面板 `musse_write_cancel` 一次使用记录是**用户手动网页测试**，不能误算为设备语音测试；后来的三项语音成功是独立的新反馈。
 - 随后按两轮语音“准备任务/预览 → 下一轮确认写入”验收，用户回复“成功了”，并指出新增事项出现在 iWiki 个人空间《测试》文档。**证据性质：用户直接现场报告**，没有此轮远端原始 `edit_doc` 与 `read_doc` 响应作为 GitHub 归档，不得擅自声称已独立核验所有内部步骤。

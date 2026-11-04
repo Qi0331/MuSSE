@@ -1,0 +1,214 @@
+# 小七 S6｜独立长期目标知识库发现与受控写入（2026-11-04）
+
+## 2026-11-05 最新实测与部署补记（覆盖下方旧阶段状态）
+
+**本地真实 iWiki 业务闭环完成，语音实物结果仍按证据等级记录。** 用户关闭梯子后 DNS、TCP 443、Node.js HTTPS（HEAD 200）和 `npm run audit:s6-uncertain -- --read-only` 均正常；审计看到 G-999 更新标记、G-998 正文有效、4 条任务、尚未补写进度。得到新一轮明确授权后只执行一次 `npm run recover:s6-progress -- --once`，结果为 `VERIFIED/ACK_AND_READBACK_VERIFIED`，远端真实 `edit_doc` 1 次、精确读回记录 1 条（0%）、私有备份成功、无只读重试或远端错误。此前的 `ECONNRESET` 已在关闭梯子环境中消失，但代理因果关系未做严格对照。禁止重新执行 `accept:s6` 或任何恢复补写。
+
+**桥接安装事故：** 初版交互式 PowerShell 安装片段在原服务对象为 null 时未完整停止，写出了无效配置。用户通过本地旧备份扫描（4 份候选、1 份完整）恢复配置并输出 `RESTORE_STATUS=SUCCESS`、原官方/S4/S5 条目均被保留。恢复不代表此时服务已启动。后续归档的 `tools/s6-safe-install.cjs` 采用 Node.js 单进程、失败即停的本地配置门禁及离线 MCP 工具检查；只在成功时备份并注册独立 `musse_iwiki_s6_goals`，**不执行 iWiki 写入**。脚本仅作为 Windows 操作工具，不含真实 Token/ID；它会启用四工具 S6 启动器，远端写入仍需逐项明确授权。用户最新反馈“没问题了，都好了”，但尚无匿名安装日志、设备 MCP 实际调用和语音写入读回的独立证据。
+
+**归档与使用**：`software/musse-iwiki/tools/s6-safe-install.cjs`；Windows 运行前先停止 `xiaozhi start`、保留原配置及备份，路径以本机独立 S6 工作树为准。不要上传 `xiaozhi.config.json`、`musse-iwiki-readonly.json`、`musse-iwiki-s6-scope.json`、令牌或原文备份。既有 207/207 本地测试为此前版本的逻辑验证，**不代表新安装器已被完整 CI 覆盖**；本次未重复 S5/S6 套件。
+
+
+> **状态（2026-11-04）**：用户已在 iWiki 完成「小七个人管理」页面目录，截图中《任务总表》是 12 列、4 行任务；《长期目标》是**单独的知识库**，不是已证实的普通子文件夹。Windows S6 worktree 已安装只读诊断并返回：45 个可见空间，精确唯一《长期目标》，该知识库 `docs=[]`、`total=0`、省略 `has_more`，无下一页游标；写入次数为 0。仓库现支持显式知识库范围模式 `{ "mode":"space", "spaceId":"..." }`，但**真实非空文档元数据、创建后的读回和语音写入尚未验收**。原 S5 成功不受影响。
+
+## 1. 建议的实际个人空间
+
+```text
+个人 iWiki 空间/
+└── 小七个人管理/
+    ├── 任务总表                 ← 保留现有《测试》全部任务，固定 ID
+    ├── 快捷笔记                 ← 固定 ID；原 notesDocId 仍待确认
+    ├── 长期目标索引             ← 可选人工导航，无状态权威性
+    ├── 长期目标（独立知识库）  ← 通过唯一知识库 ID 绑定，非 folderId
+    ├── 历史归档                 ← 可选
+    └── 使用说明                 ← 可选
+```
+
+所有待办仍放 **同一个** 12 列任务总表（真实状态来源）；目标页保存说明、阶段和进度历史，阶段关联任务按任务总表的 `目标ID + 阶段ID` 计算，不另建第二状态库。当前 S5 任务创建未自动填写目标 ID，目标任务关联编辑是后续独立能力；本次不修改 S5 行为。
+
+## 2. 用户手工迁移《测试》——不能直接代为远程修改
+
+1. 已有《任务总表》截图显示 12 列及 4 条记录；仍应由用户在本机核对原《测试》迁移前后的 doc_id 和全部记录，保留已有备份。
+2. 用户已在个人 iWiki 下建立 `小七个人管理`，并建立页面显示为「知识库」的 `长期目标`；不要将界面上的知识库无证据地等同于 API 的 `parent_id` 文件夹。
+3. 截图已出现《任务总表》和旧 S5 写入记录；尚未独立证明迁移保持了相同 doc_id。**不要**直接创建空《任务总表》取代旧页。
+4. 在浏览器本机确认：迁移前后 `doc_id` 一致；12 列表头及历史任务行完整；再次从页面读取原记录。备份保留。
+5. 如 ID 变化、目录错误或正文异常，**停止小七对任务表的写入**；只在核实新页面真实 ID 后，在 Windows 原本的私有 `musse-iwiki-readonly.json` 内更新 **`taskDocId` 一处**，避免继续写旧文档。不要把原始 JSON 解析错误/配置文件打印到聊天。
+
+注意：移动操作是否保留 ID 必须现场验证，不能靠猜；Windows 私有文件与令牌不由 S6 GitHub 提交修改。
+
+## 3. S6 设计与契约边界
+
+新源码（实际 S6 根知识库模式）：
+
+- `src/goals/s6-goal-discovery.ts`：支持 **`mode:"space" + spaceId` 的专属知识库范围**，旧 `spaceId + folderId` 模式仍可复用；仅允许标题为 `G-001` 等规范 ID 的文档；逐篇读取并检查正文 `目标ID`、重复标题/文档 ID、阶段 ID。
+- `src/goals/s6-goal-flow.ts`：三种允许操作 `goal_create`、`goal_update`（标题、说明、新增阶段）、`goal_record_progress`（百分比只按固定任务表计算）。预览→下一轮用户明确确认→写前再次扫描/比对→最多一次写入→再扫描读回。
+- `src/goals/s6-official-port.ts`：与官方 `list_docs` / `read_doc` / `create_markdown_doc` / `edit_doc` 的隔离适配。根知识库模式创建时只传明确 `space_id`、不虚构 `parent_id`；文件夹模式仍传 `space_id + parent_id`，编辑只按验证过的 `doc_id`。错误/不确定回执不自动重试。
+- `src/mcp/s6-goal-protocol.ts`、`server-s6-write.ts`：**独立**的四工具 MCP，不复用或改装已部署的 S4/S5 服务。
+- `tools/s6-inspect-directory.mjs`：新增**一次性只读**检查，输出字段存在性、数目及是否有完整性标记；不输出私人空间/页面 ID、标题、正文、令牌或原始响应。
+
+**尚未被真实现场证实**：目标知识库非空时 `list_docs` 每篇文档的 `space_id`、`page_type`、`doc_id` 等字段和分页完整性，以及真实 `create_markdown_doc(space_id)` 创建后能否被列表发现；因此写入尚未部署。S5 隔离探针证实过单页创建/编辑，但不构成上述列表字段保证。因此正式适配器现在要求 `data.docs`、`data.total`、明示的 `space_id` 和 `parent_id`；响应不符合就拒绝写入，不能伪装为“没有同名文档”。此约束需通过本次新增的**一次只读**现场字段核验，再根据实证决定是否调整。绝不凭 `search_kb` 相关度直接编辑。
+
+## 4. 私人配置（暂不需要修改；迁移完成且核实字段后再做）
+
+既有任务映射 `musse-iwiki-readonly.json` 继续保留。S6 仅新增本机独立文件，默认与桥接配置放在同一目录，文件名 `musse-iwiki-s6-scope.json`；**以下只是字段格式示意，不能把占位值用于正式环境**：
+
+```json
+{
+  "spaceId": "<仅本机填写真实私有空间 ID>",
+  "folderId": "<仅本机填写长期目标目录真实父级 ID>"
+}
+```
+
+S6 不需要在配置中列出每一个 `G-xxx` 文档 ID。目录锚点必须由用户从真实 iWiki 页面/只读元数据确认；不使用显示名猜测它。**不保存真实账号配置到 GitHub。**
+
+已改进只读检查工具：**即使尚未配置 `musse-iwiki-s6-scope.json`，也可先调用 `list_spaces`，按《长期目标》精确名称寻找唯一候选，然后对该候选调用一次 `list_docs`**。只打印匿名字段形状、条目数、匹配数，不打印空间 ID、标题、正文或令牌；名称不唯一或返回结构不匹配时不猜测目标空间。可在**本机**运行一次：
+
+```powershell
+cd $HOME\MuSSE-Lab\MuSSE-S5F\software\musse-iwiki
+npm run inspect:s6-dir -- --read-only
+```
+
+该路径是历史 S5 工作区的示意，实际需要先有包含 S6 的独立工作区；**不要在旧 S5 detached HEAD 上误以为直接就能运行新脚本**。如果私有 scope 文件不存在，运行的是只读 bootstrap 诊断；它**不会生成 scope 文件**、创建/编辑文档或安装 MCP。只传递脱敏后的结构摘要，不分享原始日志。即使识别到唯一同名空间，也不能替代真实的层级/分页验证。尚未核实返回结构时，不安装 S6 写入 MCP。
+
+正式入口（**仅代码已存在，未安装**）：`MUSSE_S6_WRITE_ENABLED=1 npm run mcp:s6`，还要求私人连接配置、原 `taskDocId` 和有效 `scope`。运行时仍非原子条件写入；口头确认不是独立说话人鉴权，必须确保平台仅在用户**下一轮真实确认**后调用确认工具。绝不可先运行写服务，再回头核实目录。
+
+## 5. S6 最小验收与边界
+
+- 代码层：新功能模拟单测，重点检查歧义、跨目录、错误 ID、重复、无效确认、取消、写前冲突、远程不确定、读回不一致。原 S5 任务链路保留不动。
+- Windows 本机：仅在用户迁移完成后，核实一次字段形状与正确文件夹归属；没有结构证据则停止。
+- 真实语音：另行获得明确远程**创建/编辑某个指定目标**的授权后，只做一次预览/取消和一次明确授权写入/读回，不重跑 S5-F。
+- 不动旧 S4 双服务、已上线 S5 服务配置、Token、ESP32、云服务器或其他 PR。所有 GitHub PR 保持 Draft。需尽快在相应平台轮换先前日志泄露的小智 MCP 令牌和 iWiki Bearer Token；轮换后仅本机改配置，不要贴回聊天。
+
+已知限制：`list_docs` 当前响应契约尚需验证；非原子写有外部浏览器编辑竞态；未实现主动通知/调度；断进程后不持久保存不确定提案阻塞状态。以上限制不应被软件模拟测试的通过掩盖。
+
+
+## 6. 已验证的知识库模式与最短后续步骤
+
+2026-11-04 用户的本地只读运行明确返回：
+
+- `list_spaces`：45 个可见知识库，`长期目标` 精确匹配 1 个且有 ID。
+- `list_docs(space_id)`：`docs=[]`、`total=0`、无下一页游标，`has_more` 字段省略。
+- `create_markdown_doc` 工具元数据声明支持 `title`、`content`、`space_id`、`space_name`、`parent_id`；仅 `title` 和 `content` 为必填。
+- `list_doc_tree` 不声明 `space_id`，因此暂不调用它，也不根据不存在的 `folderId` 写入。
+
+一次性本地作用域固定命令（由用户明确执行，**仅创建** Windows 私有 `musse-iwiki-s6-scope.json`，不修改原 `xiaozhi.config.json`、`musse-iwiki-readonly.json` 或远端 iWiki；若文件已存在则拒绝覆盖）：
+
+```powershell
+cd "$HOME\MuSSE-Lab\MuSSE-S6\software\musse-iwiki"
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw "更新失败，停止后续命令" }
+git merge --ff-only FETCH_HEAD
+npm run pin:s6-scope -- --pin-local
+npm run verify:s6 -- --read-only
+```
+
+该命令重新以只读方式核实唯一同名、空知识库及总数，成功输出 `S6_LOCAL_SCOPE_PINNED`，不打印任何私人 ID。保留 scope 文件，后续不再重复固定。**知识库归属由用户在其 iWiki 网页确认**，仅同名唯一不是写入授权。
+
+下一阶段：必须先有一个用户主动创建或明确授权创建的实际 `G-xxx` 目标页，单次只读检查非空列表的父目录/空间字段、类型和分页，再针对真实字段调整官方适配器。之后才考虑 S6 的受控预览、取消、确认及读回；**不提前运行 `mcp:s6`，不重复 S5 已通过的语音写入探针**。
+
+
+## 7. 只读迁移核验
+
+`npm run verify:s6 -- --read-only` 使用刚刚固定的 `mode:"space"` 作用域，实际检查目标知识库列表，并通过当前 Windows **原有** `musse-iwiki-readonly.json` 的 `taskDocId` 读取原《任务总表》：
+
+- 检查返回的真实 `doc_id` 与 Windows 本地任务映射一致，标题确为 `任务总表`；
+- 使用已有 `parseTaskTable` 严格解析 12 列结构和任务行，输出任务数而不是私人正文或 ID；
+- 目标文档数仅统计经过完整范围检查的结果；当前独立知识库应为 0；
+- 即使这一步通过，仍明确输出 `readyForWrite:false`，不会启用受控写入或擅自新建测试目标。
+
+用户贴回仅 `S6_LOCAL_READ_ONLY_VERIFICATION` 匿名结构；如失败不得输出私有 JSON、令牌或完整报错。
+
+
+## 8. 非空长期目标知识库实测（2026-11-04）
+
+用户在《长期目标》独立知识库中手工创建隔离页 `G-999`，S6 只读诊断返回：固定作用域已生效；`list_docs(space_id)` 的 `docs` 数量为 1、`total` 为 1、没有继续分页游标；未提供 `has_more`、`parent_id`、`page_type`、`kind`；返回的页面含 `doc_id`、`title`、`space_id`。实际写入次数仍为 0。
+
+因此在已绑定的专用知识库模式中，允许上述经过实测的非空格式，但只有在 `total===docs.length`、无分页继续标记、列表不满 100 条、每个 `space_id` 与绑定值一致时才接受。省略的文档类型标记为 `unverified`，之后逐页通过 `read_doc` 和 `parseGoal` 检验真实目标内容及一致的目标 ID；其他类型、跨空间、重复、计数不匹配等仍然拒绝。
+
+已知限制：在大量文档、分页边界时 `total` 的正式语义尚未现场验证；这里采用不足 100 条的保守边界，而非宣称 iWiki 的全局分页契约已证实。
+
+下一步在 S6 工作区先同步最新提交，再执行 `npm run verify:s6 -- --read-only`，预计 `goalDocumentCount=1`、`taskCount=4`、`readyForReadOnly=true`、`readyForWrite=false`、`writesAttempted=0`。这会完整读取和验证 `G-999`，不会修改目标页或任务表。真实 S6 写入仍需单独明确授权。
+
+## 9. G-999 只读预览和取消（下一项现场验收）
+
+真实本地 `verify:s6` 返回 `goalDocumentCount=1`、`testGoalG999Verified=true`、`taskCount=4`、`readyForReadOnly=true`、`writesAttempted=0`。这代表动态发现、读取目标正文及核对任务表均已通过。
+
+新增 `npm run preview:s6 -- --read-only`：只针对已绑定知识库里的 `G-999`，调用正式 S6 `find → prepare(goal_update.description) → cancel`，对远端仅允许 `list_docs`、`read_doc` 两种工具；独立只读客户端与业务端口双重阻断 `edit_doc`/`create_markdown_doc`。输出仅包含真假状态、读调用次数和 `writesAttempted:0`，不输出目标正文、令牌、私人 ID 或原始错误。
+
+此步骤不会编辑 `G-999`，不会修改 Windows 私有配置，也不会部署写入服务。执行前把 S6 worktree 快进至最新已通过测试的分支提交；无需重跑 S5 或先前空知识库探针。
+
+真实写入下一步应由用户单独明确授权：指定隔离目标 `G-999` 的准确字段变更，在已备份正文并可核对归属的前提下，仅执行一次受控更新和 readback。未授权时，`readyForWrite:false` 持续有效；不可假称写入已现场验收。
+## 10. 一条命令完成 S6 隔离场景验收（替代多轮手动探针）
+
+用户希望减少每轮 Git 拉取/执行/贴输出。S6 新增 `npm run accept:s6 -- --once`，包含现有只读动态发现、目标/任务数据核验，以及三个业务动作 `goal_update`、`goal_create`、`goal_record_progress` 的预览+取消。这些自动步骤禁止远程修改。
+
+在**同一次终端运行**中，程序随后按顺序提供三项**独立可拒绝**的实际 iWiki 写入：① 对现有隔离目标 `G-999` 的说明保留原内容并追加 `[小七 S6 一次性验收]`，② 创建唯一隔离目标 `G-998`，③ 在 `G-998` 的进度历史里追加一条记录（若没有关联任务，进度为 0%）。每项都显示受影响的目标并要求用户输入该项的完整确认短语，任何不匹配直接停止，且已发生写入时不可直接无脑重跑。没有自动删除，用户可决定以后如何清理 `G-998`。
+
+首项真实写入前自动以独占新文件方式备份 `G-999` 原 Markdown 到 Windows 私有 bridge 目录，不覆盖原配置。每次远端写入均通过 `createS6GoalFlow` 的写前重扫描与哈希校验、一次调用、写后重扫描与精确读回；不可确认时即停机，不重试。该 CLI 是本地受控验收，不等同于小智语音通路已经部署验收；S5 保持不变。
+
+Windows S6 当前 worktree 下：
+
+```powershell
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw '下载失败，停止操作' }
+git merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '合并失败，停止操作' }
+npm run accept:s6 -- --once
+```
+
+请只将末尾的匿名状态摘要发回，不要粘贴私人配置、令牌或原始服务错误。若任何一步写入返回 UNCERTAIN/STOPPED，先网页检查 G-999/G-998 与本机备份，**不要再次启动这个脚本**。本单次命令取代此前单独的 `preview:s6` 现场操作，但不删除原有的只读调试功能。
+## 11. 2026-11-04 真实三项集中写入验收与不确定结果
+
+用户 Windows `accept:s6 -- --once` 真实运行：三项预览/取消全部通过；任务表识别 4 条；`G-999` 的 `goal_update` 写入并精确读回成功；`G-998` 的 `goal_create` 写入并精确读回成功；第三项向 `G-998` 追加进度时已发起一次 `edit_doc`，返回 `S6_WRITE_UNCERTAIN`，整体 `STOPPED/stage_3`。机器匿名摘要：`remoteWriteCallsStarted=3`、`remoteWritesReadbackVerified=2`、`localBackupSaved=true`。不能把该结果描述为写入失败或成功，绝不可自动重跑集中脚本。
+
+新增**唯一必要的后续检查**：`npm run audit:s6-uncertain -- --read-only`。它使用私有固定作用域，仅允许 `list_docs`、`read_doc`，严格解析 `G-999`、`G-998` 和任务表，检查 `G-998` 的进度历史中验收记录是否正好一次、百分比是否与任务表一致，并仅输出匿名计数/状态。无任何远端写入、撤销或重试。
+
+如果 `thirdWriteStatus=PERSISTED_VERIFIED`，说明远端正文持久化已观察到；此前失败可能属于编辑回执/调用层，但不可武断确认原因。若 `NOT_OBSERVED_DO_NOT_RETRY` 或 `READ_ONLY_AUDIT_UNAVAILABLE`，仍不自动补写，需要先检查官方编辑工具返回契约和远端最终状态。保留测试文档及本地备份，绝不自动删除或改动 S5。
+
+建议本机执行一次（S6 工作区内）：
+
+```powershell
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw '下载失败：停止' }
+git merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '更新失败：停止' }
+npm run audit:s6-uncertain -- --read-only
+```
+
+## 12. 不确定写入的真实只读复核结果（2026-11-04）
+
+用户 Windows 运行 `npm run audit:s6-uncertain -- --read-only`，只读结果明确：`goalCount=2`、`g999MarkerVerified=true`、`g998ExistsAndValid=true`、`matchingProgressRecords=0`、`progressMatchesCurrentTaskState=false`、`thirdWriteStatus=NOT_OBSERVED_DO_NOT_RETRY`、`taskCount=4`、`writesAttempted=0`、`writeRetryPermitted=false`。
+
+结论分层：G-999 的受控更新、G-998 的新建分别已被先前实时写入及严格读回证明；第三次 `goal_record_progress` 发起了真实 `edit_doc` 但返回 `S6_WRITE_UNCERTAIN`，后续只读没有发现预期进度记录，因此**不能判定进度写入成功**，也不能仅凭此确定失败来源是网络、业务拒绝、返回契约还是其他原因。
+
+立即保持原状：不重跑 `accept:s6`、不对 G-998 自动补写、不删除测试文档或本地备份；S5 仍按已验证链路运行。S6 功能边界：发现/读、更新及创建验收通过，进度写入仍处于失败封闭状态，不得声明 S6 全功能上线。后续如需恢复写入，应先分析官方 `edit_doc` 的错误/回执协议并设计单次明确授权的隔离诊断，不能在未确认原因前盲重试。
+
+## 13. 单次定向恢复工具（替代重跑所有 S6 验收）
+
+针对 `G-998` 进度记录的 `S6_WRITE_UNCERTAIN` 且后续只读 `NOT_OBSERVED_DO_NOT_RETRY`，已经增加 `npm run recover:s6-progress -- --once`。这不是自动重试以前的操作：工具会先重新只读核验唯一的两篇隔离目标、`G-999` 已有的标记、`G-998` 的标题及该进度记录仍然不存在，并读取权威任务表计算本次进度百分比。任何条件不满足都在写入前停止。
+
+预检通过后，须由用户在本机新一轮明确输入 `确认单次补写 G-998`。确认前零写入；确认后先独占备份 G-998 原 Markdown 于 Windows 私有目录，`edit_doc` 仅允许对实际发现的 G-998 页面发起一次，硬拒绝创建、删除、编辑 G-999 或任务表，也不允许第二次写入。无论写入回执成功、失败或超时，都会尝试只读比较 G-998 全文、目标ID、进度记录出现次数以及 G-999 未被改动；匿名输出 `VERIFIED`、`PERSISTED_ACK_UNCONFIRMED`、`UNCHANGED_NO_RETRY`、`DIFFERENT_NO_RETRY` 或 `READBACK_UNAVAILABLE_NO_RETRY`，并输出脱敏编辑回执字段/通用远端错误分类。不会自行再尝试第二次。
+
+目前唯一可确认的真实现场故障是：第三项 edit 请求已发出但记录未被观察到。尚没有证据区分服务端拒绝、超时、刚创建文档的暂态问题、工具返回协议不一致等原因。不能擅自归因为其中之一。
+
+Windows S6 worktree 执行（仅这一项，S5 不动）：
+
+```powershell
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw '拉取失败：停止' }
+git merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '快进失败：停止' }
+npm run recover:s6-progress -- --once
+```
+
+若已在网页中手工补写过 G-998 进度，请不要使用此工具；程序会因检测到重复记录而拒绝写入。成功后仍需单独完成小智 S6 语音服务部署验收，不能以 Windows 本地 CLI 成功等同于已上线。
+
+## 14. 本机 207/207 通过后的 iWiki 工具列表阻塞
+
+用户上传的最新本地日志（Windows S6 工作区已到 d8d6fe0）证明 `npm test` 207/207 通过，随后 `recover:s6-progress -- --once` 的只读前置发现失败：`failureStage=goal_scan`、`failureCode=S6_DISCOVERY_UNAVAILABLE`、`listAttempts=2`、`listReadOnlyRetries=1`、`lastListError=S6_TOOLS_UNAVAILABLE`、`writeAttempts=0`、`backupSaved=false`。因此此时还没有任何新 iWiki 编辑，也不能将故障归咎于进度计算/格式。
+
+根源范围：正式读取适配器的 `listDirectChildren` 先请求 `client.listTools()` 核对 `list_docs` 工具契约；`S6_TOOLS_UNAVAILABLE` 表示 `client.listTools()` 抛出异常。此前已通过的 2 个目标内容解析未在本轮开始。它可能是 `initialize` 握手、`tools/list` RPC、HTTP 权限或网络问题，**没有真实错误类别前不能断言根因**。
+
+本轮代码仅在 S6 定向恢复入口提前执行一次相同的只读 `initialize → tools/list`，缓存其成功响应，并在失败时输出脱敏的 `toolAccessStage`（`initialize`/`tools_list`）、`toolAccessError`（已知错误类别及数字 HTTP/RPC 状态），不暴露响应消息、私人 ID、终端配置或令牌。依然在未授权前 0 写入，检查通过后仍需终端逐项确认 G-998 的唯一 edit_doc，且严格禁止自动重试写入。
+
+结论：本地业务测试通过 ≠ 远端 iWiki MCP 可用；等待真实匿名诊断结果后再判断是否需要调整网络、令牌或服务端工具契约。绝不改 S5 原链路。
