@@ -1,5 +1,13 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-10 — S5-B 离线安全门禁开发侧测试
+- **运行环境**：隔离 Linux Node.js `v22.16.0`（低于项目声明的 Windows Node `>=22.18`），独立临时工作目录；使用标准库假 `S5AtomicPort`，不连接真实 iWiki。
+- **实际命令**：`node --experimental-strip-types --test .../tests/s5-guarded-write.test.ts` → **13 tests / 13 pass / 0 fail**。覆盖严格白名单、伪造确认拒绝、跨事务摘要不匹配、过期、无原子条件写门槛、无版本令牌拒写、成功后读回与同一事务重复提交、预写冲突、模糊远端结果不盲重试、读回不一致、拒绝、待处理容量限制、敏感错误脱敏和并发双提交。
+- 新增 `src/write/guarded-write.ts`、`src/write/plan-write.ts`、`tests/s5-guarded-write.test.ts`、`tests/s5-plan-write.test.ts` 均通过 Node `--experimental-strip-types --check` 语法检查；`s5-plan-write.test.ts` **未在真实完整仓库执行**。
+- **未执行**：完整仓库 `npm test`、`python scripts/check_repo.py`、Windows/设备验收、官方 iWiki 真实写入、真实版本冲突、可信用户确认 UI。仅证实 S5-B 离线安全门禁测试通过，不代表 S5 可生产写入。
+- 没有修改 iWiki 文档、Windows 桥接/配置、Token、端口、防火墙、固件或云端提示词。
+
+
 ## 2026-11-04 T-20261104-09 — S4-D 自然语言设备语音最终验收（用户现场报告）
 
 - **证据来源**：用户一次性提交验收结论，而非本代理抓取设备日志或独立重放；逐次原始调用轨迹、参数、延迟均未提交。结论注明 **用户现场报告**。
