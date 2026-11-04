@@ -161,3 +161,43 @@ test("S5 simultaneous double commit only schedules one atomic write", async () =
   await first;
   assert.equal(f.writes, 1);
 });
+
+test("S5 verified receipt survives creation of a subsequent proposal", async () => {
+  const f = fake(); const g = createS5Gate(f.port, f.planner);
+  const one = await g.untrusted.prepare(intent);
+  g.trusted.approve(one.operationId, one.approvalDigest);
+  const receipt = await g.untrusted.commit(one.operationId);
+  await g.untrusted.prepare({ type: "note_create", content: "another" });
+  assert.deepEqual(await g.untrusted.commit(one.operationId), receipt);
+  assert.equal(g.untrusted.status(one.operationId), "VERIFIED");
+  assert.equal(f.writes, 1);
+});
+
+test("S5 reserves pending capacity while asynchronous prepares are in flight", async () => {
+  let release: (() => void) | undefined;
+  const f = fake();
+  const port = {
+    ...f.port,
+    read: async (...args: Parameters<S5AtomicPort["read"]>) => {
+      await new Promise<void>((resolve) => { release = resolve; });
+      return f.port.read(...args);
+    },
+  } as S5AtomicPort;
+  const gate = createS5Gate(port, f.planner, { maxPending: 1 });
+  const first = gate.untrusted.prepare(intent);
+  for (let i = 0; i < 10 && !release; i++) await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.ok(release);
+  await assert.rejects(gate.untrusted.prepare(intent), match("S5_TOO_MANY_PENDING"));
+  release();
+  const p = await first;
+  assert.equal(p.status, "AWAITING_APPROVAL");
+  assert.equal(f.writes, 0);
+});
+
+test("S5 rejects previews that omit required full approval detail by exceeding the bounded display", async () => {
+  const f = fake();
+  const planner: S5Planner = () => ({ content: "modified", preview: "x".repeat(2_001) });
+  const g = createS5Gate(f.port, planner);
+  await assert.rejects(g.untrusted.prepare(intent), match("S5_INVALID_PLAN"));
+  assert.equal(f.writes, 0);
+});
