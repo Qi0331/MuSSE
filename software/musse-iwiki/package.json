@@ -20,6 +20,7 @@
     "probe:s5-edit": "node tools/s5-probe-edit-doc.mjs",
     "probe:s5-auto": "node tools/s5-probe-auto-create.mjs",
     "inspect:s5-create": "node tools/s5-inspect-create-metadata.mjs",
-    "inspect:s5-edit": "node tools/s5-inspect-edit-metadata.mjs"
+    "inspect:s5-edit": "node tools/s5-inspect-edit-metadata.mjs",
+    "probe:s5-existing-edit": "node tools/s5-probe-existing-edit.mjs"
   }
 }
