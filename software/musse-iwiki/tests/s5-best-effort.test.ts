@@ -12,7 +12,7 @@ const original = [
   "| T-001 | 做作业 | 说明 | 学习 | P2 | todo | 2026-11-09 |  |  |  | 2026-11-04 10:00 |  |",
 ].join("\n");
 const mapping = { [DOC_PATHS.tasks]: "page-TEST_TASK", [DOC_PATHS.notes]: "page-TEST_NOTES" };
-const contract = { toolName: "update_doc", documentIdArgument: "doc_id", contentArgument: "content" };
+const contract = { toolName: "edit_doc", documentIdArgument: "doc_id", contentArgument: "content" };
 const now = new Date("2026-11-04T09:00:00.000Z");
 const fail = (code: string) => (error: unknown) => error instanceof S5GateError && error.code === code;
 
@@ -29,7 +29,7 @@ function sample(options: { acknowledgement?: "ok" | "none" | "error"; persist?: 
           ok: true, data: { doc_id: docId, content: documents[docId] },
         }) }] };
       }
-      if (name === "update_doc") {
+      if (name === "edit_doc") {
         writes++;
         if (options.persist !== false) documents[docId] = String(args.content);
         if (options.acknowledgement === "error") return { isError: true, structuredContent: { ok: false } };
@@ -55,7 +55,7 @@ test("S5-E best-effort task completion: explicit confirmation, read-before check
   const result = await gate.untrusted.commit(p.operationId);
   assert.equal(result.status, "VERIFIED");
   assert.equal(parseTaskTable(f.documents["page-TEST_TASK"])[0].status, "done");
-  assert.deepEqual(f.calls, ["read_doc", "read_doc", "update_doc", "read_doc"]);
+  assert.deepEqual(f.calls, ["read_doc", "read_doc", "edit_doc", "read_doc"]);
   assert.deepEqual(await gate.untrusted.commit(p.operationId), result);
   assert.equal(f.writes, 1);
 });
