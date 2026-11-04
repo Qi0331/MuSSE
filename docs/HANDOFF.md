@@ -1,5 +1,13 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 最新交接：S5-C 专项离线 26/26，生产写入仍锁定
+- 最新完整入口为 `docs/IWIKI_S5C_HANDOFF.md`。原 S4-D 任务与日程用户现场验收继续有效，用户已跳过额外 S4-E 验收，不再重复测试。S5 独立开发分支仍为 `feat/iwiki-s5-guarded-write-design`、Draft PR #25（base 为 S4 分支）；原 Draft PR #24 不动。
+- S5 核心门禁已增加真实前后值预览、已验证结果去重缓存、异步准备容量保护、预览绑定摘要和误映射笔记格式拒绝；只读官方写工具候选发现脚本 `tools/s5-inspect-write-contract.mjs` 默认无网络，显式 `--live` 也只枚举工具不执行工具调用。
+- 实际隔离 Linux Node 22.16 运行 S5 三组专项测试 **26/26**、6 文件语法检查 **6/6**，GitHub 6 文件与本机测试版本哈希一致；完整 Windows/仓库 `npm test` 未跑，不能称为完整回归。
+- 未验证 iWiki 原子条件写入、官方远端写权限、可信真人逐次确认，生产写 MCP 不接入。保持双服务、现行 Muse 角色、Windows 补丁/防火墙、ESP32 和云端配置不动；不得把旧 `src/mcp/server.ts` 接到生产。
+- 下一批优先拿到用户本机允许的**仅工具发现脱敏摘要**及完整仓库一次性测试；没有证据不得做真实写入。不要回传 Token、页面 ID、私有配置或日志。
+
+
 ## 2026-11-04 S5-B 新分支离线安全门禁交接（最新）
 - 用户要求直接 S5、加快进度，取消额外 S4-E 目标/笔记验收；S4-D 既有用户现场验收不重做。
 - 当前代码在 `feat/iwiki-s5-guarded-write-design`，从 `25a9f64` 分支出来，不改原 Draft PR #24。设计见 `docs/IWIKI_S5_SECURITY_DESIGN.md`；实现见 `software/musse-iwiki/src/write/guarded-write.ts` 和 `plan-write.ts`。
