@@ -1,4 +1,6 @@
 # MuSSE 最新交接（持续更新）
+- **新优先入口（S5-F 自动测试）**：用户希望程序直接通过 `create_markdown_doc` 创建测试文档、再使用 `edit_doc` 更新，因此新增 `npm run probe:s5-auto -- --create-and-write-test`。它只使用原有私有连接，自动创建一篇合成隔离页，收到明确成功与唯一 ID 才读页、改一次并复读；不要求手工创建页面或提供私人 page ID。若服务端响应不符合当前解析范围，停止并报告不确定，不可反复运行。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 
 ## 2026-11-04 S5-F 最新交接（优先于 S5-E）
 - **S5-F GitHub CI 已核实通过**：Node 全量 `npm test` **104/104**（run `41798382817`），文档检查成功（run `41798382801`）。所有新增测试仅模拟响应，不能替代真实 edit_doc 调用。
