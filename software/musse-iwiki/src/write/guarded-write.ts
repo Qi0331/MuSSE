@@ -234,7 +234,10 @@ export function createS5Gate(
           throw new S5GateError("S5_CONFLICT");
         }
       } catch (error) {
-        if (item.status !== "CONFLICT") item.status = "UNCERTAIN";
+        // The update tool has not been called yet: a failed pre-write read
+        // is a rejection, not an indeterminate remote write. Allow a fresh
+        // proposal instead of permanently blocking this document.
+        if (item.status !== "CONFLICT") item.status = "REJECTED";
         item.content = "";
         throw error instanceof S5GateError ? error : new S5GateError("S5_READ_BEFORE_WRITE_FAILED");
       }

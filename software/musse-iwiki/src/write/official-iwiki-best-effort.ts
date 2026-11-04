@@ -32,7 +32,7 @@ function assertContract(contract: IwikiBestEffortContract): void {
   }
 }
 
-function confirmed(result: unknown): boolean {
+function confirmed(result: unknown, expectedDocumentId: string): boolean {
   if (!result || typeof result !== "object" || (result as { isError?: unknown }).isError === true) return false;
   const reply = result as Record<string, unknown>;
   const candidates: unknown[] = [reply.structuredContent];
@@ -43,8 +43,20 @@ function confirmed(result: unknown): boolean {
       }
     }
   }
-  return candidates.some((item) => item && typeof item === "object" && !Array.isArray(item) &&
-    ((item as Record<string, unknown>).ok === true || (item as Record<string, unknown>).success === true));
+  let acknowledged = false;
+  for (const item of candidates) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const envelope = item as Record<string, unknown>;
+    if (!Object.hasOwn(envelope, "ok")) continue;
+    // Only the observed edit_doc business envelope counts. Contradictory
+    // envelopes or another page ID must never be accepted as an update.
+    if (envelope.ok !== true) return false;
+    const data = envelope.data;
+    if (!data || typeof data !== "object" || Array.isArray(data) ||
+        (data as Record<string, unknown>).doc_id !== expectedDocumentId) return false;
+    acknowledged = true;
+  }
+  return acknowledged;
 }
 
 /**
@@ -91,7 +103,7 @@ export function createOfficialIwikiBestEffortPort(
       let response: unknown;
       try { response = await client.callTool(contract.toolName, args); }
       catch { throw new S5GateError("S5_IWIKI_WRITE_FAILED"); }
-      if (!confirmed(response)) throw new S5GateError("S5_IWIKI_WRITE_UNCONFIRMED");
+      if (!confirmed(response, ids[document]!)) throw new S5GateError("S5_IWIKI_WRITE_UNCONFIRMED");
       // Caller verifies the final document with read_doc before reporting success.
     },
   };

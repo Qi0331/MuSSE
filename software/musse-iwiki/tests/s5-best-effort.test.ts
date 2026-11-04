@@ -34,7 +34,7 @@ function sample(options: { acknowledgement?: "ok" | "none" | "error"; persist?: 
         if (options.persist !== false) documents[docId] = String(args.content);
         if (options.acknowledgement === "error") return { isError: true, structuredContent: { ok: false } };
         if (options.acknowledgement === "none") return { content: [{ type: "text", text: "unclear" }] };
-        return { structuredContent: { ok: true } };
+        return { structuredContent: { ok: true, data: { doc_id: docId } } };
       }
       throw new Error("Unexpected tool");
     },
