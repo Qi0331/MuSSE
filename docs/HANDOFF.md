@@ -1,4 +1,10 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F Windows 测试失败及修复交接（最新）
+- 用户已经在 Windows S5 worktree 跑 `npm test`：**115 total / 113 pass / 2 fail**，没有执行真实创建或编辑；错误片段明确证明 #58 是 `new URL(...).pathname` 在 Windows 下产生错误 Node 路径，#90 是 `updateTaskRow` 无条件把 CRLF 替换为 LF，破坏无关行原样保持。
+- S5 GitHub 分支已修复 #58 用 `fileURLToPath`，修复 #90 保留原文每个 CRLF/LF 分隔符，并加跨平台数据保真单测。**先确认最新全部测试通过再做真实写入**，不要无条件重复 `--create-and-write-test`。
+- 若通过，用户本机运行时会交互询问确切目标空间名，创建一篇全新合成文档、读回、一次编辑、读回；只有成功响应中确认唯一 `page-...` 才允许编辑。S4 双 MCP、Token、私有映射与生产配置不动。
+
+
 ## 2026-11-04 S5-F 修正创建目标空间（最新）
 - Windows 已用仅 `tools/list` 的 `npm run inspect:s5-create -- --live` 确认：`create_markdown_doc` 的业务说明强制提供 `space_id` 或 `space_name`（二选一），但 JSON schema 的 `required` 只有标题与正文。无需继续猜缺失原因。
 - GitHub S5-F 探针已更正：执行 `npm run probe:s5-auto -- --create-and-write-test` 时在 Windows 私下输入**一个确切空间名称**；请求只多传 `space_name`，不把名称打印在脱敏结果里。仅限新建测试页、一次 edit、写后读回；已知失败不能盲重跑。
