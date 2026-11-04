@@ -1,4 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-F 真实 iWiki 创建+读取+编辑+读回全部验证成功（当前权威状态）
+- **Windows 实测通过**：用户在独立 S5 worktree `e1f30fc` 运行本地 Node 全量离线测试 **128/128 pass、0 fail**。
+- **真实创建**：此前在用户亲自选定的私人空间成功调用 `create_markdown_doc`，业务层 `ok:true`，得到新文档及唯一页面 ID；随后 `read_doc` 校验初始正文成功。测试文档标题：`MuSSE S5-F 自动隔离测试 8a6fc40f`。
+- **真实编辑**：本轮用户通过 `probe:s5-existing-edit -- --edit-once`，先仅用 `list_spaces → list_docs → read_doc` 精确定位并校验原测试文档，再在本机输入 `EDIT`。`edit_doc` 业务返回 **`ok:true`**，包含修订与字符数信息字段 `new_rev_no/old_chars/new_chars`；写后 `read_doc` 返回 **`UPDATED`**，总体 `outcome:EXISTING_EDIT_VERIFIED`。
+- **验证范围**：该测试充分证明当前身份和私人空间中指定 Markdown 文档可真实创建、读取、全量改写及复读。第一次自动测试曾收到 `edit_doc ok:false` 的原因仍**未知**，不能推断其必然原因；也未验证所有团队空间、生产任务总表、快捷笔记、所有权限或语音端到端流程。
+- **下一阶段**：结束 S5-F 重复试写。S5-E/S5 的独立开发分支已具有 `edit_doc`、`doc_id`、`content` 的可配置适配器及写前比对、二轮语音确认、写后核对逻辑；后续应在此实际验证的官方响应契约基础上完成代码/模拟测试与生产启用前检查。S5 生产入口仍需 `MUSSE_S5_WRITE_ENABLED=1` 和本机私有映射/写契约文件，**现未启用**。S4 双 MCP/Windows 桥接、Token、原真实文档、ESP32 均未改；PR #24/#25 仍 Draft，不合并。
+
+
 ## 2026-11-04 S5-F 既有测试页编辑复核（最新）
 - 官方只读 `tools/list` 已确认 `edit_doc` 接受 `doc_id` 和整篇 `content`，需文档编辑权限，使用三路合并；之前业务 `ok:false` 的确切原因尚未知，不可直接归因于权限或接口参数。
 - S5 分支新增**只针对既有合成测试文档**的 `npm run probe:s5-existing-edit -- --edit-once`：通过 list_spaces/list_docs/read_doc 前置定位、精确标题及内容标记校验，终端额外输入 `EDIT` 后只编辑一次，读回并输出安全的错误类别。**不创建新页、不遍历生产文档、不输出私人 ID 和原始错误**。
