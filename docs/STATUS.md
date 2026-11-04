@@ -1,5 +1,11 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 S5-F 最新进展：官方写工具真实发现，尚无写入
+- 用户 Windows 创建了独立 S5 worktree，HEAD `508e908`，未切换原 S4 工作目录；`npm run inspect:s5-write -- --live` 实际成功，官方 SSE_MARKET iWiki `tools/list` 共 27 个工具，筛出 6 个候选。
+- 主要候选：`edit_doc`（字段 `doc_id/content/title`，仅 `content` 必填）；`append_to_doc`（`doc_id/content`，仅 `content` 必填）。真实更新语义、响应格式、写权限**均未验证**。未调用任何 `tools/call`。
+- S5-F 已新增严格匹配测试标记的一次性隔离 `edit_doc` 探针和离线测试；不调用真实工具，必须经用户**另行明确授权**并自行在 iWiki 网页建立专门测试页后才可运行。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+- S4 双 MCP、既有用户工作区、私有配置、MuSSE 角色、Windows 补丁/防火墙和 ESP32 不动。Draft PR #24/#25 不合并。自动化测试以最新 CI 为准。
+
 ## 2026-11-04 S5-E 最新进展（覆盖旧 S5-D 严格 CAS 门槛）
 - 用户已调整为**实用优先、避免过度防御**。对 iWiki 网页与机器人并发修改采取提交前重新读取并比较文本、写后复查的**非原子低频方案**，并明确接受检查至提交之间的残余竞争窗口；不另建事务数据库、独立授权 UI 或硬件确认。
 - PR #25 开发分支新增 `src/write/official-iwiki-best-effort.ts`、`src/write/voice-flow.ts`、`src/mcp/s5-voice-protocol.ts`、`src/mcp/server-s5.ts` 与对应单测；`guarded-write.ts` 增加显式 `concurrencyMode:"check-before-write"`；原 strict/atomic 兼容保留。新增可选脚本 `npm run mcp:s5`。
