@@ -1,4 +1,6 @@
 # MuSSE — Agent 工作约定
+- **S5-F 最近结果**：官方 `edit_doc` 只读元数据确认整篇 Markdown 替换与三路合并、编辑权限要求；先前业务 `ok:false` 仍未找到具体原因。已增加仅复用 `MuSSE S5-F 自动隔离测试 8a6fc40f` 的 `probe:s5-existing-edit -- --edit-once`：list_spaces/list_docs/read_doc 严格定位后需本机输入 EDIT，最多一次 edit_doc，读回并仅分类错误。严禁重复自动创建新文档、打印原始错误/私人 ID 或修改生产任务表。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 - **S5-F 最新真实联调结果**：Windows 个人空间的合成页面 `MuSSE S5-F 自动隔离测试 8a6fc40f` 已由 `create_markdown_doc` 业务 `ok:true` 创建并被 `read_doc` 成功读取。随后 `edit_doc` 返回业务 `ok:false`、错误值未采集，`readback:UNCHANGED`；**创建验证通过，编辑未通过**。禁止重复 `probe:s5-auto` 创建新页。下一步优先 `npm run inspect:s5-edit -- --live`（只读 tools/list）获取 `edit_doc`/查询旧页工具元数据，再复用原测试页。生产 S5 仍不启用。
 
 - **S5-F 空间选择**：用户截图的“我的文档”不一定是 `space_name`，左侧多个公共/团队空间禁止自动选为试写目标。S5-F 自动探针新增只读 `list_spaces` 发现并在本机显示可见空间，用户手动选有权的私人空间编号，0 取消；无法识别不写。见 `docs/IWIKI_S5F_DISCOVERY.md`。
