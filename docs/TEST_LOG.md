@@ -1,4 +1,9 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-20 — 真实创建通过，真实编辑被拒绝
+- 用户 Windows 选择 `list_spaces` 的第 3 个个人空间（仅为用户主动选择，本记录不使用私人空间 ID），发起一次合成隔离创建。生成标题 `MuSSE S5-F 自动隔离测试 8a6fc40f`，`createAttempted:true, createCallFailed:false`，`createResponseShape.envelopes[0].ok:true`。服务器返回 `doc_id` 等数据键，程序成功从响应解析唯一 ID 并对该新页面做首次 `read_doc`。
+- `editAttempted:true, editCallFailed:false` 但 `editResponseShape.envelopes[0].ok:false`，`dataFields:["error"]`；`readback:"UNCHANGED"` 且 `outcome:"EDIT_UNCONFIRMED"`。真实创建和读成功，**真实更新失败，服务器的 error 值尚未采集**。
+- 不重新发起自动创建测试，防止另建隔离页。新增 `s5-inspect-edit-metadata.mjs` 与离线单测、`npm run inspect:s5-edit -- --live`，只读 `tools/list`，获取编辑工具与现有文档定位工具字段说明；仍未对新页面二次编辑。
+
 ## 2026-11-04 T-20261104-19 — 按 iWiki 界面改用 list_spaces
 - 用户截图展示多个团队和公共空间，以及“我的文档”导航；不能推定“我的文档”可充当 `space_name`。此前修复的 Windows 回归 116/116 已由用户本机通过，但当前终端只等待空间名，尚未调用新的创建或编辑。
 - 增加自动探针的只读 `list_spaces` 预先列举可见空间、用户本机按编号选择私人空间/按 0 取消、列表无法解析时不写入；新增模拟测试核验列举及失败保护。尚无真实远端 list_spaces/create/edit 的新证据。
