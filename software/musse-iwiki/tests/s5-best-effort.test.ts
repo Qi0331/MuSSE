@@ -102,6 +102,72 @@ test("S5-E unclear result never reports success, even if it may have written", a
   assert.equal(f.writes, 1);
 });
 
+test("S5-F adapter accepts the now-verified real textJson edit_doc acknowledgement", async () => {
+  const documents: Record<string, string> = {
+    "page-TEST_TASK": original,
+    "page-TEST_NOTES": "# 快捷笔记\n",
+  };
+  const calls: string[] = [];
+  const client = {
+    async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+      calls.push(name);
+      const id = String(args.doc_id);
+      if (name === "read_doc") return {
+        content: [{ type: "text", text: JSON.stringify({
+          ok: true, data: { doc_id: id, content: documents[id] },
+        }) }],
+      };
+      if (name === "edit_doc") {
+        assert.deepEqual(Object.keys(args).sort(), ["content", "doc_id"]);
+        documents[id] = String(args.content);
+        return { content: [{ type: "text", text: JSON.stringify({
+          ok: true, summary: "updated", data: {
+            doc_id: id, title: "SYNTHETIC", new_rev_no: 2, old_chars: original.length,
+            new_chars: documents[id].length,
+          },
+        }) }] };
+      }
+      throw new Error("unexpected tool");
+    },
+  };
+  const port = createOfficialIwikiBestEffortPort(client, mapping, contract);
+  const gate = createS5Gate(port, planS5Mutation, {
+    concurrencyMode: "check-before-write", clock: () => now.getTime(),
+  });
+  const prepared = await gate.untrusted.prepare({ type: "task_complete", taskId: "T-001" });
+  gate.trusted.approve(prepared.operationId, prepared.approvalDigest);
+  const result = await gate.untrusted.commit(prepared.operationId);
+  assert.equal(result.status, "VERIFIED");
+  assert.equal(parseTaskTable(documents["page-TEST_TASK"])[0].status, "done");
+  assert.deepEqual(calls, ["read_doc", "read_doc", "edit_doc", "read_doc"]);
+});
+
+test("S5-F adapter rejects real textJson business ok:false rather than treating MCP success as write success", async () => {
+  const client = {
+    async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+      if (name === "read_doc") return {
+        content: [{ type: "text", text: JSON.stringify({
+          ok: true, data: { doc_id: String(args.doc_id), content: original },
+        }) }],
+      };
+      if (name === "edit_doc") return {
+        content: [{ type: "text", text: JSON.stringify({
+          ok: false, summary: "rejected", data: { error: "SYNTHETIC_ERROR" },
+        }) }],
+      };
+      throw new Error("unexpected");
+    },
+  };
+  const port = createOfficialIwikiBestEffortPort(client, mapping, contract);
+  const gate = createS5Gate(port, planS5Mutation, {
+    concurrencyMode: "check-before-write", clock: () => now.getTime(),
+  });
+  const prepared = await gate.untrusted.prepare({ type: "task_complete", taskId: "T-001" });
+  gate.trusted.approve(prepared.operationId, prepared.approvalDigest);
+  await assert.rejects(gate.untrusted.commit(prepared.operationId), fail("S5_WRITE_UNCERTAIN"));
+  assert.equal(gate.untrusted.status(prepared.operationId), "UNCERTAIN");
+});
+
 test("S5-E write contract must be explicitly specified; no guessed names or IDs", () => {
   const unused = { callTool: async () => ({}) };
   assert.throws(() => createOfficialIwikiBestEffortPort(unused, mapping, {
