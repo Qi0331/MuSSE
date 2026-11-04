@@ -1,4 +1,10 @@
 # MuSSE 当前项目状态（唯一权威）
+
+## 2026-11-05 S6 最新结果（覆盖下方旧开发/阻塞记录）
+- Windows 关闭代理/梯子后 iWiki MCP 只读恢复：DNS、TCP 443、Node HTTPS HEAD 200；只读审计发现 G-999 标记有效、G-998 正文有效、4 条任务且待补进度记录不存在。后经用户新一轮授权，**一次** `recover:s6-progress -- --once` 返回 `VERIFIED/ACK_AND_READBACK_VERIFIED`、`writeAttempts=1`、`progressRecordsObserved=1`、`backupSaved=true`；0% 进度已真实写入并精确读回。已完成 S6 本地 iWiki 核心业务真实验收，禁止重跑 `accept:s6` 或补写。
+- `ECONNRESET` 更可能与代理路径相关，但仅有关闭梯子成功的证据，未证明唯一原因。S6 桥接初次 PowerShell 安装错误导致配置异常，已从本地历史备份恢复官方 iWiki/S4/S5 配置（`RESTORE_STATUS=SUCCESS`）；专用 `tools/s6-safe-install.cjs` 后续提供，用户报告“都好了”。尚未取得新安装器的脱敏成功输出或独立设备级 MCP 调用记录，不虚称 S6 语音写入完整验收。
+- 保持既有 S4/S5 业务、固件、Muse 提示词、私人 ID/Token/备份不入库；本轮仅提交可公开代码与脱敏文档到 S6 Draft 分支。完整见 `docs/S6_SESSION_HANDOFF_2026-11-05.md` 与 `docs/IWIKI_S6_IMPLEMENTATION.md`。
+
 ## 2026-11-04 S6 仓库代码开发完成首版，现场迁移与目录契约待验证（更新）
 - 从 S5 `d20942c` 建立 `feat/iwiki-s6-document-discovery`，新增 S6 范围锁定的目录精确查找、目标创建/标题说明更新/阶段新增/真实任务表进度记录、独立语音 MCP 门禁、只读元数据结构诊断。S6 分支 GitHub iWiki CI **167/167**，文档检查通过（以最新 HEAD CI 为准）。
 - 当前为**模拟测试及仓库代码**，不代表真实 `list_docs` 可以完整列出目录中的嵌套文档；父级、空间、分页字段待本机一次只读检查。契约无法证实时失败关闭；未部署 S6 MCP，未远程编辑/移动《测试》，未更新私人映射/令牌。用户仍需自行备份旧《测试》，原位重命名+移动，再核对 ID/12 列任务数据；若 ID 变化先暂停任务写入。
