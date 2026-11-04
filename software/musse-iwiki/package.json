@@ -27,6 +27,7 @@
     "bridge:s5-write": "node tools/s5-write-bridge.mjs",
     "mcp:s6": "node src/mcp/server-s6-write.ts",
     "inspect:s6-dir": "node tools/s6-inspect-directory.mjs",
-    "pin:s6-scope": "node tools/s6-pin-local-scope.mjs"
+    "pin:s6-scope": "node tools/s6-pin-local-scope.mjs",
+    "verify:s6": "node tools/s6-verify-readonly.mjs"
   }
 }
