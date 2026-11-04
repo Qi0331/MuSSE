@@ -1,4 +1,5 @@
 # MuSSE 当前项目状态（唯一权威）
+- **自动创建探针本轮 CI 实际通过**：GitHub Node.js 全量测试 `112/112 pass`（run `41799562069`），文档检查通过（run `41799562141`）。新增 8 项模拟测试，不是远端写入证据。
 - **S5-F 简化调整**：用户指出可由官方 `create_markdown_doc` 直接创建隔离页，故增加 `npm run probe:s5-auto -- --create-and-write-test` 自动创建→核验→编辑一次→读回流程，免去网页手工创建和输入 page ID。该探针尚未远端执行；创建响应 ID/默认空间是否可用仍需实测。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
 
 
