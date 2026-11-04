@@ -87,9 +87,9 @@ export function summarizeS6ToolAccessError(error) {
   else if (error?.name === "AbortError") category = "TIMEOUT";
   else if (error?.name === "TypeError") category = "NETWORK_OR_RESPONSE";
   const httpStatus = code === "IWIKI_HTTP_ERROR" ?
-    Number(/^iWiki MCP HTTP (\\d{3}):/.exec(msg)?.[1] ?? 0) || null : null;
+    Number(/^iWiki MCP HTTP (\d{3}):/.exec(msg)?.[1] ?? 0) || null : null;
   const rpcCode = code === "IWIKI_RPC_ERROR" ?
-    Number(/\\((-?\\d+)\\)\\s*$/.exec(msg)?.[1] ?? NaN) : NaN;
+    Number(/\((-?\d+)\)\s*$/.exec(msg)?.[1] ?? NaN) : NaN;
   const allowedCause = ["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT",
     "ENOTFOUND", "EAI_AGAIN", "EHOSTUNREACH"].includes(cause) ? cause : null;
   return { category, httpStatus,
