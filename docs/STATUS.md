@@ -1,5 +1,13 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-05 — S5 确认循环根因：Windows 桥接仍加载 S5F 旧源码
+
+- Windows 日志确认：`musse_iwiki_s5_write.args[0]` 仍指向 `MuSSE-S5F/.../server-s5-write.ts`，但已修正口令的新版本在 `MuSSE-S6/.../server-s5-write.ts`。这解释了 GitHub / Windows 新版 216/216 测试通过而设备仍拒绝 `确认写入。`。`s5-write-bridge.mjs --status` 返回 `S5_WRITE_ENTRY_UNEXPECTED`（不是文件已损坏）。
+- 用户 PowerShell `Get-Content -Raw | ConvertFrom-Json` 的输出出现乱码与解析失败，可能是字符编码不符，不能仅凭此认定 `xiaozhi.config.json` 损坏。用户无意间上传完整配置包含访问令牌；建议分别轮换小智和 iWiki 凭证，切勿重新传播或写入仓库。
+- 新增仅限 Windows 的 `tools/s5-repoint-write.mjs`：`--plan`（纯只读）、`--apply`（用户明确输入 `确认修复S5路径`、先私有备份，只更新 S5 服务 `args[0]`）、`--verify`（只读核验）。严格限定原 `MuSSE-S5F` 路径、目标 `MuSSE-S6` 路径、当前 node.exe、其他 S4/S6/官方服务保留；Node UTF-8 JSON 读写；不请求真实 iWiki、不输出敏感值。
+- GitHub iWiki Node 测试 218/218 通过；Repository checks 通过（提交 `97eeec4599301a7ae957059c07173d8725df6705`）。**真实 Windows 修复尚未执行**。必须先完全停止 `xiaozhi start`，fetch/merge 后先 `--plan`，然后 `--apply`、`--verify`、`node tools/s5-write-bridge.mjs --status`，最后重启服务。不要在确认远端任务表之前重复创建测试待办。
+
+
 ## 2026-11-05 — S5 确认口令二次修复（待 Windows 同步验证）
 
 - 用户反馈新的语音日志仍将 `确认写入。` 和 `确认保存。` 传给 `musse_write_confirm`，但原进程仍返回 `S5_EXPLICIT_CONFIRMATION_REQUIRED`。因为此前提交的源码已接受这些形式，此现象说明 Windows 当前 S5 运行进程未加载对应修订；实际安装文件路径/服务重启需通过 `node tools/s5-write-bridge.mjs --status` 核查（预期 `S5_WRITE_PRESENT`）。
