@@ -90,7 +90,7 @@ test("S6 reads pinned current task page with title, exact ID and twelve-column t
     "# 任务总表",
     "| " + TASK_HEADER.join(" | ") + " |",
     "| " + TASK_HEADER.map(() => "---").join(" | ") + " |",
-    "| T-001 | 任务一 | 描述 | 学习 | P2 | todo |  |  |  |  | 2026-11-04 10:00 |  |",
+    "| T-001 | 任务一 | 描述 | 学习 | P2 | todo | 2026-11-10 |  |  |  | 2026-11-04 10:00 |  |",
   ].join("\n");
   const docId = "page-TASKS";
   assert.deepEqual(summarizePinnedTaskDoc(ack({
