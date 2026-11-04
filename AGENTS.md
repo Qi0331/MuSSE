@@ -1,4 +1,7 @@
 # MuSSE — Agent 工作约定
+- **S5-F 最新真实结果**：Windows 已实际一次调用 `create_markdown_doc`，MCP 正常但业务 `ok:false`；返回 `data.error/reason/expected` 的字段值未输出，未获得确认页面 ID，因此 `edit_doc` 未被调用。不得虚称写成功、猜测缺空间或权限并盲目重复创建。下一步只用 `npm run inspect:s5-create -- --live` 取得创建工具元数据，见最新 `docs/STATUS.md` 和 `T-20261104-16`。
+
+
 - **S5-F 自动隔离写入测试优先**：用户指出无需手动创建测试页，新增 `tools/s5-probe-auto-create.mjs`，显式 `--create-and-write-test` 后最多执行一次 `create_markdown_doc`，返回唯一确认 page ID 才执行 `read_doc → edit_doc → read_doc`；不改任务总表、桥接配置与其他生产资源。不确定结果禁止盲目重试。真实写入仍须 Windows 用户本机执行；以 `docs/IWIKI_S5F_DISCOVERY.md` 最新段落为准。
 
 
