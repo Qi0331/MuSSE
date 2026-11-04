@@ -173,3 +173,23 @@ npm run audit:s6-uncertain -- --read-only
 结论分层：G-999 的受控更新、G-998 的新建分别已被先前实时写入及严格读回证明；第三次 `goal_record_progress` 发起了真实 `edit_doc` 但返回 `S6_WRITE_UNCERTAIN`，后续只读没有发现预期进度记录，因此**不能判定进度写入成功**，也不能仅凭此确定失败来源是网络、业务拒绝、返回契约还是其他原因。
 
 立即保持原状：不重跑 `accept:s6`、不对 G-998 自动补写、不删除测试文档或本地备份；S5 仍按已验证链路运行。S6 功能边界：发现/读、更新及创建验收通过，进度写入仍处于失败封闭状态，不得声明 S6 全功能上线。后续如需恢复写入，应先分析官方 `edit_doc` 的错误/回执协议并设计单次明确授权的隔离诊断，不能在未确认原因前盲重试。
+
+## 13. 单次定向恢复工具（替代重跑所有 S6 验收）
+
+针对 `G-998` 进度记录的 `S6_WRITE_UNCERTAIN` 且后续只读 `NOT_OBSERVED_DO_NOT_RETRY`，已经增加 `npm run recover:s6-progress -- --once`。这不是自动重试以前的操作：工具会先重新只读核验唯一的两篇隔离目标、`G-999` 已有的标记、`G-998` 的标题及该进度记录仍然不存在，并读取权威任务表计算本次进度百分比。任何条件不满足都在写入前停止。
+
+预检通过后，须由用户在本机新一轮明确输入 `确认单次补写 G-998`。确认前零写入；确认后先独占备份 G-998 原 Markdown 于 Windows 私有目录，`edit_doc` 仅允许对实际发现的 G-998 页面发起一次，硬拒绝创建、删除、编辑 G-999 或任务表，也不允许第二次写入。无论写入回执成功、失败或超时，都会尝试只读比较 G-998 全文、目标ID、进度记录出现次数以及 G-999 未被改动；匿名输出 `VERIFIED`、`PERSISTED_ACK_UNCONFIRMED`、`UNCHANGED_NO_RETRY`、`DIFFERENT_NO_RETRY` 或 `READBACK_UNAVAILABLE_NO_RETRY`，并输出脱敏编辑回执字段/通用远端错误分类。不会自行再尝试第二次。
+
+目前唯一可确认的真实现场故障是：第三项 edit 请求已发出但记录未被观察到。尚没有证据区分服务端拒绝、超时、刚创建文档的暂态问题、工具返回协议不一致等原因。不能擅自归因为其中之一。
+
+Windows S6 worktree 执行（仅这一项，S5 不动）：
+
+```powershell
+git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
+if ($LASTEXITCODE -ne 0) { throw '拉取失败：停止' }
+git merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '快进失败：停止' }
+npm run recover:s6-progress -- --once
+```
+
+若已在网页中手工补写过 G-998 进度，请不要使用此工具；程序会因检测到重复记录而拒绝写入。成功后仍需单独完成小智 S6 语音服务部署验收，不能以 Windows 本地 CLI 成功等同于已上线。
