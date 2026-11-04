@@ -1,4 +1,8 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-19 — 按 iWiki 界面改用 list_spaces
+- 用户截图展示多个团队和公共空间，以及“我的文档”导航；不能推定“我的文档”可充当 `space_name`。此前修复的 Windows 回归 116/116 已由用户本机通过，但当前终端只等待空间名，尚未调用新的创建或编辑。
+- 增加自动探针的只读 `list_spaces` 预先列举可见空间、用户本机按编号选择私人空间/按 0 取消、列表无法解析时不写入；新增模拟测试核验列举及失败保护。尚无真实远端 list_spaces/create/edit 的新证据。
+
 ## 2026-11-04 T-20261104-18 — Windows 115 项回归中 2 项失败：定位并修复
 - 用户在 Windows S5 独立 worktree 更新至 `e660f2b` 后执行完整 `npm test`，结果 **115 tests / 113 pass / 2 fail**；测试脚本已拦截，不曾执行新的 `create_markdown_doc` 或 `edit_doc`。已获得两个失败的完整错误片段。
 - #58 `S5-C default CLI is inert and only shows help`：测试直接把 `new URL(...).pathname` 传给 `execFileSync(process.execPath,...)`，Windows 下变成 `/C:/...`，最终 Node 报 `C:\\C:\\...`。已改成 `fileURLToPath(new URL(...))`，仅修跨平台测试路径。
