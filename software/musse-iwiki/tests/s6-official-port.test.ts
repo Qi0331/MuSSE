@@ -11,8 +11,8 @@ const ack = (data: Record<string, unknown>, ok = true) => ({
 function harness() {
   const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
   let docs: unknown[] = [
-    { doc_id: "page-GOAL", title: "G-001", parent_id: scope.folderId, space_id: scope.spaceId, page_type: "markdown" },
-    { doc_id: "page-OTHER", title: "G-999", parent_id: "page-OTHER_FOLDER", space_id: scope.spaceId, page_type: "markdown" },
+    { doc_id: "page-GOAL", title: "G001", parent_id: scope.folderId, space_id: scope.spaceId, page_type: "markdown" },
+    { doc_id: "page-OTHER", title: "G999", parent_id: "page-OTHER_FOLDER", space_id: scope.spaceId, page_type: "markdown" },
   ];
   let total: number | undefined = docs.length;
   let hasMore: boolean | undefined = false;
@@ -27,7 +27,7 @@ function harness() {
     async callTool(name: string, args: Record<string, unknown>) {
       calls.push({ name, args });
       if (name === "list_docs") return ack({ docs, total, has_more: hasMore, next_cursor: nextCursor });
-      if (name === "read_doc") return ack({ doc_id: args.doc_id, content: "# 目标：示例\n- 目标ID: G-001\n" });
+      if (name === "read_doc") return ack({ doc_id: args.doc_id, content: "# 目标：示例\n- 目标ID: G001\n" });
       if (name === "create_markdown_doc") return ack({
         doc_id: "page-CREATED", title: args.title, space_id: args.space_id, parent_id: args.parent_id,
       });
@@ -40,7 +40,7 @@ function harness() {
     setEmptyNoPagination() { docs = []; total = 0; hasMore = undefined; },
     setEmptyWithContinuation() { docs = []; total = 0; hasMore = undefined; nextCursor = "opaque-cursor"; },
     setEmptyWrongTotal() { docs = []; total = 2; hasMore = undefined; },
-    setWrongSpace() { docs = [{ doc_id: "page-GOAL", title: "G-001",
+    setWrongSpace() { docs = [{ doc_id: "page-GOAL", title: "G001",
       parent_id: scope.folderId, space_id: "space-OTHER", page_type: "markdown" }]; total = 1; },
     failEditAck() { editAck = false; },
   };
@@ -53,7 +53,7 @@ test("S6 official list_docs filters ONLY exact direct children of private folder
   const list = await f.port.listDirectChildren(scope);
   assert.equal(list.complete, true);
   assert.equal(list.entries.length, 1);
-  assert.equal(list.entries[0].title, "G-001");
+  assert.equal(list.entries[0].title, "G001");
   assert.deepEqual(f.calls[0], { name: "list_docs", args: { space_id: scope.spaceId } });
 });
 
@@ -68,7 +68,7 @@ test("S6 official list refuses unknown completeness and cross-space metadata", a
 
 test("S6 official create and edit use explicit parent ID and confirmed page ID only", async () => {
   const f = harness();
-  assert.equal(await f.port.createDoc(scope, "G-002", "# 目标：新目标\n- 目标ID: G-002\n"),
+  assert.equal(await f.port.createDoc(scope, "G002", "# 目标：新目标\n- 目标ID: G002\n"),
     "page-CREATED");
   const create = f.calls.find((v) => v.name === "create_markdown_doc")!;
   assert.deepEqual(Object.keys(create.args).sort(), ["content", "parent_id", "space_id", "title"]);
@@ -83,7 +83,7 @@ test("S6 official create and edit use explicit parent ID and confirmed page ID o
 
 test("S6 read_doc requires same document ID and does not open a general wiki path", async () => {
   const f = harness();
-  assert.match(await f.port.readDoc("page-GOAL"), /目标ID: G-001/);
+  assert.match(await f.port.readDoc("page-GOAL"), /目标ID: G001/);
   await reject(() => f.port.readDoc("other-document"), "S6_INVALID_DOCUMENT_ID");
 });
 
