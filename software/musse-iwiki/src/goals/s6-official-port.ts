@@ -38,14 +38,25 @@ function success(response: unknown): Record<string, unknown> {
  * closed until its REAL response shape is inspected and the parser is reviewed.
  */
 function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
-  // Real iWiki empty knowledge bases return {docs: [], total: 0} without
-  // a has_more field. Accept THAT exact empty case only, with no cursor.
-  // Non-empty lists still require an explicit has_more:false marker.
-  const provenEmpty = Array.isArray(payload.docs) && payload.docs.length === 0 &&
-    payload.total === 0 && payload.has_more === undefined && !payload.next_cursor;
-  if (!Array.isArray(payload.docs) || !Number.isSafeInteger(payload.total) ||
-      payload.total !== payload.docs.length || payload.total > 1000 ||
-      (payload.has_more !== false && !provenEmpty) || payload.next_cursor) {
+  // Live iWiki returns {docs:[...],total:N} with no has_more, including N=1.
+  // Accept an omitted flag ONLY in a dedicated knowledge base with a small,
+  // count-consistent result and no continuation markers. This relies on
+  // total being the server's full count, not a page-local count. Fail closed
+  // at 100 rows (a likely page-size boundary) or any ambiguous marker.
+  const docs = payload.docs;
+  const countConsistent = Array.isArray(docs) &&
+    Number.isSafeInteger(payload.total) && payload.total === docs.length &&
+    payload.total >= 0 && payload.total <= 100;
+  const noCursor = payload.next_cursor == null || payload.next_cursor === "";
+  const noOtherContinuation = !payload.next_page && !payload.nextCursor &&
+    !payload.hasMore && !payload.cursor;
+  const hasKnownEnd = payload.has_more === false;
+  const observedUnpaginated = scope.mode === "space" && countConsistent &&
+    docs.length < 100 && payload.has_more === undefined && noCursor && noOtherContinuation;
+  const provenEmpty = countConsistent && docs.length === 0 &&
+    payload.has_more === undefined && noCursor && noOtherContinuation;
+  if (!countConsistent || !noCursor || !noOtherContinuation ||
+      (!hasKnownEnd && !observedUnpaginated && !provenEmpty)) {
     throw new S6Error("S6_LIST_INCOMPLETE");
   }
   const entries: GoalEntry[] = [];
@@ -66,12 +77,17 @@ function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
     const id = value.doc_id;
     const title = value.title;
     const kind = value.page_type ?? value.kind;
+    // Dedicated knowledge bases omit type and parent fields in actual
+    // list_docs rows. Never invent a confirmed markdown kind; scanGoals
+    // validates each page through read_doc + parseGoal before it is trusted.
+    const kindVerified = kind === "markdown";
     if (typeof id !== "string" || !PAGE.test(id) ||
-        typeof title !== "string" || kind !== "markdown") {
+        typeof title !== "string" ||
+        (!kindVerified && !(scope.mode === "space" && kind == null))) {
       throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
     }
     entries.push({ docId: id, title, parentId: typeof parent === "string" ? parent : null,
-      spaceId: space, kind: "markdown" });
+      spaceId: space, kind: kindVerified ? "markdown" : "unverified" });
   }
   return { complete: true as const, entries };
 }
