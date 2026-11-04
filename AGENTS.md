@@ -1,4 +1,74 @@
 # MuSSE — Agent 工作约定
+- **当前最新 / S6 交接（2026-11-04）**：用户在 Windows 实际运行 S5-I `--install-write` 并得到安装成功回执，随后报告小七真实语音任务查询/准备/取消成功，且两轮预览确认后真实事项写入 iWiki《测试》页面；已不再卡在写入连接。**用户报告是现场证据，非 GitHub 独立远端读回**。核心固定 ID（任务总表/快捷笔记）、长期目标文件夹逐目标独立 Markdown、可信目录内自动精确查找的混合架构已确定；长期目标自动发现/写入 **尚未实现**。S6 交接 `docs/IWIKI_S6_DYNAMIC_DISCOVERY_HANDOFF.md`，新开 MuSSE 项目 S6 子对话；用户本轮只授权将进度/架构写入 GitHub，不允许直接动真实 iWiki/Windows 私人配置/令牌。曾有令牌在用户日志中意外暴露，须建议轮换，不复制秘密。PR #24/#25 保持 Draft，当前 S5 分支继续维护；不要重跑已通过的 S5 旧测试。
+
+- **S5-I 最新（2026-11-04）**：用户明确要求一站式启用可写入的 S5 语音 MCP，不再分阶段测试只读预览。S5 分支提交 `64f017a`/ `eb4d079` 新增专用写 launcher + 一键安装/回滚（私有本地严格 `edit_doc/doc_id/content` 契约、第三个服务、保留双 S4、备份、只离线 smoke）；Node CI **153/153**。**用户 Windows 尚未执行新安装或实测小智语音**。下一步只给 fetch/fast-forward + `node tools/s5-write-bridge.mjs --install-write`，用户自行重启小智后语音创建任务/明确口头确认，即进入真实写入验收。旧 notesMapping 缺失，默认只能改映射任务文档，不能宣称笔记也已可写；S5 严格确认/写前冲突/读回保护继续，不把确认视作独立身份认证。PR Draft 不合并，不更改 S4、Token/安全补丁、ESP32/云。见 docs/STATUS.md 和 TEST_LOG.md T-20261104-27。
+
+- **S5-H 新语音预览入口（2026-11-04，最新）**：S5 原分支新增可真实注册的小智独立只读预览服务、Windows `s5-preview-bridge.mjs --install-preview/--rollback-preview`、安全备份与测试。GitHub Node CI **148/148**、文档检查成功；尚未在用户 Windows 注册，尚未实际小智语音验收。用户要求直接推进现场语音，下一步仅用户运行安装命令、重启小智并报告口头预览/取消，不要再反复跑同样的本地检查。安装严格只增加第三个预览服务；协议不公开 confirm、伪造 confirm 被拒，端口没有写能力。不写生产文档，不改 S4 原服务/Token/固件/云；后续隔离实写须另行明确授权。详见 docs/STATUS.md、docs/TEST_LOG.md T-20261104-26。
+
+- **S5-G Windows 本地预检已实际通过（2026-11-04，最新）**：用户提供 PowerShell 原始终端输出：独立 S5 worktree 执行 `git fetch` 成功，`git merge --ff-only FETCH_HEAD` 从 `e1f30fc` 快进到 `c09f5a4`；Windows `npm test` **144/144 pass**，`npm run preflight:s5 -- --local-readonly` 返回 `officialIwiki:CONFIGURED`、`s4Readonly:REGISTERED`、`taskMapping:TASK_VALID`、`s5BridgeEntry:ABSENT`、`contractFile:MISSING`、`writeFlagInThisShell:NOT_SET`。本机明确未启用 S5；`notesMapping:NOT_CONFIRMED`。**需额外核实工作树分支状态**：`git branch --show-current` 的分支名检查抛出 `WRONG_BRANCH`，但快进和测试成功；可能处于 detached HEAD 或其他分支，不能声称已经在正确本地分支上。该输出不是 ESP32/小智真实语音测试。详见 `docs/TEST_LOG.md` T-20261104-25。S4/Token/生产任务/ESP32/桥接配置不动，PR 仍 Draft，未来启用须另外批准。
+
+- **S5-G 下一测试已准备（2026-11-04）**：GitHub S5 分支提交 `9b6ec4f` 添加 `npm run preflight:s5 -- --local-readonly`（只读读取 Windows 本地已有配置、只输出脱敏状态；无网络/无写入/无服务注册），并用合成私有配置完成 3 项新增测试；GitHub Node 全量 CI **144/144 pass**（run 41819040249），仓库检查成功（run 41819040721）。**实际 Windows 预检未运行**，小智/ESP32 两轮真实语音写入未验收。下一阶段必须获用户独立批准再接入第三个 S5 MCP 和真实隔离语音试写。不要重复 S5-F 合成页探针、不要写真实任务表、不要动 S4 生产桥接/Token/固件/云。
+
+- **S5-G 离线整合已完成（2026-11-04，最新）**：权威进展 `docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`。GitHub S5 分支 `cd88bc9` 的完整 Node CI **141/141**、文档检查均通过；已覆盖真实 `edit_doc + doc_id + content` 包络的模拟 MCP → 语音 prepare/confirm/cancel → 写前比较 → 一次写入 → 写后核验，并增加 stdio 两轮协议测试。实际 Windows 128/128 和私人合成页实写证据仍为旧基线，最新 GitHub CI **不是** Windows/真实语音联调。现仅具备受控部署前评审条件，严禁自动启用 S5、写生产文档、改 S4 双 MCP/桥接/Token/ESP32 或迁云；PR #24/#25 留 Draft。不要重跑 S5-F 实写探针。
+
+- **新对话请优先读 S5-G 交接**：`docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`。S5-F 已实证创建/读取/编辑/写后复核，停止重复测试；继续同一 S5 Draft PR #25（base S4 PR #24），暂不启用生产写权限。源码/脱敏说明已上 GitHub，Windows 本地有运行桥接和私有 Token/文档映射与日志补丁，小智与 iWiki 在远端；未来上云需部署常驻进程与安全配置，不是上传代码即完成。下一对话先核实最新 HEAD/CI 再做语音写入链路离线整合。
+
+
+- **S5-F 已真实验收通过（2026-11-04）**：用户 Windows `npm test` 128/128 全绿。已在私人空间创建测试 Markdown 文档（`create_markdown_doc ok:true`）并 `read_doc` 校验；对唯一现有页 `MuSSE S5-F 自动隔离测试 8a6fc40f` 二次输入 `EDIT` 后成功 `edit_doc ok:true`，写后 `read_doc` 为 `UPDATED`，结果 `EXISTING_EDIT_VERIFIED`，真实返回键 `new_rev_no/old_chars/new_chars`。第一次编辑失败的业务原因未知，不再猜。**停止重复 S5-F 实写探针**。S5 生产 MCP 仍禁用、PR #25 Draft，S4 双 MCP/桥接/Token/真实任务表/ESP32 均不变。下一阶段只做已验证 `edit_doc + doc_id + content` 的 S5 适配、语音流程和独立启用前检查。详见 `docs/STATUS.md`、`docs/TEST_LOG.md` T-20261104-22。
+
+
+- **S5-F 最近结果**：官方 `edit_doc` 只读元数据确认整篇 Markdown 替换与三路合并、编辑权限要求；先前业务 `ok:false` 仍未找到具体原因。已增加仅复用 `MuSSE S5-F 自动隔离测试 8a6fc40f` 的 `probe:s5-existing-edit -- --edit-once`：list_spaces/list_docs/read_doc 严格定位后需本机输入 EDIT，最多一次 edit_doc，读回并仅分类错误。严禁重复自动创建新文档、打印原始错误/私人 ID 或修改生产任务表。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
+- **S5-F 最新真实联调结果**：Windows 个人空间的合成页面 `MuSSE S5-F 自动隔离测试 8a6fc40f` 已由 `create_markdown_doc` 业务 `ok:true` 创建并被 `read_doc` 成功读取。随后 `edit_doc` 返回业务 `ok:false`、错误值未采集，`readback:UNCHANGED`；**创建验证通过，编辑未通过**。禁止重复 `probe:s5-auto` 创建新页。下一步优先 `npm run inspect:s5-edit -- --live`（只读 tools/list）获取 `edit_doc`/查询旧页工具元数据，再复用原测试页。生产 S5 仍不启用。
+
+- **S5-F 空间选择**：用户截图的“我的文档”不一定是 `space_name`，左侧多个公共/团队空间禁止自动选为试写目标。S5-F 自动探针新增只读 `list_spaces` 发现并在本机显示可见空间，用户手动选有权的私人空间编号，0 取消；无法识别不写。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
+- **S5-F Windows 跨平台回归修复**：用户在 `e660f2b` 运行 npm test 为 113/115，通过前禁止真实写入。#58 命令行测试把 URL.pathname 当作 Windows 路径，已改 `fileURLToPath`；#90 任务表 `updateTaskRow` 原先丢失 CRLF，已修复保留原始分隔符并添加 CRLF+混合换行回归。最新 GitHub S5 分支代码必须重新核验 CI / Windows 测试后再实写。见 `docs/TEST_LOG.md` T-20261104-18。
+
+
+- **S5-F 最新创建规则**：Windows `tools/list` 实际证明 `create_markdown_doc` 创建正式文档时必须带 `space_id` 或 `space_name`（二选一），尽管 schema required 未体现。现已改为用户本机交互输入私有空间的准确 `space_name`，再做一次隔离新建/编辑验证。不要猜空间、上传空间名/ID 或在生产任务表写测试内容。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
+- **S5-F 最新真实结果**：Windows 已实际一次调用 `create_markdown_doc`，MCP 正常但业务 `ok:false`；返回 `data.error/reason/expected` 的字段值未输出，未获得确认页面 ID，因此 `edit_doc` 未被调用。不得虚称写成功、猜测缺空间或权限并盲目重复创建。下一步只用 `npm run inspect:s5-create -- --live` 取得创建工具元数据，见最新 `docs/STATUS.md` 和 `T-20261104-16`。
+
+
+- **S5-F 自动隔离写入测试优先**：用户指出无需手动创建测试页，新增 `tools/s5-probe-auto-create.mjs`，显式 `--create-and-write-test` 后最多执行一次 `create_markdown_doc`，返回唯一确认 page ID 才执行 `read_doc → edit_doc → read_doc`；不改任务总表、桥接配置与其他生产资源。不确定结果禁止盲目重试。真实写入仍须 Windows 用户本机执行；以 `docs/IWIKI_S5F_DISCOVERY.md` 最新段落为准。
+
+
+## 2026-11-04 S5-F 官方写工具发现（最新）
+- 用户已在 Windows 独立 Git worktree `MuSSE-S5F` 检出 `508e908`；只读执行 `npm run inspect:s5-write -- --live` 成功，官方 MCP 共 27 个工具，候选 `edit_doc` 参数 `doc_id/content/title`、`append_to_doc` 参数 `doc_id/content`。此检查未执行 `tools/call`，**不是**真实写入验证。
+- 现有可配置普通写适配器不必猜工具名；S5-F 新增默认惰性的单页 `edit_doc` 隔离探针及模拟测试，等用户另行批准一次真实写入才可执行。最新细节以 `docs/IWIKI_S5F_DISCOVERY.md` 为准。
+- 原 S4 工作区和双 MCP、私有 Token/配置、日志补丁、防火墙、Muse 人设、ESP32 均未改；不启用 S5 服务。保留 D-021 的实用模式，禁止恢复旧过度 CAS 门槛。
+
+## 2026-11-04 S5-E 最新指令（高于旧 S5-D/C/A 门槛）
+- 用户要求 **加快进度、反对过度防御性编程**；同意优先考虑 iWiki 网页与机器人同时编辑的实际冲突，不再将原子 CAS、独立身份批准 UI、跨重启事务数据库作为个人低频写入的强制条件。
+- **最新权威交接：`docs/IWIKI_S5E_PRACTICAL_HANDOFF.md`**。S5 独立 Draft PR #25，原 S4 Draft PR #24 不动。iWiki 唯一持久化来源，当前 Muse 人设、Windows 桥接/日志补丁/防火墙、ESP32 均不改变。
+- 已实现 S5 可选 `check-before-write`（准备时读、提交前重新读并比对、写后复读；检查与提交的瞬间竞态仍存在）；带明确工具契约的官方 iWiki 普通写适配器；两轮语音确认与独立 `server-s5.ts` 入口（默认未启用、不安装）。
+- **语音两轮确认是对话交互规则，不是真正独立的身份认证**；不能假称服务端可识别真实用户语音。适配器不预设真实写工具名/参数；公开同名的腾讯企业 iWiki API 不适用于 SSE_MARKET。
+- S5 代码的完整 GitHub Node.js CI 在 Node 22.23.4 环境 **98/98 tests pass**（含模拟 iWiki 写工具与语音协议），不等于真实 iWiki 更新成功。仍缺真实官方更新工具契约，需用户本地只读 `npm run inspect:s5-write -- --live` 摘要；无需重做 S2-B/S4-E 人工验收。
+- 生产 MCP、私有配置、真实文档或其他设备的实际改动仍要另行批准；绝不直接启用旧 13 工具入口或未经确认的远端写映射。
+
+
+## 2026-11-04 S5-D 最新权威进展（覆盖历史 S5-C/B）
+- 用户要求加速 S5；取消 S4-E 额外验收与 S2-B 三文档验收，禁止恢复。
+- **最新入口：`docs/IWIKI_S5D_FINAL_HANDOFF.md`。GitHub CI 在完整仓库 Node 22.23.4 执行 `npm test` 已 84/84 通过**，run 41784910123。现有 S5 29 项专项已包含在完整包 84 项中；不再宣称仅有隔离环境测试。
+- 已修复固定日期旧测、在途 `COMMITTING` 过期误清理、`UNCERTAIN` 被误清理及同文档重复提案、Markdown 单行字段换行不同步；S5 新 CI 独立工作流只授予 `contents: read`。
+- 生产写入**仍禁用**：官方 iWiki 原子 CAS/可靠幂等未证实、可信独立用户批准通道未接入、跨进程重启不确定状态未耐久恢复。旧 13 工具入口不可挂生产，两套已有 MCP、Muse 人设、Windows 日志脱敏补丁和防火墙、ESP32 固件、云端、私有配置与 iWiki 数据不动。S5 PR #25 与 S4 PR #24 均 Draft，未合并。
+
+
+## 2026-11-04 S5-C 最新状态（覆盖下方 S5-B 交接）
+- 用户要求 S5 加速推进，不恢复 S2-B/S4-E 人工验收；`docs/IWIKI_S5C_HANDOFF.md` 为 S5 最新入口。
+- S5 Draft PR #25 的核心与业务规划已有 26/26 开发侧隔离专项测试（Node 22.16，非完整仓库），六份文件 GitHub blob SHA 与本机已测源码一致；文档 CI 通过，但完整 `npm test` 与 Windows 实测尚未执行。
+- `tools/s5-inspect-write-contract.mjs` 为安全的**工具发现器**：默认不联网，`--live` 仅 `initialize/tools/list`，绝不写入；字段名不能证明原子写或权限。
+- 当前绝不能部署写工具：官方 CAS/原子条件更新与独立可信用户确认渠道尚无证据。保持 Windows 官方/本地双只读 MCP、日志脱敏补丁、防火墙、Muse 人设、ESP32、云端及所有私人配置不变；PR #24/#25 均 Draft 不合并。
+
+
+## 2026-11-04 S5-B 最新优先级（覆盖下面历史 S4 下一步建议）
+- 用户明确要求跳过 S4-E 目标/笔记额外验收，直接开发 S5 受控语音写入，并减少零散确认；不要再推荐恢复已取消的 S2-B 测试。
+- 新 S5 分支 `feat/iwiki-s5-guarded-write-design`，Draft PR #25 **以 S4 功能分支为 base**；原 PR #24 仍 Draft 未合并。S5 安全设计见 `docs/IWIKI_S5_SECURITY_DESIGN.md`，最新状态和测试以 `docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`、D-019 为准。
+- S5-B 离线核心门禁、变更规划器、两份测试已提交；仅在隔离 Node 22.16 实测核心门禁 13/13 通过，真实 Markdown 规划测试和完整 `npm test` 尚未运行。不能将此表述为生产写入成功。
+- **禁止**将 `src/mcp/server.ts` 旧 13 工具服务接入生产、复用模型声明作为用户确认、在没有已证实的官方原子条件写入支持时整篇覆写任务表。未接入可信确认通道和远端写适配器；不得读取或泄露 Token、真实文档 ID、私人日志。
+- 官方 `iwiki` 与现有 `musse_iwiki_readonly` 两 MCP、Windows 日志脱敏补丁及防火墙、Muse 角色提示词、ESP32 固件与真实 iWiki 数据保持不变。后续仅在明确授权下进行真实写入、凭证升级、桥接配置或部署。
+
 
 ## 2026-11-04 S4-D 最新优先级（覆盖下方旧 S4 待审状态）
 

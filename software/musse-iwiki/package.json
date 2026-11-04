@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "MuSSE task/schedule/goal logic with iWiki as the only persistent source",
-  "engines": { "node": ">=22.18" },
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "test": "node --test tests/*.test.ts tests/*.test.mjs",
     "mcp": "node src/mcp/server.ts",
@@ -12,6 +14,16 @@
     "inspect:readonly": "node tools/inspect-readonly.mjs",
     "probe:read-shape": "node tools/probe-read-structure.mjs",
     "probe:task-queries": "node tools/probe-task-queries.mjs",
-    "probe:goal-notes": "node tools/probe-goal-notes.mjs"
+    "probe:goal-notes": "node tools/probe-goal-notes.mjs",
+    "mcp:s5": "node src/mcp/server-s5.ts",
+    "inspect:s5-write": "node tools/s5-inspect-write-contract.mjs",
+    "probe:s5-edit": "node tools/s5-probe-edit-doc.mjs",
+    "probe:s5-auto": "node tools/s5-probe-auto-create.mjs",
+    "inspect:s5-create": "node tools/s5-inspect-create-metadata.mjs",
+    "inspect:s5-edit": "node tools/s5-inspect-edit-metadata.mjs",
+    "probe:s5-existing-edit": "node tools/s5-probe-existing-edit.mjs",
+    "preflight:s5": "node tools/s5-local-preflight.mjs",
+    "bridge:s5-preview": "node tools/s5-preview-bridge.mjs",
+    "bridge:s5-write": "node tools/s5-write-bridge.mjs"
   }
 }
