@@ -21,8 +21,8 @@ test("S6 dedicated knowledge base validates without a fabricated folder", () => 
 });
 
 test("S6 space-scoped goal read includes exact space and rejects cross-space documents", async () => {
-  const goalText = "# 目标：备考\n- 目标ID: G-001\n- 说明: 计划\n\n## 阶段\n\n## 进度历史\n";
-  const entry = { docId: "page-GOAL", title: "G-001", parentId: null,
+  const goalText = "# 目标：备考\n- 目标ID: G001\n- 说明: 计划\n\n## 阶段\n\n## 进度历史\n";
+  const entry = { docId: "page-GOAL", title: "G001", parentId: null,
     spaceId: scope.spaceId, kind: "markdown" as const };
   const port = {
     async listDirectChildren() { return { complete: true, entries: [entry] }; },
@@ -31,7 +31,12 @@ test("S6 space-scoped goal read includes exact space and rejects cross-space doc
     async editDoc() { throw Error("unneeded"); },
     async readTaskTable() { throw Error("unneeded"); },
   } satisfies GoalPort;
-  assert.equal((await scanGoals(port, scope)).get("G-001")?.goal.id, "G-001");
+  assert.equal((await scanGoals(port, scope)).get("G001")?.goal.id, "G001");
+  const legacyTitle = { ...port, async listDirectChildren() {
+    return { complete: true, entries: [{ ...entry, title: "G-001" }] };
+  } };
+  await assert.rejects(() => scanGoals(legacyTitle, scope),
+    (e: unknown) => e instanceof S6Error && e.code === "S6_SCOPE_OR_METADATA_MISMATCH");
   const wrong = { ...port, async listDirectChildren() {
     return { complete: true, entries: [{ ...entry, spaceId: "space-UNRELATED" }] };
   } };
@@ -60,11 +65,11 @@ test("S6 official adapter lists dedicated space and does not send parent_id on r
   };
   const port = createOfficialS6GoalPort(client, "page-TASKS");
   assert.deepEqual(await port.listDirectChildren(scope), { complete: true, entries: [] });
-  assert.equal(await port.createDoc(scope, "G-001", "temporary Markdown"), "page-NEW");
+  assert.equal(await port.createDoc(scope, "G001", "temporary Markdown"), "page-NEW");
   assert.deepEqual(calls, [
     { name: "list_docs", args: { space_id: scope.spaceId } },
     { name: "create_markdown_doc", args: {
-      title: "G-001", content: "temporary Markdown", space_id: scope.spaceId,
+      title: "G001", content: "temporary Markdown", space_id: scope.spaceId,
     } },
   ]);
 });
@@ -109,9 +114,9 @@ test("S6 reads pinned current task page with title, exact ID and twelve-column t
 });
 
 
-test("S6 live-shaped nonempty space list validates G-999 by read_doc, allows preview and cancel only", async () => {
+test("S6 live-shaped nonempty space list validates G999 by read_doc, allows preview and cancel only", async () => {
   const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
-  const goal = "# 目标：小七 S6 验收\n- 目标ID: G-999\n- 说明: 用于验证长期目标动态发现。\n\n## 阶段\n\n### 阶段 P1：功能验证\n- 阶段ID: P1\n- 任务:\n- 手动进度:\n\n## 进度历史\n\n| 日期 | 进度 | 说明 |\n|---|---|---|\n";
+  const goal = "# 目标：小七 S6 验收\n- 目标ID: G999\n- 说明: 用于验证长期目标动态发现。\n\n## 阶段\n\n### 阶段 P1：功能验证\n- 阶段ID: P1\n- 任务:\n- 手动进度:\n\n## 进度历史\n\n| 日期 | 进度 | 说明 |\n|---|---|---|\n";
   const client = {
     async listTools() {
       return [{ name: "list_docs", inputSchema: { required: ["space_id"] } }];
@@ -119,11 +124,11 @@ test("S6 live-shaped nonempty space list validates G-999 by read_doc, allows pre
     async callTool(name: string, args: Record<string, unknown>) {
       calls.push({ name, args });
       if (name === "list_docs") return ack({
-        docs: [{ doc_id: "page-G999", title: "G-999", space_id: scope.spaceId }],
+        docs: [{ doc_id: "page-G999", title: "G999", space_id: scope.spaceId }],
         total: 1,
       });
       if (name === "read_doc") return ack({
-        doc_id: args.doc_id, title: "G-999", content: goal,
+        doc_id: args.doc_id, title: "G999", content: goal,
       });
       throw Error("unexpected remote operation");
     },
@@ -132,14 +137,14 @@ test("S6 live-shaped nonempty space list validates G-999 by read_doc, allows pre
   const list = await port.listDirectChildren(scope);
   assert.equal(list.complete, true);
   assert.deepEqual(list.entries, [{
-    docId: "page-G999", title: "G-999", parentId: null,
+    docId: "page-G999", title: "G999", parentId: null,
     spaceId: scope.spaceId, kind: "unverified",
   }]);
-  assert.equal((await scanGoals(port, scope)).get("G-999")?.goal.title, "小七 S6 验收");
+  assert.equal((await scanGoals(port, scope)).get("G999")?.goal.title, "小七 S6 验收");
   const flow = createS6GoalFlow(port, scope);
-  assert.equal((await flow.find("G-999")).goal.id, "G-999");
+  assert.equal((await flow.find("G999")).goal.id, "G999");
   const prepared = await flow.prepare({
-    type: "goal_update", goalId: "G-999",
+    type: "goal_update", goalId: "G999",
     changes: { description: "读取已通过，写入尚未授权" },
   });
   assert.equal(prepared.status, "AWAITING_APPROVAL");
@@ -148,7 +153,7 @@ test("S6 live-shaped nonempty space list validates G-999 by read_doc, allows pre
 });
 
 test("S6 nonempty knowledge-base listing fails closed on incomplete counts or ambiguous pagination", async () => {
-  const doc = { doc_id: "page-G999", title: "G-999", space_id: scope.spaceId };
+  const doc = { doc_id: "page-G999", title: "G999", space_id: scope.spaceId };
   let payload: Record<string, unknown> = { docs: [doc], total: 1 };
   const client = {
     async listTools() { return [{ name: "list_docs", inputSchema: { required: ["space_id"] } }]; },
@@ -183,12 +188,12 @@ test("S6 nonempty knowledge-base listing fails closed on incomplete counts or am
 });
 
 test("S6 unknown metadata kind cannot bypass read_doc content identity validation", async () => {
-  let content = "# 目标：错误\n- 目标ID: G-100\n";
+  let content = "# 目标：错误\n- 目标ID: G100\n";
   const client = {
     async listTools() { return [{ name: "list_docs", inputSchema: { required: ["space_id"] } }]; },
     async callTool(name: string, args: Record<string, unknown>) {
       if (name === "list_docs") return ack({
-        docs: [{ doc_id: "page-G999", title: "G-999", space_id: scope.spaceId }],
+        docs: [{ doc_id: "page-G999", title: "G999", space_id: scope.spaceId }],
         total: 1,
       });
       return ack({ doc_id: args.doc_id, content });
