@@ -2,13 +2,7 @@ name: iWiki Node tests
 
 on:
   push:
-    paths:
-      - 'software/musse-iwiki/**'
-      - '.github/workflows/iwiki-node-tests.yml'
   pull_request:
-    paths:
-      - 'software/musse-iwiki/**'
-      - '.github/workflows/iwiki-node-tests.yml'
   workflow_dispatch:
 
 permissions:
