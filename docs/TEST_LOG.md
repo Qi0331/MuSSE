@@ -1,5 +1,11 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-14 — S5-F Windows 官方工具发现（用户终端证据）
+- 用户在 Windows PowerShell 执行 `git fetch origin feat/iwiki-s5-guarded-write-design` 与 `git worktree add --detach ... FETCH_HEAD`，独立工作树 HEAD `508e908`；原 S4 工作目录未切换分支。
+- 在 S5 工作树执行 `npm run inspect:s5-write -- --live`，实际返回 `advertisedToolCount=27`、六个候选 `write_note/create_markdown_doc/create_doc/append_to_doc/edit_doc/edit_page_config`；`edit_doc` 字段 `doc_id/content/title`，必填 `content`；`append_to_doc` 字段 `doc_id/content`，必填 `content`。所有候选 `hasVersionNamedField=false`。
+- 原检查脚本只发 MCP `initialize/tools/list`，不执行 `tools/call`；用户提供的文本不含 Token、私有页面 ID 或原始 JSON 配置。**没有验证编辑功能、真实写入、远端权限或成功响应**。
+- 本轮开发者新增仅用于以后隔离文档联调的单次 `edit_doc` 探针及模拟单测，未执行真实写入。代码测试是否通过，以本轮 GitHub Actions 后续实际结果为准。参见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 ## 2026-11-04 T-20261104-13 — S5-E 实用普通写入适配与两轮语音协议
 - GitHub Draft PR #25 新增轻量 `check-before-write` 模式、无默认写接口的官方 iWiki 普通写入适配、两轮语音确认流程及默认禁用的独立 MCP stdio 服务。现有 S4 只读服务没有改变。
 - **实际 GitHub Actions 在完整仓库检出、Node.js 22.23.4 上执行 `npm test`：98/98 pass、0 fail**。最近成功 run `41792735125`；文档 `Repository checks` 同次成功。
