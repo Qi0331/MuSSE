@@ -1,5 +1,12 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-08 — S4-D Windows 本地业务 MCP 安装成功（用户终端证据）
+
+- 用户在 Windows 真实目录执行 `git pull --ff-only`，成功从 `b0b0436` 快进至 `64002a9`，新增 `tools/s4d-bridge.mjs`。
+- 用户执行 `node tools/s4d-bridge.mjs --install`，回报 `S4D_MCP_SMOKE_OK`、`tools=6`、`total=3`、`todo=2`、`done=1`、`write_blocked=true`、`S4D_BRIDGE_ENTRY_INSTALLED`、`ORIGINAL_IWIKI_PRESERVED`、`PRIVATE_BACKUP_CREATED`。说明本地 MCP 子进程协议与真实 iWiki 测试任务表读取通过，测试写入工具被只读白名单拒绝，脚本已写入新服务配置且备份了旧配置。
+- 用户进一步执行 `node tools/s4d-bridge.mjs --status`，回报 `S4D_BRIDGE_ENTRY_PRESENT` 和 `ORIGINAL_IWIKI_PRESERVED`。**仍未获得重启后的 xiaozhi-client 两服务连接、六工具云端可见、设备语音调用证据，S4-D 不应标记全部验收完成**。
+- 不保存或公开任何私有凭证、接入 URL、映射文档 ID 或原始配置内容。旧官方 iWiki 服务配置保留；若用户报告故障，应指导先停止桥接，`node tools/s4d-bridge.mjs --rollback` 后再启动。
+
 ## 2026-11-04 T-20261104-07 — 用户实际读 iWiki 成功 + S4-D 桥接脚本离线模拟
 
 - **Windows 用户实测**：当前 `software/musse-iwiki` 工作区执行 `buildReadonlyTaskService(process.env)` 与 `service.listTasks()`；终端回传 `CONFIG_OK`、`READ_ONLY_OK`、`total=3`、`todo=2`、`done=1`、`archived=0`。说明实际 `read_doc` 访问、任务表解析和统计成功；未显示任务正文、Token 或真实页面 ID，未调用写入。
