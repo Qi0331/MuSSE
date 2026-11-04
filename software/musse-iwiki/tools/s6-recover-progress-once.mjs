@@ -1,14 +1,14 @@
 /**
- * S6 targeted recovery for the G-998 progress write that was NOT OBSERVED
+ * S6 targeted recovery for the G998 progress write that was NOT OBSERVED
  * after an earlier ambiguous edit. This is NOT a retry of the full S6 suite.
  *
- * Phase 1: read-only preflight; validates the pinned space, G-999/G-998,
+ * Phase 1: read-only preflight; validates the pinned space, G999/G998,
  *          authoritative task table, and absence of the precise progress row.
  * Phase 2: explicit new per-operation terminal approval, THEN at most
- *          ONE edit_doc against the verified G-998 page ID.
+ *          ONE edit_doc against the verified G998 page ID.
  * Phase 3: always perform one read-only reconciliation (even if ACK fails).
  *
- * No remote create/delete; never write G-999 or task table. All errors and
+ * No remote create/delete; never write G999 or task table. All errors and
  * output are sanitized; no raw private ID/markdown/token/endpoint exposed.
  */
 import { randomUUID } from "node:crypto";
@@ -32,7 +32,7 @@ import { summarizeEditResponse } from "./s5-probe-edit-doc.mjs";
 const NOTE = "小七 S6 受控进度写入验收（隔离测试）";
 const G999_MARKER = "[小七 S6 一次性验收]";
 const G998_TITLE = "小七 S6 自动创建验收";
-const CONFIRM = "确认单次补写 G-998";
+const CONFIRM = "确认单次补写 G998";
 
 const fail = (code) => { throw Error(code); };
 const SAFE_CODES = new Set(["IWIKI_RPC_ERROR", "IWIKI_HTTP_ERROR",
@@ -149,15 +149,15 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
 
   report({ type: "stage", stage: "goal_scan" });
   const goals = await scanGoals(port, scope);
-  const g999 = goals.get("G-999");
-  const g998 = goals.get("G-998");
+  const g999 = goals.get("G999");
+  const g998 = goals.get("G998");
   const checks = {
     goalCountTwo: goals.size === 2,
     g999Present: Boolean(g999),
     g999MarkerValid: Boolean(g999?.goal.description.includes(G999_MARKER)),
     g998Present: Boolean(g998),
     g998TitleValid: Boolean(g998?.goal.title === G998_TITLE),
-    g998IdValid: Boolean(g998?.entry.title === "G-998"),
+    g998IdValid: Boolean(g998?.entry.title === "G998"),
     progressAlreadyPresent: Boolean(g998?.goal.history.some((h) => h.note === NOTE)),
   };
   report({ type: "preflight_check", checks });
@@ -181,7 +181,7 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
   report({ type: "stage", stage: "prepare" });
   const flow = createS6GoalFlow(port, scope, { clock: () => ts, ttlMs: 600_000 });
   const prepared = await flow.prepare({
-    type: "goal_record_progress", goalId: "G-998", note: NOTE,
+    type: "goal_record_progress", goalId: "G998", note: NOTE,
   });
   if (prepared.status !== "AWAITING_APPROVAL") fail("S6_PREVIEW_FAILED");
 
@@ -218,7 +218,7 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
   let matchingRecords = null;
   try {
     const after = await scanGoals(port, scope);
-    const a999 = after.get("G-999"), a998 = after.get("G-998");
+    const a999 = after.get("G999"), a998 = after.get("G998");
     if (after.size === 2 && a999?.content === g999.content && a998?.entry.docId === g998.entry.docId) {
       matchingRecords = a998.goal.history.filter((row) => row.note === NOTE).length;
       if (a998.content === expected && matchingRecords === 1) {
@@ -249,8 +249,8 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
 async function main(args) {
   if (args.length !== 1 || args[0] !== "--once") {
     process.stdout.write("Usage: npm run recover:s6-progress -- --once\n" +
-      "Read-only preflight, fresh explicit consent, at most ONE G-998 edit, read-only reconciliation.\n" +
-      "Do NOT run if G-998's progress was updated manually after the last audit.\n");
+      "Read-only preflight, fresh explicit consent, at most ONE G998 edit, read-only reconciliation.\n" +
+      "Do NOT run if G998's progress was updated manually after the last audit.\n");
     return;
   }
   if (!process.stdin.isTTY) {
@@ -293,18 +293,18 @@ async function main(args) {
         if (ev.type === "stage") failureStage = ev.stage;
         if (ev.type === "preflight_check") preflightChecks = ev.checks;
         if (ev.type === "preview") process.stdout.write(
-          "预检通过：G-998 的验收进度记录仍不存在；将新增一条 " +
-          ev.progressPercent + "% 的记录；G-999 和任务总表不变。\n");
+          "预检通过：G998 的验收进度记录仍不存在；将新增一条 " +
+          ev.progressPercent + "% 的记录；G999 和任务总表不变。\n");
       },
       ask: async (phrase) => (await rl.question(
-        "若同意针对 G-998 单次补写，输入「" + phrase +
+        "若同意针对 G998 单次补写，输入「" + phrase +
         "」；输入 0 取消：\n> ")).trim(),
       async backup(content) {
         const path = join(dir, "s6-g998-recovery-backup-" + Date.now() + "-" +
           randomUUID().slice(0, 8) + ".md");
         await writeFile(path, content, { flag: "wx", mode: 0o600 });
         backupSaved = true;
-        process.stdout.write("G-998 原文已独立备份至 Windows 私有目录。\n");
+        process.stdout.write("G998 原文已独立备份至 Windows 私有目录。\n");
       },
     });
     process.stdout.write(JSON.stringify({ ...result, backupSaved,
@@ -341,4 +341,5 @@ async function main(args) {
   } finally { rl?.close(); }
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1])
-  main(process.argv.slice(2));
+  process.stderr.write("S6_LEGACY_PROGRESS_RECOVERY_RETIRED: remote progress already verified; never repeat.\n");
+  process.exitCode = 2;
