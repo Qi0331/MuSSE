@@ -119,3 +119,13 @@ npm run verify:s6 -- --read-only
 已知限制：在大量文档、分页边界时 `total` 的正式语义尚未现场验证；这里采用不足 100 条的保守边界，而非宣称 iWiki 的全局分页契约已证实。
 
 下一步在 S6 工作区先同步最新提交，再执行 `npm run verify:s6 -- --read-only`，预计 `goalDocumentCount=1`、`taskCount=4`、`readyForReadOnly=true`、`readyForWrite=false`、`writesAttempted=0`。这会完整读取和验证 `G-999`，不会修改目标页或任务表。真实 S6 写入仍需单独明确授权。
+
+## 9. G-999 只读预览和取消（下一项现场验收）
+
+真实本地 `verify:s6` 返回 `goalDocumentCount=1`、`testGoalG999Verified=true`、`taskCount=4`、`readyForReadOnly=true`、`writesAttempted=0`。这代表动态发现、读取目标正文及核对任务表均已通过。
+
+新增 `npm run preview:s6 -- --read-only`：只针对已绑定知识库里的 `G-999`，调用正式 S6 `find → prepare(goal_update.description) → cancel`，对远端仅允许 `list_docs`、`read_doc` 两种工具；独立只读客户端与业务端口双重阻断 `edit_doc`/`create_markdown_doc`。输出仅包含真假状态、读调用次数和 `writesAttempted:0`，不输出目标正文、令牌、私人 ID 或原始错误。
+
+此步骤不会编辑 `G-999`，不会修改 Windows 私有配置，也不会部署写入服务。执行前把 S6 worktree 快进至最新已通过测试的分支提交；无需重跑 S5 或先前空知识库探针。
+
+真实写入下一步应由用户单独明确授权：指定隔离目标 `G-999` 的准确字段变更，在已备份正文并可核对归属的前提下，仅执行一次受控更新和 readback。未授权时，`readyForWrite:false` 持续有效；不可假称写入已现场验收。
