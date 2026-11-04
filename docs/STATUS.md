@@ -1,4 +1,10 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-F 真实创建联调已触达业务层（最新）
+- 用户已用 HTTP/1.1 成功将 Windows S5 worktree 快进到 `7aa98f0`。真实运行一次自动测试时，`create_markdown_doc` 有 MCP 响应，但服务器业务 JSON `ok:false`，携带 `data.error/reason/expected`；没有确认文档 ID，因此程序停止，`edit_doc` **没有调用**。
+- **不能把此次视为真实写入成功，也不能武断归因于 Token 或空间**。在未明晰业务规则和页面是否已创建之前，不重复创建。新增仅读取工具元数据的 `npm run inspect:s5-create -- --live`，用于检查创建的空间参数说明。见 `docs/TEST_LOG.md` 最新 T-20261104-16。
+- 现有 S4 双 MCP、生产配置和私人映射保持不变，S5 生产未启用。
+
+
 - **自动创建探针本轮 CI 实际通过**：GitHub Node.js 全量测试 `112/112 pass`（run `41799562069`），文档检查通过（run `41799562141`）。新增 8 项模拟测试，不是远端写入证据。
 - **S5-F 简化调整**：用户指出可由官方 `create_markdown_doc` 直接创建隔离页，故增加 `npm run probe:s5-auto -- --create-and-write-test` 自动创建→核验→编辑一次→读回流程，免去网页手工创建和输入 page ID。该探针尚未远端执行；创建响应 ID/默认空间是否可用仍需实测。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
 
