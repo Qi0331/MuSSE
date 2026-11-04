@@ -6,7 +6,7 @@ import { TASK_HEADER } from "../src/markdown/tasks.ts";
 const scope = { mode: "space", spaceId: "space-TEST_GOALS" };
 const existing = [
   "# 目标：小七 S6 验收",
-  "- 目标ID: G-999",
+  "- 目标ID: G999",
   "- 说明: 用于验证长期目标动态发现。",
   "",
   "## 阶段",
@@ -31,11 +31,11 @@ const taskTable = [
 
 function fixture({ existingG998 = false, failEdit = false } = {}) {
   const pages = new Map([
-    ["page-G999", { title: "G-999", content: existing }],
+    ["page-G999", { title: "G999", content: existing }],
   ]);
   if (existingG998) pages.set("page-G998", {
-    title: "G-998",
-    content: "# 目标：已有目标\n- 目标ID: G-998\n- 说明: 已存在\n\n## 阶段\n\n## 进度历史\n",
+    title: "G998",
+    content: "# 目标：已有目标\n- 目标ID: G998\n- 说明: 已存在\n\n## 阶段\n\n## 进度历史\n",
   });
   const calls = [];
   const port = {
@@ -116,7 +116,7 @@ test("S6 one-run rejected first write means all 3 dry tests complete and zero wr
   assert.equal(f.pages.size, 1);
 });
 
-test("S6 one-run approval is per stage; declining after first stops without creating G-998", async () => {
+test("S6 one-run approval is per stage; declining after first stops without creating G998", async () => {
   const f = fixture();
   let answered = 0;
   const outcome = await runS6OneShot(f.port, scope, {
@@ -145,7 +145,7 @@ test("S6 one-run refuses an already occupied isolated test ID before any write",
   const f = fixture({ existingG998: true });
   let asked = 0;
   await assert.rejects(() => runS6OneShot(f.port, scope, {
-    ask: async () => { asked++; return "确认修改 G-999"; },
+    ask: async () => { asked++; return "确认修改 G999"; },
     beforeFirstWrite: async () => {},
   }), /S6_G998_ALREADY_EXISTS/);
   assert.equal(asked, 0);
