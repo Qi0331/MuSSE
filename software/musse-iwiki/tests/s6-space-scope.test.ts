@@ -4,6 +4,8 @@ import { scanGoals, validateScope, S6Error } from "../src/goals/s6-goal-discover
 import type { GoalScope, GoalPort } from "../src/goals/s6-goal-discovery.ts";
 import { createOfficialS6GoalPort } from "../src/goals/s6-official-port.ts";
 import { planS6SpacePin } from "../tools/s6-pin-local-scope.mjs";
+import { summarizePinnedTaskDoc } from "../tools/s6-verify-readonly.mjs";
+import { TASK_HEADER } from "../src/markdown/tasks.ts";
 
 const scope: GoalScope = { mode: "space", spaceId: "space-EXACT_GOALS" };
 const ack = (data: Record<string, unknown>) =>
@@ -80,4 +82,27 @@ test("S6 local scope pin requires one exact knowledge-base match and provably em
     { name: "长期目标", space_id: scope.spaceId },
     { name: "长期目标", space_id: "space-AMBIGUOUS" },
   ] }), empty));
+});
+
+
+test("S6 reads pinned current task page with title, exact ID and twelve-column table", () => {
+  const markdown = [
+    "# 任务总表",
+    "| " + TASK_HEADER.join(" | ") + " |",
+    "| " + TASK_HEADER.map(() => "---").join(" | ") + " |",
+    "| T-001 | 任务一 | 描述 | 学习 | P2 | todo |  |  |  |  | 2026-11-04 10:00 |  |",
+  ].join("\n");
+  const docId = "page-TASKS";
+  assert.deepEqual(summarizePinnedTaskDoc(ack({
+    doc_id: docId, title: "任务总表", content: markdown,
+  }), docId), { titleMatches: true, columnCount: 12, taskCount: 1 });
+  assert.equal(summarizePinnedTaskDoc(ack({
+    doc_id: docId, title: "测试", content: markdown,
+  }), docId).titleMatches, false);
+  assert.throws(() => summarizePinnedTaskDoc(ack({
+    doc_id: "page-UNEXPECTED", title: "任务总表", content: markdown,
+  }), docId));
+  assert.throws(() => summarizePinnedTaskDoc(ack({
+    doc_id: docId, title: "任务总表", content: "not a task table",
+  }), docId));
 });
