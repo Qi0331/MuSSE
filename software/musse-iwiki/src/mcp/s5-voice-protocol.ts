@@ -69,7 +69,9 @@ const requiredString = (args: Record<string, unknown>, name: string): string => 
   return value;
 };
 
-export async function handleS5VoiceRpc(flow: VoiceFlow, message: unknown): Promise<Record<string, unknown> | null> {
+export async function handleS5VoiceRpc(
+  flow: VoiceFlow, message: unknown, options: { previewOnly?: boolean } = {},
+): Promise<Record<string, unknown> | null> {
   if (!message || typeof message !== "object" || Array.isArray(message)) return null;
   const request = message as Record<string, unknown>;
   if (request.id === undefined) return null;
@@ -83,7 +85,9 @@ export async function handleS5VoiceRpc(flow: VoiceFlow, message: unknown): Promi
         serverInfo: { name: "musse-iwiki-voice-write", version: "0.1.0" },
       });
     case "ping": return reply({});
-    case "tools/list": return reply({ tools: S5_VOICE_TOOLS });
+    case "tools/list": return reply({ tools: options.previewOnly
+      ? S5_VOICE_TOOLS.filter((tool) => tool.name !== "musse_write_confirm")
+      : S5_VOICE_TOOLS });
     case "tools/call": {
       try {
         const params = obj(request.params);
@@ -96,6 +100,7 @@ export async function handleS5VoiceRpc(flow: VoiceFlow, message: unknown): Promi
             value = await flow.prepare(args.intent);
             break;
           case "musse_write_confirm":
+            if (options.previewOnly) throw new S5GateError("S5_PREVIEW_ONLY");
             value = await flow.confirm(requiredString(args, "operationId"), requiredString(args, "spokenText"));
             break;
           case "musse_write_cancel":

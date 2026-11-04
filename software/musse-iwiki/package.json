@@ -22,6 +22,7 @@
     "inspect:s5-create": "node tools/s5-inspect-create-metadata.mjs",
     "inspect:s5-edit": "node tools/s5-inspect-edit-metadata.mjs",
     "probe:s5-existing-edit": "node tools/s5-probe-existing-edit.mjs",
-    "preflight:s5": "node tools/s5-local-preflight.mjs"
+    "preflight:s5": "node tools/s5-local-preflight.mjs",
+    "bridge:s5-preview": "node tools/s5-preview-bridge.mjs"
   }
 }
