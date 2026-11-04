@@ -39,6 +39,43 @@ const SAFE_CODES = new Set(["IWIKI_RPC_ERROR", "IWIKI_HTTP_ERROR",
   "IWIKI_PROTOCOL_ERROR", "S6_REMOTE_UNAVAILABLE", "S6_REMOTE_UNCONFIRMED"]);
 const safeErrorCode = (error) => SAFE_CODES.has(error?.code) ? error.code : "OTHER_REMOTE_ERROR";
 
+/**
+ * Preserve sanitized discovery diagnostics that scanGoals otherwise masks.
+ * Retry ONLY transient tool/transport failures, at most once, for list_docs.
+ * Never retry a schema, scope, pagination, or business-result mismatch.
+ * The only repeated calls are read-only list operations.
+ */
+const KNOWN_LIST_CODES = new Set([
+  "S6_REMOTE_UNAVAILABLE", "S6_TOOLS_UNAVAILABLE",
+  "S6_TOOL_CONTRACT_UNVERIFIED", "S6_REMOTE_UNCONFIRMED",
+  "S6_LIST_INCOMPLETE", "S6_SCOPE_OR_METADATA_MISMATCH",
+]);
+const RETRYABLE_LIST_CODES = new Set(["S6_REMOTE_UNAVAILABLE", "S6_TOOLS_UNAVAILABLE"]);
+export function createS6DiagnosedReadPort(port, diag = {}) {
+  diag.listAttempts = 0;
+  diag.listRetries = 0;
+  diag.lastListError = null;
+  return {
+    ...port,
+    async listDirectChildren(scope) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        diag.listAttempts++;
+        try {
+          const result = await port.listDirectChildren(scope);
+          diag.lastListError = null;
+          return result;
+        } catch (error) {
+          const code = KNOWN_LIST_CODES.has(error?.code) ? error.code : "OTHER_LIST_ERROR";
+          diag.lastListError = code;
+          if (attempt > 0 || !RETRYABLE_LIST_CODES.has(code)) throw error;
+          diag.listRetries++;
+        }
+      }
+      throw Error("S6_UNREACHABLE");
+    },
+  };
+}
+
 export function createS6SingleEditGuard(client, control) {
   return {
     async listTools() {
@@ -191,6 +228,7 @@ async function main(args) {
   let backupSaved = false;
   let failureStage = "local_config";
   let preflightChecks = null;
+  const listDiagnostics = {};
   try {
     const dir = join(homedir(), "MuSSE-MCP-Local", "musse-bridge");
     const scope = JSON.parse(await readFile(join(dir, "musse-iwiki-s6-scope.json"), "utf8"));
@@ -200,7 +238,8 @@ async function main(args) {
       join(dir, "xiaozhi.config.json"), "utf8")));
     const client = new IwikiMcpClient(connection);
     const guard = createS6SingleEditGuard(client, control);
-    const port = createOfficialS6GoalPort(guard, ids[DOC_PATHS.tasks]);
+    const port = createS6DiagnosedReadPort(
+      createOfficialS6GoalPort(guard, ids[DOC_PATHS.tasks]), listDiagnostics);
     rl = createInterface({ input: process.stdin, output: process.stdout });
     const result = await recoverS6ProgressOnce(port, scope, control, {
       report(ev) {
@@ -221,7 +260,10 @@ async function main(args) {
         process.stdout.write("G-998 原文已独立备份至 Windows 私有目录。\n");
       },
     });
-    process.stdout.write(JSON.stringify({ ...result, backupSaved }, null, 2) + "\n");
+    process.stdout.write(JSON.stringify({ ...result, backupSaved,
+      listAttempts: listDiagnostics.listAttempts,
+      listReadOnlyRetries: listDiagnostics.listRetries,
+      lastListError: listDiagnostics.lastListError }, null, 2) + "\n");
     if (result.status !== "VERIFIED" && result.status !== "PERSISTED_ACK_UNCONFIRMED" &&
         result.status !== "CANCELED_NO_WRITES") process.exitCode = 2;
   } catch (error) {
@@ -238,7 +280,11 @@ async function main(args) {
       preflightChecks,
       writeAttempts: control.attempted,
       editResponse: control.ack, remoteErrorCode: control.remoteErrorCode,
-      backupSaved, writeRetryPermitted: false,
+      backupSaved,
+      listAttempts: typeof listDiagnostics === "object" ? listDiagnostics.listAttempts : null,
+      listReadOnlyRetries: typeof listDiagnostics === "object" ? listDiagnostics.listRetries : null,
+      lastListError: typeof listDiagnostics === "object" ? listDiagnostics.lastListError : null,
+      writeRetryPermitted: false,
     }, null, 2) + "\n");
     process.exitCode = 1;
   } finally { rl?.close(); }
