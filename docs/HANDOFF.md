@@ -1,4 +1,10 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-I｜用户明确要求直接接入可写入语音 MCP（最新）
+- 用户明确拒绝再做只读预览阶段，授权推进独立 S5 可写入服务的部署准备。已提交 `src/mcp/server-s5-write.ts`（专用可写启动器）和 `tools/s5-write-bridge.mjs`（一次性 `--install-write/--status/--rollback-write`），创建严格为 `edit_doc + doc_id + content` 的本地私有写契约，并在本地进程启动/工具列表无远端请求的 smoke 成功后，备份原桥接 JSON，追加唯一第三个 `musse_iwiki_s5_write` 条目。保留原官方 iWiki 与 S4 只读 MCP，不重配 Token、不改原映射/真实任务数据。独立 launcher 只在安装后由小智调用时在自身进程开启 S5，原 `server-s5.ts` 默认关闭的入口不变。未经下一轮用户口头明确“确认写入/确认保存”不调用 `edit_doc`；写前 read 对比、一次写、严格回执与写后 readback 仍按 S5-G 现有流程。
+- `tests/s5i-write-bridge.test.mjs` 新增 5 项：真正启动可写子进程初始化和三工具列表（含无有效准备时确认失败）、一次性安装/契约/备份/回滚、错误私有映射/契约拒绝、已有 S5 预览时拒绝重复注册、笔记可选映射。GitHub S5 开发提交 `64f017a`、`eb4d079`；Node [run 41824829014](https://github.com/Qi0331/MuSSE/actions/runs/41824829014) **153/153 pass、0 fail、0 skipped**，仓库检查 [run 41824829102](https://github.com/Qi0331/MuSSE/actions/runs/41824829102) success。
+- **尚未在 Windows 执行本次安装或真实小智/ESP32 语音写入**。下一步用户可以在现有 detached HEAD S5 工作区简单 fetch + `git merge --ff-only FETCH_HEAD`，然后进入 `software/musse-iwiki` 显式执行 `node tools/s5-write-bridge.mjs --install-write`，重启 Windows 小智桥接/客户端并用新建任务的两轮明确确认进行真实写后读回验收。无需先运行 S5-H 只读预览版，也无需重复 144 项本机检查。
+- **权限与证据边界**：此步骤授予新 S5 MCP 对已有私人 `taskDocId` 对应 iWiki 文档的编辑能力，**真正确认时会修改该映射文档**。旧本地预检 `notesMapping:NOT_CONFIRMED`，因此只有映射任务文档默认可用，笔记未映射不能凭空创建。尚未证明真实任务 Markdown 结构符合 S5 规划器，格式不符将拒绝写；官方 iWiki 令牌仍需具备原有写权限（S5-F 私人隔离文档编辑已真实验证，但不自动证明每个目标可写）。写入不是原子 CAS，语音确认不是独立身份验证。回滚 `--rollback-write` 删除第三个服务并重启，不删除任何已经由用户明确确认写入的远端内容。PR #24/#25 仍 Draft，不迁云、不碰 ESP32 固件/S4 原配置/Token 安全补丁。
+
 ## 2026-11-04 S5-H：开始真实小智语音测试的独立只读预览入口（最新）
 - 为加速现场语音联调，在 S5 Draft PR #25 原分支新增 `src/mcp/server-s5-preview.ts`（独立启动入口）、`src/mcp/server-s5.ts` 的 `buildS5PreviewFlow/mainPreview`、`tools/s5-preview-bridge.mjs`（Windows `--install-preview/--status/--rollback-preview`），以及 `tests/s5h-preview-bridge.test.mjs`。安装入口要求原官方 iWiki 和 S4 只读服务仍在，备份桥接配置，只追加第三个 `musse_iwiki_s5_preview`，可单独回滚；不会替换 S4。
 - **设计上彻底不具备写入能力**：独立预览服务器使用 `OfficialIwikiReadStore`、未提供 `writeWithoutCondition`，不加载写契约、不需 `MUSSE_S5_WRITE_ENABLED`；协议仅列出 prepare/cancel，手动伪造 confirm 调用也拒绝 `S5_PREVIEW_ONLY`。可在真实小智上先测试“生成预览/语音取消”，不得声称已真实写入。

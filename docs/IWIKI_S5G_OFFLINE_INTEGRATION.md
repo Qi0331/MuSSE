@@ -90,3 +90,9 @@
 为尽快开始真实 ESP32/小智联调，新增可选的 `src/mcp/server-s5-preview.ts`，**只读** iWiki 文档，语音 MCP 只展示准备修改与取消两种工具；即使明确调用隐藏的 `musse_write_confirm` 也返回 `S5_PREVIEW_ONLY`。该服务无需写契约文件、不启用写入环境变量，不能调用 `edit_doc`。它不等价于 S5 真实语音写入功能验收。
 
 Windows 独立 S5 工作区更新最新代码后，在 `software/musse-iwiki` 执行 `node tools/s5-preview-bridge.mjs --install-preview`，为小智配置追加仅一个 `musse_iwiki_s5_preview` stdio 服务，自动备份；原官方 iWiki 和 S4 只读 MCP 保留。**该操作只有用户明确运行命令才发生**，随后重启小智即可测试两轮“语音预览、取消”；如需撤销，执行 `node tools/s5-preview-bridge.mjs --rollback-preview` 并重启。GitHub S5-H [完整测试 148/148](https://github.com/Qi0331/MuSSE/actions/runs/41823641283)，但 Windows 实际安装与小智现场测试未发生。确认预览成功后，再另行考虑仅对批准的合规隔离文档启用写入能力。
+
+## 8. S5-I 用户要求一次性部署的可写语音 MCP（2026-11-04）
+
+用户明确要求跳过 S5-H 只读预览部署步骤，直接允许安装真实可写语音 MCP。代码已提供独立启动器 `src/mcp/server-s5-write.ts` 和 Windows `tools/s5-write-bridge.mjs`，执行 `--install-write` 可一次创建本地已验证 `edit_doc/doc_id/content` 字段契约、启动不访问远端的初始化 smoke、备份私有桥接 JSON 并注册 `musse_iwiki_s5_write`；默认 `server-s5.ts` 仍不自行开启。安装阶段不调用任何 iWiki 读写工具、不修改远端数据；仅用户另行明确口头确认准备好的提案后，才执行写前重新 read_doc → 一次 edit_doc → 写后 read_doc 对比。
+
+回滚是 `node tools/s5-write-bridge.mjs --rollback-write` 并重启小智，只去掉第三个新服务，不恢复远端已有修改；原官方 iWiki 和 S4 只读 MCP 不变。当前真实 Windows 仍未运行安装/实际小智两轮语音；GitHub S5-I [153/153 CI](https://github.com/Qi0331/MuSSE/actions/runs/41824829014)。已知目前 Windows 私人笔记映射未确认，因此写能力首先针对现有的私人任务页 `taskDocId`，可能是真实任务总表；非语音测试专用隔离页。真实权限、文档 Markdown 结构与小智模型能否遵守下一轮确认仍须用现场结果验证。此处不声称服务端原子 CAS 或音频身份认证。

@@ -1,4 +1,9 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-27 — S5-I 真实可写语音服务一键安装（开发测试）
+- 用户明确要求从只读预览改为直接具备写能力。新增 `src/mcp/server-s5-write.ts` 以及 `tools/s5-write-bridge.mjs`：S5 仅通过显式安装的第三条专用小智服务启动，自动验证本机原双服务与映射、写入本地纯字段契约、离线子进程启动 smoke、备份私有 JSON、注册新条目，可原状回滚。原 S4 服务、Token 与映射不变，安装阶段不访问任何远端文档、不会调用 `edit_doc`；正式写入需要后续真实独立语音确认。
+- 新增 5 个完整测试（实际 Node 子进程 + 合成私人 Windows 配置/失败防护/回滚），GitHub [41824829014](https://github.com/Qi0331/MuSSE/actions/runs/41824829014) **153 tests、153 pass、0 fail、0 skipped**；仓库检查 [41824829102](https://github.com/Qi0331/MuSSE/actions/runs/41824829102) success。
+- **尚未进行**：用户 Windows 最新代码快进/安装、真实小智/ESP32 语音修改、真实映射任务 Markdown 解析及写权限。已知目前只有 `taskDocId` 有效格式，`notesDocId` 缺失；任务写入将在实际“确认写入”后真的修改私人映射的 iWiki 任务页，非隔离试页。语音确认来自模型转发，并非硬件身份认证；iWiki 不支持已验证的原子 CAS，写前检查与 edit 之间有残余竞争窗口。回滚只解除新服务而不撤回已写远端内容。
+
 ## 2026-11-04 T-20261104-26 — S5-H 可注册的真实语音预览服务与回滚机制
 - 新增独立 S5 预览服务入口，实际 Node 子进程启动测试确认：没有私人 `musse-iwiki-write.json` 时正常初始化，`tools/list` 只含 `musse_write_prepare` / `musse_write_cancel`，伪造 `musse_write_confirm` 返回 `S5_PREVIEW_ONLY`；服务侧读取使用只读映射，不持有编辑函数。即使环境意外设置 `MUSSE_S5_WRITE_ENABLED=1`，预览服务仍不能写。
 - 用合成 Windows 桥接配置执行真实的安装/回滚函数：只追加 `musse_iwiki_s5_preview`、备份原始文件、保留官方 iWiki/S4 旧服务、回滚复原原 JSON；缺少 S4 或私有映射时不修改配置。用户尚未在真实 Windows 上执行安装。
