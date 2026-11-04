@@ -1,5 +1,13 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 S5-E 最新进展（覆盖旧 S5-D 严格 CAS 门槛）
+- 用户已调整为**实用优先、避免过度防御**。对 iWiki 网页与机器人并发修改采取提交前重新读取并比较文本、写后复查的**非原子低频方案**，并明确接受检查至提交之间的残余竞争窗口；不另建事务数据库、独立授权 UI 或硬件确认。
+- PR #25 开发分支新增 `src/write/official-iwiki-best-effort.ts`、`src/write/voice-flow.ts`、`src/mcp/s5-voice-protocol.ts`、`src/mcp/server-s5.ts` 与对应单测；`guarded-write.ts` 增加显式 `concurrencyMode:"check-before-write"`；原 strict/atomic 兼容保留。新增可选脚本 `npm run mcp:s5`。
+- **完整 GitHub CI Node.js v22.23.4，`npm test` 98/98 成功，0 失败**，同时文档 CI 成功。测试使用模拟官方 iWiki 工具，不代表真实写入。详见 `docs/IWIKI_S5E_PRACTICAL_HANDOFF.md`。
+- **未完成**：SSE_MARKET iWiki 官方写入工具名、字段及成功响应尚未真实发现。Windows 真实部署与写入仍未授权；独立新服务器默认关闭、未挂桥接，不更改现有两个 MCP、Muse 角色、Windows/ESP32 与真实数据。
+- 下一步最短路径：获取一次**不涉及实际写入**的本地工具列表脱敏摘要，核对官方更新工具，再决定是否授权隔离页面的一次写入及最终桥接。
+
+
 ## 2026-11-04 S5-D 最新进展（覆盖下方 S5-C/B 快照）
 - **已首次完成真正完整 GitHub 工程检出上的 Node 全量回归：Node 22.23.4，`npm test` 84/84 通过，0 失败**。独立 CI：`.github/workflows/iwiki-node-tests.yml`，run ID `41784910123`；只具 `contents: read` 权限。旧日期依赖测试首轮 80/81 的失败已修复，并经完整 CI 重跑通过。
 - 修复 S5 受控写门禁：`COMMITTING` 不被 TTL 清理；`UNCERTAIN` 不被误降为 `EXPIRED`，并阻止同一文档重复准备；任务 Markdown 单行字段拒绝换行。S5 专项共 **29 项**，已经包含在 84 项全部通过的测试里。
