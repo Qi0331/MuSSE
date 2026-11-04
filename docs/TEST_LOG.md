@@ -1,5 +1,12 @@
 # 实验与测试日志
 
+## 2026-11-05 — Gxxx 统一格式代码检查 / 迁移测试状态
+
+- S6 源码规则更新为 ^G[0-9]{3,6}$；MCP 工具说明 G001/G998 无横线；针对旧 G-001 的拒绝及迁移任务表关联的模拟测试已提交。
+- 原 207/207 为修改前历史 Windows 测试；**本次新代码和迁移工具尚未在 Windows 完整运行 npm test，也没有真实执行 iWiki 迁移**，不能沿用历史通过数冒充本次测试结果。
+- 历史写入脚本已禁用 CLI 入口；迁移前必须在用户 Windows 上读取一次 plan 并进行私有备份。参见 docs/S6_GOAL_ID_MIGRATION_2026-11-05.md。
+
+
 ## 2026-11-05 T-20261105-S6-CLOSE — iWiki 进度写入双重验收及桥接恢复（用户 Windows 现场记录）
 - **网络只读**：关闭梯子后 Node v22.23.2，HTTP/HTTPS/ALL 代理环境变量未设置，DNS 正常、TCP 443 正常、Node 对主站 HTTPS HEAD 200；`audit:s6-uncertain -- --read-only` 返回 2 个目标、4 个任务、G-999/G-998 有效、`matchingProgressRecords=0`、`writesAttempted=0`。退出码 2 是预期记录不存在的业务未完成状态，不是 MCP 连不上。
 - **唯一新授权的远端写入**：用户执行 `recover:s6-progress -- --once`，本机交互确认 `G-998` 单条 0% 记录，备份后向 iWiki 发出唯一一次 `edit_doc`。真实结果 `status=VERIFIED`、`flowResult=ACK_AND_READBACK_VERIFIED`、`writeAttempts=1`、`progressRecordsObserved=1`、`backupSaved=true`、`remoteErrorCode=null`、`toolAccessStage=ready`、`listReadOnlyRetries=0`、回执中 `ok=true`；证据足以认定本地业务写入与精确读回成功。
