@@ -5,12 +5,16 @@ import { appendNote, requireNoteHeading } from "../markdown/notes.ts";
 import type { S5Action, S5Mutation } from "./guarded-write.ts";
 import { S5GateError } from "./guarded-write.ts";
 
+/** Escaped, full values for a meaningful human approval preview. Long plans fail closed at the gate's 2,000-character preview limit. */
+function shown(value: string): string { return JSON.stringify(value); }
+
 /** Pure S5 business composer. It never invokes iWiki MCP, filesystem writes or a task database. */
 export function planS5Mutation(action: S5Action, current: string, operationId: string, now: Date): S5Mutation {
   if (action.type === "note_create") {
     requireNoteHeading(current);
+    if (!/^#\s+快捷笔记\s*$/m.test(current)) throw new S5GateError("S5_NOTES_FORMAT_INVALID");
     const { markdown, heading } = appendNote(current, formatShanghai(now), action.content);
-    return { content: markdown, preview: `追加快捷笔记（${heading}）：${action.content.slice(0, 120)}` };
+    return { content: markdown, preview: `追加快捷笔记（${heading}），完整内容：${shown(action.content)}` };
   }
 
   const tasks = parseTaskTable(current);
@@ -25,7 +29,7 @@ export function planS5Mutation(action: S5Action, current: string, operationId: s
     validateTask(task);
     const content = serializeTaskTable(current, [...tasks, task]);
     if (parseTaskTable(content).length !== tasks.length + 1) throw new S5GateError("S5_INVALID_PLAN");
-    return { content, preview: `创建任务「${task.title}」，截止 ${task.dueDate}${task.dueTime ? " " + task.dueTime : ""}，优先级 ${task.priority}` };
+    return { content, preview: `创建任务 ${task.id}：名称 ${shown(task.title)}；说明 ${shown(task.description)}；分类 ${shown(task.category)}；截止 ${task.dueDate}${task.dueTime ? " " + task.dueTime : ""}；优先级 ${task.priority}` };
   }
 
   const task = tasks.find((row) => row.id === action.taskId);
@@ -37,7 +41,12 @@ export function planS5Mutation(action: S5Action, current: string, operationId: s
       throw new S5GateError("S5_NO_CHANGE");
     }
     const content = updateTaskRow(current, task.id, action.changes as Partial<Task>);
-    return { content, preview: `修改任务「${task.title}」：${Object.keys(action.changes).join("、")}` };
+    const details = Object.keys(action.changes).map((key) => {
+      const prior = String(task[key as keyof Task]);
+      const after = String(next[key as keyof Task]);
+      return `${key}：${shown(prior)} → ${shown(after)}`;
+    });
+    return { content, preview: `修改任务 ${task.id}「${task.title}」：${details.join("；")}` };
   }
   if (action.type === "task_complete") {
     if (task.status === "archived") throw new S5GateError("S5_RESTORE_FIRST");
