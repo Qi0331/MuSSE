@@ -38,9 +38,14 @@ function success(response: unknown): Record<string, unknown> {
  * closed until its REAL response shape is inspected and the parser is reviewed.
  */
 function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
+  // Real iWiki empty knowledge bases return {docs: [], total: 0} without
+  // a has_more field. Accept THAT exact empty case only, with no cursor.
+  // Non-empty lists still require an explicit has_more:false marker.
+  const provenEmpty = Array.isArray(payload.docs) && payload.docs.length === 0 &&
+    payload.total === 0 && payload.has_more === undefined && !payload.next_cursor;
   if (!Array.isArray(payload.docs) || !Number.isSafeInteger(payload.total) ||
       payload.total !== payload.docs.length || payload.total > 1000 ||
-      payload.has_more !== false || payload.next_cursor) {
+      (payload.has_more !== false && !provenEmpty) || payload.next_cursor) {
     throw new S6Error("S6_LIST_INCOMPLETE");
   }
   const entries: GoalEntry[] = [];
