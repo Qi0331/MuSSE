@@ -80,3 +80,10 @@
 - 可见空间≠可写权限；列表可能包含公共/团队空间，程序不自动挑选，也不宣称某空间私有。如果只出现共享空间，应选择 `0`，由用户在网页“新建我的知识库”创建独立私人空间后再测试（不需要手工创建文档）。
 - 如果 `list_spaces` 的工具定义有未知必填参数，或其响应结构无法解析，程序停止、打印 `S5F_SPACE_LIST_UNAVAILABLE`，不做创建，也不猜名字。列表、空间 ID/私人文档信息均不写入仓库、Windows 配置或脱敏 JSON；选定空间仅通过 `space_name` 在一次新建中使用。
 - 与之前一致：创建失败或没有唯一确认页面 ID 时绝不重试、绝不编辑已有任务文档；成功后只读回新文档、一次 `edit_doc`、再次读回。S4 生产环境完全不变。
+
+## 2026-11-04 首次成功创建、编辑被业务拒绝（本轮已实测）
+- 用户 Windows `list_spaces` 显示多个可见空间，用户显式选择编号 3（个人名称对应的空间）。脚本生成合成测试页面 `MuSSE S5-F 自动隔离测试 8a6fc40f`，用户仅执行一次该探针。
+- `create_markdown_doc` MCP 正常且**业务 `ok:true`**，返回 `data.kind/doc_id/space_id/space_name/title/page_type/editor_mode/url/hint` 字段；新页面 ID 未对外打印。随后 `read_doc` 成功验证初始标记，因此**真实创建与读取已通过**。
+- `edit_doc` MCP 正常但**业务 `ok:false`**，`data` 仅有 `error` 字段，原探针隐藏了值；`editCallFailed:false` 仅表示未抛请求异常，不代表服务端编辑成功。再读回为 `UNCHANGED`。本轮未证明编辑权限、整篇编辑支持或成功回执结构，正式 S5 写入仍禁用。
+- **禁止重跑 `probe:s5-auto -- --create-and-write-test`**，否则会产生另一篇测试文档。应复用已经存在的合成页面，先查官方 `edit_doc` 元数据，明确编辑对 Markdown 页的支持与必需字段，再考虑一次针对性修正。
+- GitHub S5 分支新增 `npm run inspect:s5-edit -- --live`：只通过 `initialize/tools/list` 读 `edit_doc`、`append_to_doc`、`list_docs`、`search_kb`、`list_doc_tree` 的工具描述和字段约束。**不调用 tools/call、不读取文档、不写入**；输出经过基本脱敏，仅用于接口契约判断。私有 Token、页面 ID 和正文均不进代码库。
