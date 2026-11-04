@@ -1,5 +1,11 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-07 — 用户实际读 iWiki 成功 + S4-D 桥接脚本离线模拟
+
+- **Windows 用户实测**：当前 `software/musse-iwiki` 工作区执行 `buildReadonlyTaskService(process.env)` 与 `service.listTasks()`；终端回传 `CONFIG_OK`、`READ_ONLY_OK`、`total=3`、`todo=2`、`done=1`、`archived=0`。说明实际 `read_doc` 访问、任务表解析和统计成功；未显示任务正文、Token 或真实页面 ID，未调用写入。
+- **脚本制作和隔离验证**：新增 `tools/s4d-bridge.mjs`。在本地容器 Node v22.16.0（低于生产门槛，测试副本临时降低版本断言）、假凭证和模拟 MCP 子进程下分别运行 `--smoke`、`--install`、`--status`、`--rollback`，终端得到 `S4D_MCP_SMOKE_OK`、`tools=6`、`write_blocked=true`、`S4D_BRIDGE_ENTRY_INSTALLED`、`S4D_BRIDGE_ENTRY_REMOVED`；生产脚本未降低 Node>=22.18 检查。与正式分支脚本内容按 32 位 FNV 哈希比对一致（`613ef46d`）。仅为隔离模拟，**不代表 Windows 客户端实际接入成功**。
+- **限制**：尚未验证 Windows `xiaozhi-client` 的新增服务热加载、工具同步、实际工具调用追踪、ESP32 语音或长期目标/笔记真实文档读取。不得把本阶段标记全通过，未恢复已取消的 S2-B 多文档人工验收。Windows 用户将自行运行脚本并回传脱敏摘要。
+
 ## 2026-11-04 T-20261104-06 — S4-D Windows 私有文档映射本地成功（用户回报）
 
 - 用户在本机 PowerShell 的既有桥接目录新建 `musse-iwiki-readonly.json`，以不回显的输入方式填入其自己保存的 S2-A 测试任务表 `page-...` 文档 ID；终端显示 `MAPPING_CREATED`。

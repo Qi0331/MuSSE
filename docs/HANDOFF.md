@@ -1,5 +1,13 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S4-D 批量 Windows 接入操作包已备妥（待用户执行）
+
+- 用户确认真实 `read_doc` 读取 S2-A 测试任务表成功，汇总 `total=3, todo=2, done=1, archived=0`。此前 Windows 指定 10/10 离线检查通过。
+- 新脚本 `software/musse-iwiki/tools/s4d-bridge.mjs` 已在当前功能分支。建议用户停止已运行的 `xiaozhi start` 后，进入 `$HOME\MuSSE-Lab\MuSSE\software\musse-iwiki`，执行 `git pull --ff-only`，`node tools/s4d-bridge.mjs --install`，`node tools/s4d-bridge.mjs --status`。安装前会自动运行 stdio MCP 真实只读查询和写工具拒绝检查；成功后备份既有 `xiaozhi.config.json`，仅追加 `musse_iwiki_readonly` 本地 Node 服务，不在配置中填入令牌或页面 ID。
+- 之后原目录 `$HOME\MuSSE-MCP-Local\musse-bridge` 执行 `xiaozhi start`，本机 dashboard 核对官方 `iwiki` 和新增 `musse_iwiki_readonly` 两服务，并确保六个业务工具可见。只对任务执行少量设备语音查询，需看到实际 `task_query` 调用证据，不能仅凭语音数字判断工具来源。目标/笔记目前未映射，调用会安全失败。
+- 若接入出错：关闭 `xiaozhi start`，在原功能分支执行 `node tools/s4d-bridge.mjs --rollback`，然后重新在原目录 `xiaozhi start`。回滚只移除新增服务项，保留原官方 iWiki；自动备份含私人凭证，留在 Windows 本机不能上传。保留原有 npm 安装目录的日志脱敏补丁、防火墙 9999 入站规则，不重装客户端。
+- 脚本只做过合成数据和模拟子进程的隔离检查，尚无真实 Windows `stdio` 桥接集成与 MuSSE 设备验收。S5 写入仍未授权，草稿 PR #24 不合并。
+
 ## 2026-11-04 S4-D Windows 10/10 离线测试已由用户实测通过
 
 - 用户报告 Node `v22.23.2`，Git `2.54.0.windows.1`，本地克隆提交 `b0b0436`，三份测试文件 `tests 10 / pass 10 / fail 0`。因此可进入本机私有映射准备，但**不宣称已完成真实 iWiki 查询或 MuSSE 设备集成**。

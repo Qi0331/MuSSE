@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 S4-D 首次真实 iWiki 任务只读成功；Windows 桥接接入脚本已准备
+
+- 用户在 Windows `Node.js v22.23.2`、`b0b0436` 工作区用 `buildReadonlyTaskService(process.env)` 构建官方 iWiki 只读 `read_doc` 客户端，终端回传 `CONFIG_OK`、`READ_ONLY_OK`、`total=3`、`todo=2`、`done=1`、`archived=0`。**这是用户实际执行的官方只读文档读取 + 业务解析**，不是模拟；尚未通过新 MCP stdio 或小智设备语音链路。
+- 分支新增 `software/musse-iwiki/tools/s4d-bridge.mjs`，提供 `--smoke`（六工具列表、真实任务查询与白名单拒绝写入，仅输出计数）、`--install`（先烟雾测试、再备份现有 Windows 私有桥接配置，添加不含 Token/页面 ID 的第二本地服务）、`--status`、`--rollback`（只移除新增服务项）。原官方 iWiki 服务始终保留。
+- 脚本在隔离 Linux Node 22.16 临时放宽本机版本门槛下，使用合成配置、模拟 MCP 子进程验证烟雾测试/安装/状态/回滚，模拟输出成功。实际正式脚本保留 Node>=22.18 门槛；用户 Windows 真实桥接**尚未安装或验收**。
+- 用户可按同一批操作拉取分支、停旧桥接、安装第二服务、重启 `xiaozhi start`、核对服务列表并做一次设备语音验证。不得分享私有日志、Token、文档 ID；S5 写入不开放，PR #24 继续草稿。
+
 ## 2026-11-04 S4-D Windows 正式工作区离线检查 10/10 通过（用户实测）
 
 - 用户在 Windows PowerShell 的 `C:\Users\HONOR\MuSSE-Lab\MuSSE\software\musse-iwiki` 中克隆分支，反馈 Node.js `v22.23.2`、Git `2.54.0.windows.1`、提交 `b0b0436`。
