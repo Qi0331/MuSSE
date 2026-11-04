@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { recoverS6ProgressOnce, createS6SingleEditGuard, createS6DiagnosedReadPort } from "../tools/s6-recover-progress-once.mjs";
+import { recoverS6ProgressOnce, createS6SingleEditGuard, createS6DiagnosedReadPort, verifyS6ToolAccess, summarizeS6ToolAccessError } from "../tools/s6-recover-progress-once.mjs";
 import { TASK_HEADER } from "../src/markdown/tasks.ts";
 
 const scope = { mode: "space", spaceId: "space-PRIVATE_GOALS" };
@@ -253,4 +253,77 @@ test("S6 repeated transient list failure halts after exactly two read calls", as
   assert.equal(diag.listRetries, 1);
   assert.equal(diag.lastListError, "S6_REMOTE_UNAVAILABLE");
   assert.equal(f.control.attempted, 0);
+});
+
+
+test("S6 tool access identifies initialization failure without remote tools/call or secrets", async () => {
+  const diagnostic = {};
+  let toolsListCalls = 0;
+  const client = {
+    async initialize() {
+      const e = Error("PRIVATE_TOKEN_SHOULD_NOT_LEAK");
+      e.code = "IWIKI_HTTP_ERROR";
+      e.message = "iWiki MCP HTTP 403: PRIVATE_TOKEN_SHOULD_NOT_LEAK";
+      throw e;
+    },
+    async listTools() { toolsListCalls++; return []; },
+  };
+  await assert.rejects(() => verifyS6ToolAccess(client, diagnostic),
+    /S6_TOOL_ACCESS_FAILED/);
+  assert.equal(diagnostic.stage, "initialize");
+  assert.equal(diagnostic.error.category, "IWIKI_HTTP_ERROR");
+  assert.equal(diagnostic.error.httpStatus, 403);
+  assert.equal(toolsListCalls, 0);
+  assert.equal(JSON.stringify(diagnostic).includes("PRIVATE_TOKEN"), false);
+});
+
+test("S6 tool access distinguishes tools/list RPC failure after successful initialize", async () => {
+  const diagnostic = {};
+  const calls = [];
+  const client = {
+    async initialize() { calls.push("initialize"); },
+    async listTools() {
+      calls.push("tools_list");
+      const e = Error("tools/list: PRIVATE ( -32001 )");
+      e.code = "IWIKI_RPC_ERROR";
+      e.message = "tools/list: sensitive response (-32001)";
+      throw e;
+    },
+  };
+  await assert.rejects(() => verifyS6ToolAccess(client, diagnostic),
+    /S6_TOOL_ACCESS_FAILED/);
+  assert.deepEqual(calls, ["initialize", "tools_list"]);
+  assert.equal(diagnostic.stage, "tools_list");
+  assert.deepEqual(diagnostic.error, {
+    category: "IWIKI_RPC_ERROR",
+    httpStatus: null,
+    rpcCode: -32001,
+    networkCause: null,
+  });
+});
+
+test("S6 tool access successful handshake and tools/list is zero-write and ready", async () => {
+  const diagnostic = {};
+  const calls = [];
+  const client = {
+    async initialize() { calls.push("initialize"); },
+    async listTools() { calls.push("tools_list"); return [{name:"list_docs"}]; },
+  };
+  assert.deepEqual(await verifyS6ToolAccess(client, diagnostic), [{name:"list_docs"}]);
+  assert.equal(diagnostic.stage, "ready");
+  assert.equal(diagnostic.error, null);
+  assert.deepEqual(calls, ["initialize","tools_list"]);
+});
+
+test("S6 tool access summarizes only allowlisted network errors without private content", () => {
+  const err = Object.assign(new TypeError("PRIVATE_NETWORK_BODY"), {
+    cause: { code: "ECONNRESET", private: "SECRET" },
+  });
+  assert.deepEqual(summarizeS6ToolAccessError(err), {
+    category: "NETWORK_OR_RESPONSE",
+    httpStatus: null,
+    rpcCode: null,
+    networkCause: "ECONNRESET",
+  });
+  assert.equal(JSON.stringify(summarizeS6ToolAccessError(err)).includes("SECRET"), false);
 });
