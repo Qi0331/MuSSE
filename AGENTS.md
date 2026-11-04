@@ -1,5 +1,12 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 S5-C 最新状态（覆盖下方 S5-B 交接）
+- 用户要求 S5 加速推进，不恢复 S2-B/S4-E 人工验收；`docs/IWIKI_S5C_HANDOFF.md` 为 S5 最新入口。
+- S5 Draft PR #25 的核心与业务规划已有 26/26 开发侧隔离专项测试（Node 22.16，非完整仓库），六份文件 GitHub blob SHA 与本机已测源码一致；文档 CI 通过，但完整 `npm test` 与 Windows 实测尚未执行。
+- `tools/s5-inspect-write-contract.mjs` 为安全的**工具发现器**：默认不联网，`--live` 仅 `initialize/tools/list`，绝不写入；字段名不能证明原子写或权限。
+- 当前绝不能部署写工具：官方 CAS/原子条件更新与独立可信用户确认渠道尚无证据。保持 Windows 官方/本地双只读 MCP、日志脱敏补丁、防火墙、Muse 人设、ESP32、云端及所有私人配置不变；PR #24/#25 均 Draft 不合并。
+
+
 ## 2026-11-04 S5-B 最新优先级（覆盖下面历史 S4 下一步建议）
 - 用户明确要求跳过 S4-E 目标/笔记额外验收，直接开发 S5 受控语音写入，并减少零散确认；不要再推荐恢复已取消的 S2-B 测试。
 - 新 S5 分支 `feat/iwiki-s5-guarded-write-design`，Draft PR #25 **以 S4 功能分支为 base**；原 PR #24 仍 Draft 未合并。S5 安全设计见 `docs/IWIKI_S5_SECURITY_DESIGN.md`，最新状态和测试以 `docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`、D-019 为准。
