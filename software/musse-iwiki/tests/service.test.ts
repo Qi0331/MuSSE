@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { loadFixtureStore, MemoryStore } from "../src/store/local-store.ts";
 import { TaskService } from "../src/service/task-service.ts";
 import { DOC_PATHS } from "../src/store/wiki-store.ts";
-import { parseTaskTable } from "../src/markdown/tasks.ts";
+import { parseTaskTable, updateTaskRow } from "../src/markdown/tasks.ts";
 import { computeGoalProgress, parseGoal } from "../src/markdown/goals.ts";
 import { dueTimestamp, isOverdue, shanghaiNow } from "../src/date.ts";
 import { createIwikiStoreFromEnv, IwikiMcpStore } from "../src/store/iwiki-store.ts";
@@ -48,6 +48,23 @@ test("updates only the target task row", async () => {
     const beforeLine = before.content.split("\n").find((l) => l.includes(id));
     const afterLine = after.content.split("\n").find((l) => l.includes(id));
     assert.equal(afterLine, beforeLine);
+  }
+});
+
+test("task row update preserves CRLF and mixed line endings outside the edited row", async () => {
+  const { store } = await fresh();
+  const doc = await store.read(DOC_PATHS.tasks);
+  const id = "T-20261101-A1";
+  const crlf = doc.content.replace(/\r?\n/g, "\r\n");
+
+  for (const original of [crlf, crlf.replace("\r\n", "\n")]) {
+    const oldRow = original.split(/\r?\n/).find((line) => line.includes(id));
+    assert.ok(oldRow);
+    const updated = updateTaskRow(original, id, { title: "跨平台更新" });
+    const newRow = updated.split(/\r?\n/).find((line) => line.includes(id));
+    assert.ok(newRow);
+    assert.notEqual(newRow, oldRow);
+    assert.equal(updated.replace(newRow, oldRow), original);
   }
 });
 
