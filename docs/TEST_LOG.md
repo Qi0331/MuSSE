@@ -1,4 +1,12 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-18 — Windows 115 项回归中 2 项失败：定位并修复
+- 用户在 Windows S5 独立 worktree 更新至 `e660f2b` 后执行完整 `npm test`，结果 **115 tests / 113 pass / 2 fail**；测试脚本已拦截，不曾执行新的 `create_markdown_doc` 或 `edit_doc`。已获得两个失败的完整错误片段。
+- #58 `S5-C default CLI is inert and only shows help`：测试直接把 `new URL(...).pathname` 传给 `execFileSync(process.execPath,...)`，Windows 下变成 `/C:/...`，最终 Node 报 `C:\\C:\\...`。已改成 `fileURLToPath(new URL(...))`，仅修跨平台测试路径。
+- #90 `updates only the target task row`：Windows checkout 的 fixture 使用 CRLF，`updateTaskRow` 原先按 `/\\r?\\n/` split 后用 `"\\n"` join，导致非目标行尾 `\\r` 被改动，违反“非目标行保持原样”。已修改生产函数保留原始分隔符，添加 CRLF 和混合换行保持性单测。这是实际代码缺陷，不能简单让测试忽略 `\\r`。
+- 以上修复已提交 S5 分支，最新功能改动为 `8b8e966`。**尚需最新 Windows `npm test` 或 GitHub CI 实际通过的证据**，不得预先声称全绿。
+- 原 S4 双 MCP / Windows 生产桥接和私人配置完全不动。仍未启动修正后的真正 create/edit 探针。
+
+
 ## 2026-11-04 T-20261104-17 — S5-F 创建空间参数定位及修复
 - 用户 Windows 从 `7aa98f0` 更新至 `39877ec`，执行 `npm run inspect:s5-create -- --live` 成功，工具 `create_markdown_doc` 的说明实际指出：目标知识库空间必须用 `space_id` 或 `space_name` 指定（二选一），`parent_id` 可选，创建即发布；正文是整篇 Markdown。这里没有 `tools/call`，不属于写入。
 - 确认旧探针只有 `title/content`，缺少业务层必需的目标空间；能解释第一次 `ok:false`。尚未核验是否有写权限，不能把这个原因扩大为唯一未来错误。
