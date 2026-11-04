@@ -1,4 +1,10 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-15 — S5-F 自动创建并编辑探针代码（尚未远端运行）
+- 用户建议不必人工先创建隔离文档，直接测试官方 `create_markdown_doc` 和 `edit_doc`。增加 `tools/s5-probe-auto-create.mjs` 及 `tests/s5-probe-auto-create.test.mjs`，并注册 `npm run probe:s5-auto`。
+- 未指定 `--create-and-write-test` 不会连线；指定后仅一次创建隔离测试页，若没有明确成功且唯一 `page-...` ID 则停止；仅对自动新建的测试页执行标记核验、一次 edit、写后核验。不打印私密 ID、Token、正文或远端异常，不自动重试。
+- 此处新增测试为模拟远端，不构成真实创建或编辑成功。当前 Windows 仅 `tools/list` 有用户实测证据。新增代码是否通过完整 Node CI，以关联提交最新工作流为准。
+
+
 
 ## 2026-11-04 T-20261104-14 — S5-F Windows 官方工具发现（用户终端证据）
 - **本次新增实际 GitHub CI**：最新 S5-F commit `c38ecad`，`iWiki Node tests` run `41798382817`：完整 `npm test` **104 tests / 104 pass / 0 fail**；`Repository checks` run `41798382801` 成功。新增 6 项隔离探针测试（前置标记、一次写入、异常不重试、脱敏、默认无动作）；远端 iWiki 写入仍为 0 次。
