@@ -53,3 +53,22 @@ test("S5 planner fails closed on nonexistent task, no-op, unsupported document",
   assert.throws(() => planS5Mutation({ type: "task_restore", taskId: "T-001" }, table, id, now), S5GateError);
   assert.throws(() => planS5Mutation({ type: "note_create", content: "X" }, "not a notes document", id, now));
 });
+
+test("S5 approval preview shows complete old/new task values and note body", () => {
+  const p = planS5Mutation({type:"task_update",taskId:"T-001",changes:{title:"已改的标题",dueTime:"14:20"}}, table,id,now);
+  assert.match(p.preview, /"测试任务".*"已改的标题"/);
+  assert.match(p.preview, /"".*"14:20"/);
+  assert.match(p.preview, /T-001/);
+  const note = planS5Mutation({type:"note_create",content:"标题和完整笔记内容"}, "# 快捷笔记\n", id,now);
+  assert.match(note.preview, /完整内容/);
+  assert.match(note.preview, /标题和完整笔记内容/);
+  const create = planS5Mutation({type:"task_create",title:"学习任务", description:"复习题库",category:"学习",dueDate:"2026-11-10"},table,id,now);
+  assert.match(create.preview,/复习题库/);
+  assert.match(create.preview,/学习/);
+});
+
+
+test("S5 notes never append into a mismapped arbitrary document", () => {
+  assert.throws(() => planS5Mutation({ type: "note_create", content: "test" }, "# 私人日记\n", id, now),
+    (error: unknown) => error instanceof S5GateError && error.code === "S5_NOTES_FORMAT_INVALID");
+});
