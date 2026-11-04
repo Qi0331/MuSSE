@@ -1,5 +1,14 @@
 # 小七 S6｜独立长期目标知识库发现与受控写入（2026-11-04）
 
+## 2026-11-05 最新实测与部署补记（覆盖下方旧阶段状态）
+
+**本地真实 iWiki 业务闭环完成，语音实物结果仍按证据等级记录。** 用户关闭梯子后 DNS、TCP 443、Node.js HTTPS（HEAD 200）和 `npm run audit:s6-uncertain -- --read-only` 均正常；审计看到 G-999 更新标记、G-998 正文有效、4 条任务、尚未补写进度。得到新一轮明确授权后只执行一次 `npm run recover:s6-progress -- --once`，结果为 `VERIFIED/ACK_AND_READBACK_VERIFIED`，远端真实 `edit_doc` 1 次、精确读回记录 1 条（0%）、私有备份成功、无只读重试或远端错误。此前的 `ECONNRESET` 已在关闭梯子环境中消失，但代理因果关系未做严格对照。禁止重新执行 `accept:s6` 或任何恢复补写。
+
+**桥接安装事故：** 初版交互式 PowerShell 安装片段在原服务对象为 null 时未完整停止，写出了无效配置。用户通过本地旧备份扫描（4 份候选、1 份完整）恢复配置并输出 `RESTORE_STATUS=SUCCESS`、原官方/S4/S5 条目均被保留。恢复不代表此时服务已启动。后续归档的 `tools/s6-safe-install.cjs` 采用 Node.js 单进程、失败即停的本地配置门禁及离线 MCP 工具检查；只在成功时备份并注册独立 `musse_iwiki_s6_goals`，**不执行 iWiki 写入**。脚本仅作为 Windows 操作工具，不含真实 Token/ID；它会启用四工具 S6 启动器，远端写入仍需逐项明确授权。用户最新反馈“没问题了，都好了”，但尚无匿名安装日志、设备 MCP 实际调用和语音写入读回的独立证据。
+
+**归档与使用**：`software/musse-iwiki/tools/s6-safe-install.cjs`；Windows 运行前先停止 `xiaozhi start`、保留原配置及备份，路径以本机独立 S6 工作树为准。不要上传 `xiaozhi.config.json`、`musse-iwiki-readonly.json`、`musse-iwiki-s6-scope.json`、令牌或原文备份。既有 207/207 本地测试为此前版本的逻辑验证，**不代表新安装器已被完整 CI 覆盖**；本次未重复 S5/S6 套件。
+
+
 > **状态（2026-11-04）**：用户已在 iWiki 完成「小七个人管理」页面目录，截图中《任务总表》是 12 列、4 行任务；《长期目标》是**单独的知识库**，不是已证实的普通子文件夹。Windows S6 worktree 已安装只读诊断并返回：45 个可见空间，精确唯一《长期目标》，该知识库 `docs=[]`、`total=0`、省略 `has_more`，无下一页游标；写入次数为 0。仓库现支持显式知识库范围模式 `{ "mode":"space", "spaceId":"..." }`，但**真实非空文档元数据、创建后的读回和语音写入尚未验收**。原 S5 成功不受影响。
 
 ## 1. 建议的实际个人空间
