@@ -1,4 +1,9 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F 已有测试文档编辑复测交接
+- 最新官方 `edit_doc` 描述已确认：`content` 为完整 Markdown，`doc_id` 指定目标，三路合并、需要编辑权限。用户第一次真实 edit 返回业务 `ok:false`，后续读回未变化；不能推断缺写权限。
+- 已开发 `npm run probe:s5-existing-edit -- --edit-once`，只读 list_spaces → 指定私人空间 list_docs → **完全匹配固定测试标题** `MuSSE S5-F 自动隔离测试 8a6fc40f` → read_doc 确认原始 marker → 本机输入 `EDIT` 才尝试一次 edit_doc → read_doc；服务端错误只输出分类，不打印原始值和私有 ID。
+- 此脚本不会运行 `create_markdown_doc`，不会写生产任务表，拒绝目标不唯一或内容不匹配的情况。需要先通过完整离线测试再使用，禁止循环重试。PR #25 仍 Draft，原 S4 环境不动。
+
 ## 2026-11-04 S5-F 成功创建 + 编辑拒绝交接
 - 用户 Windows 本机 `list_spaces` 选 3 进行一次隔离测试：`create_markdown_doc` 业务 `ok:true`，新页面 `read_doc` 校验通过；`edit_doc` 业务 `ok:false` 且 `data.error` 未披露，最终 `readback:UNCHANGED`、`outcome:EDIT_UNCONFIRMED`。不能宣称写入编辑成功，也不能将 `editCallFailed:false` 理解为成功。
 - 唯一已创建测试页标题：`MuSSE S5-F 自动隔离测试 8a6fc40f`。禁止原样再次执行 `probe:s5-auto`，否则另建测试页；以后优先复用此页，先读前置 marker，仍不猜私人 page ID。
