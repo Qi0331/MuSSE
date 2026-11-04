@@ -45,7 +45,7 @@ async function getConfig() {
 }
 
 async function writeConfig(config) {
-  const tmp = \`\${configPath}.s4d-tmp-\${process.pid}\`;
+  const tmp = `${configPath}.s4d-tmp-${process.pid}`;
   let created = false;
   try {
     const file = await open(tmp, 'wx', 0o600);
@@ -124,10 +124,10 @@ async function smoke() {
     throw Error('S4D_SMOKE_TASK_SHAPE_INVALID');
   }
   console.log('S4D_MCP_SMOKE_OK');
-  console.log(\`tools=\${listed.length}\`);
-  console.log(\`total=\${tasks.length}\`);
-  console.log(\`todo=\${tasks.filter(t => t.status === 'todo').length}\`);
-  console.log(\`done=\${tasks.filter(t => t.status === 'done').length}\`);
+  console.log(`tools=${listed.length}`);
+  console.log(`total=${tasks.length}`);
+  console.log(`todo=${tasks.filter(t => t.status === 'todo').length}`);
+  console.log(`done=${tasks.filter(t => t.status === 'done').length}`);
   console.log('write_blocked=true');
 }
 
@@ -138,7 +138,7 @@ async function install() {
     throw Error('S4D_SERVICE_ALREADY_PRESENT');
   }
   const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-  const backup = \`\${configPath}.s4d-backup-\${timestamp}.bak\`;
+  const backup = `${configPath}.s4d-backup-${timestamp}.bak`;
   try { await copyFile(configPath, backup, fsConstants.COPYFILE_EXCL); }
   catch { throw Error('S4D_BACKUP_FAILED'); }
   config.mcpServers[serviceKey] = { command: process.execPath, args: [serverPath] };
