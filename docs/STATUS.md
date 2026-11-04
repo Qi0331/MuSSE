@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-05 — S6 Gxxx 编号统一（已提交代码；Windows/iWiki 数据待迁移）
+
+- 用户决定仅把长期目标编号统一为 G001/G998/G999，无横线；模糊查找另期开发。S6 discovery / create / MCP schema 及测试已更新；真实旧数据 G-998/G-999 必须先迁移，才能启用新版 S6。
+- 一次性工具与私有备份/核验步骤见 docs/S6_GOAL_ID_MIGRATION_2026-11-05.md；GitHub 不含远端数据变更。旧 accept:s6、recover:s6-progress CLI 已退休，不得重跑。
+- 用户语音直读 G-998 在明确念出横线时通过；错误日志证明 G998 在旧版严格校验下返回 S6_INVALID_GOAL_ID，官方 iwiki 桥接断开时 S6 直接读仍成功。新格式尚需 Windows 迁移后验收。
+
+
 ## 2026-11-05 S6 最新结果（覆盖下方旧开发/阻塞记录）
 - Windows 关闭代理/梯子后 iWiki MCP 只读恢复：DNS、TCP 443、Node HTTPS HEAD 200；只读审计发现 G-999 标记有效、G-998 正文有效、4 条任务且待补进度记录不存在。后经用户新一轮授权，**一次** `recover:s6-progress -- --once` 返回 `VERIFIED/ACK_AND_READBACK_VERIFIED`、`writeAttempts=1`、`progressRecordsObserved=1`、`backupSaved=true`；0% 进度已真实写入并精确读回。已完成 S6 本地 iWiki 核心业务真实验收，禁止重跑 `accept:s6` 或补写。
 - `ECONNRESET` 更可能与代理路径相关，但仅有关闭梯子成功的证据，未证明唯一原因。S6 桥接初次 PowerShell 安装错误导致配置异常，已从本地历史备份恢复官方 iWiki/S4/S5 配置（`RESTORE_STATUS=SUCCESS`）；专用 `tools/s6-safe-install.cjs` 后续提供，用户报告“都好了”。尚未取得新安装器的脱敏成功输出或独立设备级 MCP 调用记录，不虚称 S6 语音写入完整验收。
