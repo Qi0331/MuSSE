@@ -1,4 +1,6 @@
 # MuSSE — Agent 工作约定
+- **S5-F 自动隔离写入测试优先**：用户指出无需手动创建测试页，新增 `tools/s5-probe-auto-create.mjs`，显式 `--create-and-write-test` 后最多执行一次 `create_markdown_doc`，返回唯一确认 page ID 才执行 `read_doc → edit_doc → read_doc`；不改任务总表、桥接配置与其他生产资源。不确定结果禁止盲目重试。真实写入仍须 Windows 用户本机执行；以 `docs/IWIKI_S5F_DISCOVERY.md` 最新段落为准。
+
 
 ## 2026-11-04 S5-F 官方写工具发现（最新）
 - 用户已在 Windows 独立 Git worktree `MuSSE-S5F` 检出 `508e908`；只读执行 `npm run inspect:s5-write -- --live` 成功，官方 MCP 共 27 个工具，候选 `edit_doc` 参数 `doc_id/content/title`、`append_to_doc` 参数 `doc_id/content`。此检查未执行 `tools/call`，**不是**真实写入验证。
