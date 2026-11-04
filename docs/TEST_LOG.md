@@ -1,5 +1,11 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-04 — S4-D 接入前代码静态审查与待测项
+
+- 对比仓库新增 MCP 协议入口与固定的上游 `xiaozhi-client v2.3.0`：上游 `src/mcp-core/transport-factory.ts` 支持 `stdio` `command/args/env`；`src/config/adapter.ts` 在服务配置转换中存在打印原始配置的路径，因此未来业务服务配置不得放置真实文档 ID、Token 等私人数据。
+- 仓库代码修正：`readonly-protocol.ts` 对列表结果统一封装对象型 `structuredContent`；`document-ids.ts` 新增本机私有 JSON 映射读取，`server-readonly.ts` 默认从 Windows 用户目录读取桥接配置和映射，不自动执行任何真实连接。
+- 新增 `tests/s4d-preflight.test.ts`，包含合成页面映射及 MCP 返回形状两个测试。**尚未实际运行完整仓库测试**，也未触碰真实 Windows、设备或账号。等待用户返回 Node 版本、功能分支提交哈希及三文件离线测试结果后补记；不得提前标记测试通过。
+
 ## 2026-11-04 T-20261104-03 — S4-C 六工具离线隔离测试（非真实 iWiki 验收）
 
 - **范围**：仓库 S4-C 只读目标/笔记代码，没有触碰 Windows、用户 iWiki 数据、ESP32 或云端。测试使用合成页面 ID 和合成笔记。

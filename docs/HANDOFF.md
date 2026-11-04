@@ -1,5 +1,11 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S4-D 准备阶段：等待 Windows 本机离线测试结果
+
+- 仓库已完成 S4-B+C 六个查询并提交 S4-D 最小安全修正：任务/笔记数组返回 `structuredContent.data`、目标对象保持对象格式。新增私有映射文件路径读取，避免在 `xiaozhi-client v2.3.0` 的 `mcpServers` 中放含真实页面 ID 的 `env` 字段（上游转换配置有打印配置的代码）。
+- **用户下一步**：按 [S4-D Windows 离线检查](IWIKI_S4D_PREFLIGHT.md) 从指定功能分支获取代码，在本机运行 Node 22.18+ 下 S4-B/C/D 三个精确测试文件，并汇报测试通过数或已脱敏错误。无需现在启动/修改现行桥接、上传私有配置或进行真实 iWiki 读取。
+- 本轮 S4-D 仅处于本机检查准备状态；未经下一轮明确审查许可，不修改本机运行中 `xiaozhi.config.json`、日志补丁、防火墙规则或云端。官方 MCP 继续作为当前生产链路。PR #24 保持 Draft，S5 写入仍单独待授权。
+
 ## 2026-11-04 S4-C 完成仓库代码交接，下一步 S4-D 需单独批准
 
 - 当前分支 `feat/iwiki-s2a-readonly-contract`，草稿 PR #24，未合并。一个未部署的入口 `software/musse-iwiki/src/mcp/server-readonly.ts` 提供 S4-B 四项任务/日程 + S4-C `goal_query`、`note_query`，合计 6 项只读工具。保留既有官方 iWiki MCP 生产配置、现行 Muse 提示词和旧 `server.ts` 不变。
