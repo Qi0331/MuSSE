@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Readable, Writable } from "node:stream";
+import { serveS5VoiceStdio } from "../src/mcp/server-s5.ts";
 import { handleS5VoiceRpc } from "../src/mcp/s5-voice-protocol.ts";
 import { createOfficialIwikiBestEffortPort } from "../src/write/official-iwiki-best-effort.ts";
 import { createS5VoiceFlow } from "../src/write/voice-flow.ts";
@@ -184,5 +186,40 @@ test("S5-G note creation uses mapped notes page and the same confirm/readback se
   });
   assert.equal(saved.status, "VERIFIED");
   assert.match(f.documents["page-TEST_NOTES"], /离线语音确认笔记/);
+  assert.equal(f.writes, 1);
+});
+
+async function stdio(flow: ReturnType<typeof createS5VoiceFlow>, requests: unknown[]) {
+  const output: string[] = [];
+  const writer = new Writable({
+    write(chunk, _encoding, done) { output.push(chunk.toString()); done(); },
+  });
+  await serveS5VoiceStdio(
+    flow, Readable.from(requests.map((request) => JSON.stringify(request) + "\n")), writer,
+  );
+  return output.join("").trim().split("\n").filter(Boolean).map((s) => JSON.parse(s) as Record<string, unknown>);
+}
+
+test("S5-G actual stdio JSON-lines transport retains a proposal across separate voice turns", async () => {
+  const f = harness();
+  const first = await stdio(f.flow, [
+    { jsonrpc: "2.0", id: 1, method: "initialize", params: {} },
+    { jsonrpc: "2.0", method: "notifications/initialized" },
+    { jsonrpc: "2.0", id: 2, method: "tools/list" },
+    rpc("musse_write_prepare", { intent }),
+  ]);
+  assert.equal(first.length, 3);
+  assert.equal((first[0].result as { serverInfo: { name: string } }).serverInfo.name, "musse-iwiki-voice-write");
+  assert.equal((first[1].result as { tools: unknown[] }).tools.length, 3);
+  const prepared = (first[2].result as { structuredContent: { operationId: string; preview: string } }).structuredContent;
+  assert.match(prepared.preview, /完成任务/);
+  assert.equal(f.writes, 0);
+
+  const second = await stdio(f.flow, [
+    rpc("musse_write_confirm", { operationId: prepared.operationId, spokenText: "确认保存" }),
+  ]);
+  assert.equal(second.length, 1);
+  assert.equal((second[0].result as { structuredContent: { status: string } }).structuredContent.status, "VERIFIED");
+  assert.deepEqual(f.calls, ["read_doc", "read_doc", "edit_doc", "read_doc"]);
   assert.equal(f.writes, 1);
 });

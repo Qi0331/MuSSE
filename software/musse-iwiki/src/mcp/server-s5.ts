@@ -39,10 +39,16 @@ export async function buildS5VoiceFlow(env: NodeJS.ProcessEnv) {
   return createS5VoiceFlow(port, planS5Mutation, { concurrencyMode: "check-before-write" });
 }
 
-export async function main(): Promise<void> {
-  const flow = await buildS5VoiceFlow(process.env);
-  process.stderr.write("[musse-iwiki] S5 voice-write MCP ready (best-effort concurrency)\n");
-  const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
+/**
+ * Injectable stdio transport for offline integration tests. No config, token
+ * or network access occurs here; main() supplies the explicitly enabled flow.
+ */
+export async function serveS5VoiceStdio(
+  flow: ReturnType<typeof createS5VoiceFlow>,
+  input: NodeJS.ReadableStream,
+  output: NodeJS.WritableStream,
+): Promise<void> {
+  const rl = createInterface({ input, crlfDelay: Infinity });
   for await (const line of rl) {
     if (!line.trim()) continue;
     let message: unknown;
@@ -52,8 +58,14 @@ export async function main(): Promise<void> {
       continue;
     }
     const response = await handleS5VoiceRpc(flow, message);
-    if (response) process.stdout.write(`${JSON.stringify(response)}\n`);
+    if (response) output.write(`${JSON.stringify(response)}\n`);
   }
+}
+
+export async function main(): Promise<void> {
+  const flow = await buildS5VoiceFlow(process.env);
+  process.stderr.write("[musse-iwiki] S5 voice-write MCP ready (best-effort concurrency)\n");
+  await serveS5VoiceStdio(flow, process.stdin, process.stdout);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
