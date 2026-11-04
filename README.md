@@ -1,113 +1,94 @@
-# MuSSE
+# 小七 | 记得重要的事，陪你走得更远
 
-**MuSSE** 是一个基于 ESP32-S3 和小智 AI（xiaozhi-esp32）的软硬件结合式 AI 陪伴机器人项目。
+**小七 是一个以 ESP32-S3 实体设备**为交互入口、结合语音 AI 与个人知识管理的长期陪伴项目。
 
-> **当前状态请以 [docs/STATUS.md](docs/STATUS.md) 为准。** 当前已有真实 Hello World 烧录运行记录；语音和矩阵仍未验证。
+我们希望它不只是一个能聊天的语音助手，而是能够**记住经过授权的重要信息、理解你的表达、随手记录待办，并让长期目标持续有迹可循**的个人伙伴。
 
-## 项目目标
+> **项目状态说明**：小七 正在持续开发。以下同时包含已经验证的能力和产品建设目标；“长期保存”不等于在任何故障、服务停运或账户丢失情况下都保证数据永不丢失。
 
-1. **基础语音交互**：复用小智的语音输入、音频播放及网络对话能力。
-2. **实体交互**：已到手的按键和 16×16 LED 矩阵；OLED 等待到货，扭动开关属于后续计划。
-3. **软件扩展（规划）**：经合法授权后接入校园资源检索、快捷记录、长期记忆和主动提醒。
+## 五个核心方向
 
-这是自主的 MuSSE 工程仓库，**不是**小智上游的官方仓库。当前先记录硬件、技术决策与实验，不急于直接复制整个上游固件源码。
+### 01 · 永久记忆｜重要的事，不必反复讲
 
-## 新成员 / 新 Agent 从哪里开始
+目标是将用户**主动授权保存**的偏好、重要事件、项目背景与个人知识沉淀到持久化存储中，支持后续对话检索、纠错、整理和导出。记忆不应仅依赖一次对话的临时上下文，也不应未经同意保存所有内容。
 
-| 对象 | 阅读顺序 |
+**当前状态：建设目标。** 现有 iWiki 语音知识查询链路已验证，但个人长期记忆的自动提取、写入、召回与恢复机制尚未完成端到端验收。
+
+### 02 · 情绪陪伴｜不仅回应，也有表情
+
+通过自然的语音交流和实体表情反馈，让 小七 呈现更有温度的陪伴体验。小七固件提供 **25 款 16×16 点阵表情**，覆盖待机、聆听、思考、说话、联网、升级和故障等状态，并支持简单动画和同组随机切换。
+
+**当前状态：** 语音对话已有用户实测反馈；25 款表情有源码与随包测试记录，尚未取得本次固件在实际 LED 矩阵上的验收记录。表情随设备状态变化，不代表已经实现对用户情绪的可靠识别。
+
+### 03 · 语音输入｜一句“你好小七”，开启交互
+
+使用 ESP32-S3、麦克风和扬声器作为物理交互入口，复用小智 AI 的语音识别、对话与播报能力。小七源码配置了自定义唤醒词 **“你好小七”**，并保留 OLED 与按键等接口。
+
+**当前状态：** 小七 已有普通双向语音交互及经本地 MCP 桥接的 iWiki 语音查询成功记录；本次新上传的自定义唤醒词固件尚未单独进行实机验收。
+
+### 04 · 待办一键记录｜想到就说，减少遗漏
+
+期望用户用一句话完成任务创建，再通过语音查询、更新和完成待办。记录应包含任务内容、时间与状态；涉及实际写入时，要有成功反馈，失败不能假装已经保存。
+
+**当前状态：建设中。**
+
+### 05 · 长期事项永久追踪｜让目标持续有进展
+
+长期目标不该只是一句愿望。小七 计划为目标关联阶段、子任务、里程碑和进展记录，让用户随时询问“我做到哪一步了”“接下来做什么”。
+
+**当前状态：建设中。** 当前路线以 iWiki 作为持久化数据源，侧重用户主动查询和记录；**尚未实现全天候后台监控或主动推送提醒**。持续追踪能力仍受存储可靠性、服务可用性和备份机制约束。
+
+## 当前系统架构
+
+ESP32-S3 小七实体设备
+
+↓ 语音输入 / 播报 / OLED / 16×16 点阵表情
+
+小智 AI 云端智能体
+
+↓ MCP 工具调用
+
+Windows 本地 MCP 桥接（xiaozhi-client）
+
+↓
+
+iWiki 个人知识库（当前仅已验证查询链路）
+
+当前采用的 Windows 本地桥接要求电脑开机、联网并保持程序运行
+
+## 项目进度
+
+| 方向 | 当前进展 |
 | --- | --- |
-| 新组员 | README → [STATUS](docs/STATUS.md) → [HARDWARE](docs/HARDWARE.md) → [Issues](https://github.com/Qi0331/MuSSE/issues) |
-| 编程 Agent | **[AGENTS.md](AGENTS.md)** → STATUS → 指派的 Issue → 相关代码或文档 |
-| 负责固件 | [UPSTREAM](docs/UPSTREAM.md) → HARDWARE → [TEST_LOG](docs/TEST_LOG.md) |
-| 负责规划 | [ROADMAP](docs/ROADMAP.md) → [DECISIONS](docs/DECISIONS.md) → [HANDOFF](docs/HANDOFF.md) |
+| ESP32-S3 双向语音 | 已有实际使用反馈 |
+| 通过语音查询 iWiki | 已有设备端成功反馈，使用 Windows 本地 MCP 桥接 |
+| “你好小七”自定义唤醒词 | 已写入新固件配置，待独立实机验证 |
+| 25 款点阵表情 | 源码及随包验证记录已具备，待硬件显示验收 |
+| 永久记忆 / 跨会话长期记忆 | 产品目标，端到端写入与召回待验证 |
+| 语音一键记录待办 | 业务逻辑已有离线实现，真实远程写入闭环待验证 |
+| 长期目标追踪 | 数据模型与离线逻辑已建设，持续运行能力待验证 |
 
-## 最新进展（2026-11-02 晚间）
+项目阶段与实测证据以 [项目状态](docs/STATUS.md) 和 [测试记录](docs/TEST_LOG.md) 为准。
 
-**M0 实际设备进度**：ESP32-S3-N16R8 已通过 ESP-IDF v6.1 Hello World 的本地编译、授权烧录、串口运行和自动重启验证；原 Flash 已本地安全备份。GPIO/按钮实验工程已本地构建，尚未上板。**小智 v2.5.2 / bread-compact-wifi 已本地构建成功，但从未烧录或验证语音。** 以上以用户转交 Reasonix CLI 报告为依据，未直接核验另一台 Windows 主机的二进制文件。权威详情：[STATUS](docs/STATUS.md) / [TEST_LOG](docs/TEST_LOG.md) / [HANDOFF](docs/HANDOFF.md)。
+## 代码导航
 
-**新硬件变化**：除了现有创乐博 2×HT16K33A 的 **I²C 16×16 LED 矩阵**，用户还购买了一款单独的 **5V WS2812B 16×16 RGB 矩阵**、四路双向电平转换模块、标称 5V/3A USB 适配器和 14500 电池供电模块（均依据商品截图，实物/电气未核验）。**I²C 矩阵和 WS2812B 不能套用同一套驱动，电平转换器也需匹配具体信号接口。** 当前供电策略为 **USB 5V 长期有线桌面运行，不采用电池**。未经核验禁止给 LED 矩阵接线或上电。
+- [`software/musse-display/`](software/musse-display/)：MuSSE 离线表情/显示核心与测试。
+- [`software/musse-iwiki/`](software/musse-iwiki/)：待办、目标、笔记与 iWiki 适配的离线业务代码。
+- `software/xiaoqi-firmware/`（待提交）：小七 25 款表情 ESP32-S3 固件源码，基于小智 ESP32 **v2.2.4**，使用 **ESP-IDF v5.5.6** 构建。
+- [`docs/HARDWARE.md`](docs/HARDWARE.md)：硬件与接线。
+- [`docs/PRODUCT_V1.md`](docs/PRODUCT_V1.md)：当前产品范围与数据路线。
+- [`docs/IWIKI_LOCAL_MCP_RUNBOOK.md`](docs/IWIKI_LOCAL_MCP_RUNBOOK.md)：本地知识库桥接的启动和维护方法。
 
-## 实物与采购状态
+> **版本边界**：现有 MuSSE 设备曾使用小智 **v2.5.2** 进行语音链路验证；“小七 25 款表情”是另一个基于 **v2.2.4** 的固件源码版本。两个版本不能直接视为同一构建结果，也不应直接覆盖彼此。
 
-已到货的主板、按钮、创乐博 I²C LED 矩阵及尚未到货的音频/OLED 清单，见 [HARDWARE](docs/HARDWARE.md)。新买的 5V WS2812B RGB 矩阵与旧 I²C 模块属不同硬件，实际到货和电气均未核实；有关购买后续请看 [LED_MATRIX](docs/LED_MATRIX.md)。
+## 开发与安全
 
-## 文档索引
+设备侧使用 C/C++ 与 [乐鑫物联网开发框架（ESP-IDF）](https://github.com/espressif/esp-idf)；语音能力主要依赖 [小智 AI（xiaozhi-esp32）](https://github.com/78/xiaozhi-esp32)。小七固件的具体构建与硬件配置请查阅源码包中的 `README_最终版.md`。
 
-- [项目状态](docs/STATUS.md)（唯一权威进展记录）
-- [软件产品 V1：待办、长期目标与 iWiki 知识库](docs/PRODUCT_V1.md)（2026-11-03 已确定的 B+C 开发范围）
-- [硬件档案](docs/HARDWARE.md)
-- [16×16 LED 矩阵调查与安全检查](docs/LED_MATRIX.md)
-- [烧录工具与固件文件核验](docs/FLASH_FILES.md)
-- [上游依赖](docs/UPSTREAM.md)
-- [研发参考资料总导航](docs/REFERENCES.md)
-- [系统架构草案](docs/ARCHITECTURE.md)
-- [路线图](docs/ROADMAP.md)
-- [决策记录](docs/DECISIONS.md)
-- [测试记录](docs/TEST_LOG.md)
-- [交接记录](docs/HANDOFF.md)
-- [贡献指南](CONTRIBUTING.md)
-- [安全说明](SECURITY.md)
+本项目是独立的工程，**并非小智上游官方产品**。引入的上游源码须保留其 MIT 许可与相关版权声明；本仓库其他自有代码的许可情况单独确认。
 
-## 参考资料
+**隐私原则**：未经授权不保存个人敏感信息；密钥、Wi-Fi 密码、私人知识库内容和设备备份不得进入公开仓库。长期记忆与任务数据应支持访问控制、纠错与备份，重要事项的保存结果必须可核验。
 
-> **完整的分阶段用途、版本记录与来源说明见 [研发参考文档导航](docs/REFERENCES.md)**。无需一次性通读；先看当前阶段资料。小智上游源码是版本权威，**xiaozhi.dev 是非官方社区文档站**，乐鑫官方文档用于确认芯片和驱动行为。
+---
 
-### 小智项目源码与候选固件（固定到 v2.5.2）
-
-- [小智上游仓库](https://github.com/78/xiaozhi-esp32) · [v2.5.2 发布页](https://github.com/78/xiaozhi-esp32/releases/tag/v2.5.2) · [bread-compact-wifi 候选发布包](https://github.com/78/xiaozhi-esp32/releases/download/v2.5.2/v2.5.2_bread-compact-wifi.zip)
-- [参考 GPIO 配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.h) · [板型构建配置](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/config.json) · [对应板型实现](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/main/boards/bread-compact-wifi/compact_wifi_board.cc)
-- [上游自定义开发板（中文）](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/custom-board_zh.md) · [上游设备控制用法（中文）](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-usage_zh.md) · [上游协议文档](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/docs/mcp-protocol_zh.md) · [MIT 许可证](https://github.com/78/xiaozhi-esp32/blob/v2.5.2/LICENSE)
-
-### 小智社区文档（按开发用途分组，共 27 篇）
-
-社区总入口：[小智文档索引](https://xiaozhi.dev/docs/)。
-
-**基础认识**
-
-[AI 能力与设备/服务端分工](https://xiaozhi.dev/docs/ai-features/)
-
-**硬件与入门**
-
-[硬件搭建指南](https://xiaozhi.dev/docs/usage/hardware-guide/) · [支持的开发板](https://xiaozhi.dev/docs/usage/supported-boards/) · [ESP32 低成本方案](https://xiaozhi.dev/docs/usage/esp32-budget-version/)
-
-**烧录与使用**
-
-[固件下载与烧录](https://xiaozhi.dev/docs/usage/firmware-download/) · [首次配网、激活与绑定](https://xiaozhi.dev/docs/usage/activation/) · [网络配置](https://xiaozhi.dev/docs/usage/network-setup/) · [功能使用教程](https://xiaozhi.dev/docs/usage/feature-guide/) · [常见问题 FAQ](https://xiaozhi.dev/docs/usage/faq/)
-
-**开发与固件**
-
-[ESP-IDF 开发环境与编译](https://xiaozhi.dev/docs/development/esp-idf-setup/) · [自定义开发板指南](https://xiaozhi.dev/docs/development/custom-board/) · [代码风格指南](https://xiaozhi.dev/docs/development/code-style/) · [自定义资源（Assets）](https://xiaozhi.dev/docs/development/assets-customization/) · [BluFi 蓝牙配网](https://xiaozhi.dev/docs/development/blufi/)
-
-**设备与协议**
-
-[MCP 协议规范](https://xiaozhi.dev/docs/development/mcp/protocol/) · [MCP 物联网设备控制](https://xiaozhi.dev/docs/development/mcp/usage/) · [WebSocket 通信协议](https://xiaozhi.dev/docs/development/websocket/) · [MQTT + UDP 混合协议](https://xiaozhi.dev/docs/development/mqtt-udp/)
-
-**显示与提醒**
-
-[Emoji 情感显示](https://xiaozhi.dev/docs/development/emotion/) · [动态文字 Glyph Push](https://xiaozhi.dev/docs/development/glyph-push/) · [异步语音通知（notify）](https://xiaozhi.dev/docs/development/notify/)
-
-**后台与扩展**
-
-[自建服务端](https://xiaozhi.dev/docs/usage/self-hosted-server/) · [生态项目与服务端](https://xiaozhi.dev/docs/development/ecosystem/)
-
-**ESP32 深入**
-
-[芯片支持与存储规格](https://xiaozhi.dev/docs/esp32/technical-specs/) · [固件代码导览](https://xiaozhi.dev/docs/esp32/programming-guide/) · [进阶扩展点](https://xiaozhi.dev/docs/esp32/advanced-features/) · [ESP32 开发问题排查](https://xiaozhi.dev/docs/esp32/troubleshooting/)
-
-### 乐鑫官方文档（芯片、驱动与烧录）
-
-- [ESP-IDF v6.1 ESP32-S3 快速入门](https://docs.espressif.com/projects/esp-idf/zh_CN/v6.1/esp32s3/get-started/index.html)
-- [Espressif esptool（ESP32-S3）](https://docs.espressif.com/projects/esptool/en/latest/esp32s3/index.html)
-- [ESP32-S3 GPIO 驱动与引脚限制](https://docs.espressif.com/projects/esp-idf/zh_CN/v6.1/esp32s3/api-reference/peripherals/gpio.html)
-- [ESP32-S3 I2S 音频驱动](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/i2s.html)
-- [ESP32-S3 I2C 驱动](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/i2c.html)
-
-### 暂待确认的资料
-
-实际开发板及电子元件的原厂规格书、软工集市和 iWiki 的合法授权接口文档，待型号/权限确认后补充；**绝不在公开仓库发布令牌、校园内部文件或私人链接**。
-
-## 公开仓库提醒
-
-本仓库按团队决定保持 **Public（公开）**。**不要提交 Wi-Fi 密码、API Token、设备凭证、私人订单、未经授权的校园资料或个人信息。** Git 历史中的泄露内容并不会因为删除文件而自动消失。
-
-本仓库自身许可证尚未确定；引入小智上游代码时须保留适用的 MIT 许可证和版权声明。
+**小七 希望成为这样一个伙伴：你说过的重要事情，它能在你的允许下记住；你想完成的事情，它能陪你持续推进。**
