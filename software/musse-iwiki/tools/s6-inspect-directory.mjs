@@ -12,6 +12,26 @@ import { IwikiMcpClient } from "../src/store/iwiki-mcp-client.ts";
 import { validateScope } from "../src/goals/s6-goal-discovery.ts";
 
 const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
+
+/**
+ * JSON Schema treats missing "required" as an empty list. Only apply that
+ * default when inputSchema itself is a real object; never infer a schema.
+ */
+export function summarizeS6Tool(tool, allowed = ["space_id"]) {
+  if (!tool || !obj(tool.inputSchema)) {
+    return { present: Boolean(tool), requiredKnown: false, requiredOnlySupported: false };
+  }
+  const schema = tool.inputSchema;
+  const omitted = !Object.hasOwn(schema, "required");
+  const required = omitted ? [] : schema.required;
+  const usable = Array.isArray(required) && required.every((k) => typeof k === "string");
+  return {
+    present: true,
+    requiredKnown: usable,
+    requiredOnlySupported: usable && required.every((s) => allowed.includes(s)),
+    requiredDefaultedEmpty: omitted,
+  };
+}
 export function summarizeS6ListShape(response) {
   if (!obj(response) || response.isError === true) return { businessOk: false };
   const candidates = [];
@@ -120,12 +140,8 @@ async function main(args) {
     const connection = extractConnection(JSON.parse(await readFile(configPath, "utf8")));
     const client = new IwikiMcpClient(connection);
     const advertised = await client.listTools();
-    const summarize = (name, allowed = ["space_id"]) => {
-      const tool = advertised.find((x) => x?.name === name);
-      const required = Array.isArray(tool?.inputSchema?.required) ? tool.inputSchema.required : null;
-      return { present: Boolean(tool), requiredKnown: required !== null,
-        requiredOnlySupported: required !== null && required.every((s) => allowed.includes(s)) };
-    };
+    const summarize = (name, allowed = ["space_id"]) =>
+      summarizeS6Tool(advertised.find((x) => x?.name === name), allowed);
     const report = {
       listSpaces: summarize("list_spaces", []),
       listDocs: summarize("list_docs"),
