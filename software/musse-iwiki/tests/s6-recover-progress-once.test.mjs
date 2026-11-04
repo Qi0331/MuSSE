@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { recoverS6ProgressOnce, createS6SingleEditGuard } from "../tools/s6-recover-progress-once.mjs";
+import { recoverS6ProgressOnce, createS6SingleEditGuard, createS6DiagnosedReadPort } from "../tools/s6-recover-progress-once.mjs";
 import { TASK_HEADER } from "../src/markdown/tasks.ts";
 
 const scope = { mode: "space", spaceId: "space-PRIVATE_GOALS" };
@@ -189,5 +189,68 @@ test("S6 zero-write preflight reports only structural checks for changed target"
     progressAlreadyPresent: false,
   });
   assert.equal(JSON.stringify(report).includes("用户后来修改"), false);
+  assert.equal(f.control.attempted, 0);
+});
+
+
+test("S6 transient goal-list RPC failure is retried once with read-only calls", async () => {
+  const f = fixture();
+  const diagnostics = {};
+  const ordinaryList = f.port.listDirectChildren;
+  let attempts = 0;
+  f.port.listDirectChildren = async (scope) => {
+    attempts++;
+    if (attempts === 1) {
+      const error = Error("private server diagnostics must not leak");
+      error.code = "S6_REMOTE_UNAVAILABLE";
+      throw error;
+    }
+    return ordinaryList(scope);
+  };
+  const port = createS6DiagnosedReadPort(f.port, diagnostics);
+  const outcome = await recoverS6ProgressOnce(
+    port, scope, f.control, options(["0"], []));
+  assert.equal(outcome.status, "CANCELED_NO_WRITES");
+  assert.equal(f.control.attempted, 0);
+  assert.equal(diagnostics.listRetries, 1);
+  assert.ok(diagnostics.listAttempts >= 2);
+  assert.equal(diagnostics.lastListError, null);
+});
+
+test("S6 structural list mismatch fails closed with no read retry, no write", async () => {
+  const f = fixture();
+  const diag = {};
+  f.port.listDirectChildren = async () => {
+    const error = Error("private data may be embedded here");
+    error.code = "S6_LIST_INCOMPLETE";
+    throw error;
+  };
+  const port = createS6DiagnosedReadPort(f.port, diag);
+  await assert.rejects(() => recoverS6ProgressOnce(
+    port, scope, f.control, options([], [])),
+    (error) => error?.code === "S6_DISCOVERY_UNAVAILABLE");
+  assert.equal(diag.listAttempts, 1);
+  assert.equal(diag.listRetries, 0);
+  assert.equal(diag.lastListError, "S6_LIST_INCOMPLETE");
+  assert.equal(f.control.attempted, 0);
+});
+
+test("S6 repeated transient list failure halts after exactly two read calls", async () => {
+  const f = fixture();
+  const diag = {};
+  let n = 0;
+  f.port.listDirectChildren = async () => {
+    n++;
+    const error = Error("network exception private content");
+    error.code = "S6_REMOTE_UNAVAILABLE";
+    throw error;
+  };
+  const port = createS6DiagnosedReadPort(f.port, diag);
+  await assert.rejects(() => recoverS6ProgressOnce(
+    port, scope, f.control, options([], [])),
+    (error) => error?.code === "S6_DISCOVERY_UNAVAILABLE");
+  assert.equal(n, 2);
+  assert.equal(diag.listRetries, 1);
+  assert.equal(diag.lastListError, "S6_REMOTE_UNAVAILABLE");
   assert.equal(f.control.attempted, 0);
 });
