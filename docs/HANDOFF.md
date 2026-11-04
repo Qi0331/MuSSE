@@ -1,4 +1,9 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-G 离线开发完成（后续优先本节）
+- **当前新入口**：`docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`（S5-F 的原始新对话背景仍见 `docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`）。S5 原分支 `feat/iwiki-s5-guarded-write-design` 最新功能提交 `cd88bc9`；完整 GitHub CI **141/141 pass**、仓库检查通过，真实 Windows 仍只证实 `e1f30fc` 128/128 + 私人合成页 `edit_doc ok:true/readback UPDATED`。
+- 已实现/验证的**离线模拟**：`musse_write_prepare/confirm/cancel`、完整预览、下一轮明确确认、写前读比较、官方写回执 `ok:true,data.doc_id` 核验、一次 `edit_doc`、写后 `read_doc`，以及两轮 stdio JSON Lines。错误/取消/网页冲突/读回不一致不会盲重试；写前读失败是明确未写入且允许重新准备。
+- **下一步仅是受控部署前授权评审**，不自动启用 Windows S5 写 MCP、访问真实任务总表、改现有 S4 双 MCP、迁云、改 Token/日志/ESP32 或合并 Draft PR #24/#25。无需重复 S5-F 实写；只有未来授权后才同步 Windows S5 worktree、确认私有映射与权限、明确注册/回滚和人工语音验收。
+
 ## 2026-11-04 新对话统一入口（S5-G）
 - 新开对话前先读 **`docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`**：包含 S4/S5 双分支和 worktree、S5-F 实写成功证据、下一阶段 S5-G 操作顺序、保护边界以及“Windows 本地桥接／GitHub 源码／小智和 iWiki 远端”部署结构。
 - GitHub 分支仍为 `feat/iwiki-s5-guarded-write-design`、Draft PR #25，base 为 S4；不要因换聊天新开 Git 分支。用户尚未授权 S5 生产启用、真实任务表写入、迁云或关停现有 Windows 两套 MCP。

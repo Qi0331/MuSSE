@@ -1,4 +1,6 @@
 # MuSSE — Agent 工作约定
+- **S5-G 离线整合已完成（2026-11-04，最新）**：权威进展 `docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`。GitHub S5 分支 `cd88bc9` 的完整 Node CI **141/141**、文档检查均通过；已覆盖真实 `edit_doc + doc_id + content` 包络的模拟 MCP → 语音 prepare/confirm/cancel → 写前比较 → 一次写入 → 写后核验，并增加 stdio 两轮协议测试。实际 Windows 128/128 和私人合成页实写证据仍为旧基线，最新 GitHub CI **不是** Windows/真实语音联调。现仅具备受控部署前评审条件，严禁自动启用 S5、写生产文档、改 S4 双 MCP/桥接/Token/ESP32 或迁云；PR #24/#25 留 Draft。不要重跑 S5-F 实写探针。
+
 - **新对话请优先读 S5-G 交接**：`docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`。S5-F 已实证创建/读取/编辑/写后复核，停止重复测试；继续同一 S5 Draft PR #25（base S4 PR #24），暂不启用生产写权限。源码/脱敏说明已上 GitHub，Windows 本地有运行桥接和私有 Token/文档映射与日志补丁，小智与 iWiki 在远端；未来上云需部署常驻进程与安全配置，不是上传代码即完成。下一对话先核实最新 HEAD/CI 再做语音写入链路离线整合。
 
 

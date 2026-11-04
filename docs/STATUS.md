@@ -1,4 +1,10 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-G 离线整合已通过（最新权威）
+- **结果与后续边界**：`docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`。在 S5 原分支 / Draft PR #25 上完成正式 MCP → 两轮语音协议 → 写前检查 → 一次 `edit_doc` → 写后复读的模拟端到端测试，以及标准 stdio JSON Lines 两轮链路测试；没有修改 Windows 桥接或任何远程 iWiki 数据。
+- 真实已验证的 `edit_doc + doc_id + content` 写入契约现要求业务 `ok:true`、`data.doc_id` 与目标一致且无矛盾包络；`isError:false` 不等于写成功。写前读失败改为明确拒绝、可重新准备；写后读失败或写调用不确定时依然不自动重试。
+- **GitHub HEAD `cd88bc9`**：完整 Node CI **141/141 pass**，run [41817781723](https://github.com/Qi0331/MuSSE/actions/runs/41817781723)；仓库文档检查成功，run [41817781852](https://github.com/Qi0331/MuSSE/actions/runs/41817781852)。仅为 GitHub Linux + 模拟环境；用户 Windows 的真实测试基线仍为 `e1f30fc` **128/128**，S5-F 的一次私人合成页真实编辑已通过，不再重做。
+- **阶段门槛**：离线整合完成，可以讨论受控部署前审批；**尚不能宣布实际语音写入验收或自行上线**。后续仍需用户批准 Windows 更新/私有文档映射和权限审核/S5 独立服务注册与回滚/真实语音验收。S4 双 MCP、Token、日志补丁、防火墙、ESP32、生产任务表、云端均不动；PR #24/#25 均 Draft。
+
 ## 2026-11-04 S5-G 新对话交接已入库（本轮 GitHub 收尾）
 - **下一对话入口：`docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`**。S5-F 创建→读→编辑→读的真实验收已经通过；现在应停止重复隔离写入探针，转入 S5-G 的写入适配器/二轮语音协议/写后复核离线整合及后续授权部署前检查。
 - 区分部署位置：**GitHub 有公开源码与脱敏文档，Windows 本地运行 `xiaozhi-client` 与两套只读 MCP 并保存 Token/映射和安装补丁；小智智能体与 iWiki 数据原本就在远端。** 将来上云不是仅上传文件，还需配置可信运行时、私有密钥、常驻连接、网络防护/日志/运维与回滚。目前未批准迁云或修改 Windows 生产配置。

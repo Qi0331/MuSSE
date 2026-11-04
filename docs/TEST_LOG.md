@@ -1,4 +1,11 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-23 — S5-G 语音写入离线端到端集成（无真实远端写入）
+- 先读 GitHub `da4394d`：完整 Node CI run `41816644844` **130/130 pass、0 fail**；文档检查 run `41816644660` 成功。确认 GitHub PR #24 与 PR #25 均为 Draft，S5 base 为 S4 分支。
+- 提交 `8e2b320`：官方业务 `ok:true` 与 `data.doc_id` 必须对应预期页，拒绝 `ok:false`、矛盾包络、未知响应和错页回执；修复写前 `read_doc` 失败时错误进入 `UNCERTAIN` 的状态（未写入应拒绝且允许新提案）；新增十项模拟 MCP 端到端用例，覆盖工具列表、预览、明确/含糊确认、取消、重复、网页冲突、读写不确定与笔记写入。完整 CI run `41817549089` **140/140 pass**。
+- 提交 `cd88bc9`：将同一独立 S5 服务的 stdio 处理提取成可注入流，不改变默认拒启用策略；新增从初始化、工具列表到跨两轮标准输入输出 `prepare → confirm` 的模拟用例。GitHub Node 完整 run [41817781723](https://github.com/Qi0331/MuSSE/actions/runs/41817781723) **141/141 pass、0 fail、0 skipped**；Repository checks run [41817781852](https://github.com/Qi0331/MuSSE/actions/runs/41817781852) 成功。
+- **证据边界**：这 11 项新增测试都是模拟 iWiki 回执与内存文档，GitHub CI 在 Linux 跑 Node；没有读取 Windows 私有 Token/配置，没有运行真实 `edit_doc`，也没有 ESP32/小智真实两轮语音。用户 Windows 128/128 和 S5-F 私人隔离文档真实编辑成功仍是独立的上阶段证据，不冒充本次语音联调。
+- **结论**：S5-G 离线集成通过；进入受控部署前授权评审而非生产启用。详见 `docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`；S4 双 MCP、Windows 桥接、日志补丁、Token、ESP32、真实任务表和 S4/S5 Draft PR 均不更动。
+
 ## 2026-11-04 T-20261104-22 — S5-F 真实既有页编辑通过（最终实测）
 - 用户 Windows 从 `b215fcb` 快进至 `e1f30fc`，`npm test` 运行 **128 tests / 128 pass / 0 fail**。该统计是用户 Windows 本地实际输出，并非 GitHub CI 冒充。
 - 调用 `npm run probe:s5-existing-edit -- --edit-once`，本机输入原私人空间名称后，测试脚本通过只读 `list_spaces`、指定空间的 `list_docs`、`read_doc` 确认**唯一匹配**已存在合成文档 `MuSSE S5-F 自动隔离测试 8a6fc40f`，且正文仍是初始标记。用户在本机明确输入 `EDIT`，仅对该文档执行一次 `edit_doc({doc_id,content})`，没有再次调用 `create_markdown_doc`。
