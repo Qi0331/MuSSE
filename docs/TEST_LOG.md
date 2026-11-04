@@ -1,6 +1,7 @@
 # 实验与测试日志
 
 ## 2026-11-04 T-20261104-14 — S5-F Windows 官方工具发现（用户终端证据）
+- **本次新增实际 GitHub CI**：最新 S5-F commit `c38ecad`，`iWiki Node tests` run `41798382817`：完整 `npm test` **104 tests / 104 pass / 0 fail**；`Repository checks` run `41798382801` 成功。新增 6 项隔离探针测试（前置标记、一次写入、异常不重试、脱敏、默认无动作）；远端 iWiki 写入仍为 0 次。
 - 用户在 Windows PowerShell 执行 `git fetch origin feat/iwiki-s5-guarded-write-design` 与 `git worktree add --detach ... FETCH_HEAD`，独立工作树 HEAD `508e908`；原 S4 工作目录未切换分支。
 - 在 S5 工作树执行 `npm run inspect:s5-write -- --live`，实际返回 `advertisedToolCount=27`、六个候选 `write_note/create_markdown_doc/create_doc/append_to_doc/edit_doc/edit_page_config`；`edit_doc` 字段 `doc_id/content/title`，必填 `content`；`append_to_doc` 字段 `doc_id/content`，必填 `content`。所有候选 `hasVersionNamedField=false`。
 - 原检查脚本只发 MCP `initialize/tools/list`，不执行 `tools/call`；用户提供的文本不含 Token、私有页面 ID 或原始 JSON 配置。**没有验证编辑功能、真实写入、远端权限或成功响应**。
