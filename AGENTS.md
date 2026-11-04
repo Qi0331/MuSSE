@@ -1,5 +1,10 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 S5-F 官方写工具发现（最新）
+- 用户已在 Windows 独立 Git worktree `MuSSE-S5F` 检出 `508e908`；只读执行 `npm run inspect:s5-write -- --live` 成功，官方 MCP 共 27 个工具，候选 `edit_doc` 参数 `doc_id/content/title`、`append_to_doc` 参数 `doc_id/content`。此检查未执行 `tools/call`，**不是**真实写入验证。
+- 现有可配置普通写适配器不必猜工具名；S5-F 新增默认惰性的单页 `edit_doc` 隔离探针及模拟测试，等用户另行批准一次真实写入才可执行。最新细节以 `docs/IWIKI_S5F_DISCOVERY.md` 为准。
+- 原 S4 工作区和双 MCP、私有 Token/配置、日志补丁、防火墙、Muse 人设、ESP32 均未改；不启用 S5 服务。保留 D-021 的实用模式，禁止恢复旧过度 CAS 门槛。
+
 ## 2026-11-04 S5-E 最新指令（高于旧 S5-D/C/A 门槛）
 - 用户要求 **加快进度、反对过度防御性编程**；同意优先考虑 iWiki 网页与机器人同时编辑的实际冲突，不再将原子 CAS、独立身份批准 UI、跨重启事务数据库作为个人低频写入的强制条件。
 - **最新权威交接：`docs/IWIKI_S5E_PRACTICAL_HANDOFF.md`**。S5 独立 Draft PR #25，原 S4 Draft PR #24 不动。iWiki 唯一持久化来源，当前 Muse 人设、Windows 桥接/日志补丁/防火墙、ESP32 均不改变。
