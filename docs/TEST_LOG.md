@@ -1,4 +1,12 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-22 — S5-F 真实既有页编辑通过（最终实测）
+- 用户 Windows 从 `b215fcb` 快进至 `e1f30fc`，`npm test` 运行 **128 tests / 128 pass / 0 fail**。该统计是用户 Windows 本地实际输出，并非 GitHub CI 冒充。
+- 调用 `npm run probe:s5-existing-edit -- --edit-once`，本机输入原私人空间名称后，测试脚本通过只读 `list_spaces`、指定空间的 `list_docs`、`read_doc` 确认**唯一匹配**已存在合成文档 `MuSSE S5-F 自动隔离测试 8a6fc40f`，且正文仍是初始标记。用户在本机明确输入 `EDIT`，仅对该文档执行一次 `edit_doc({doc_id,content})`，没有再次调用 `create_markdown_doc`。
+- 真实返回：`editAttempted:true`；`editCallFailed:false`；MCP `mcpError:false`；业务信封 `ok:true`，`data` 键含 `doc_id,title,new_rev_no,old_chars,new_chars`；`errorKind:NO_EXPLICIT_BUSINESS_ERROR`；写后 `readback:UPDATED`，`outcome:EXISTING_EDIT_VERIFIED`。**服务端真实编辑且读回验证成功**。
+- 区分历史事实：同一文档在首次自动创建后曾收到一次 `edit_doc` 业务 `ok:false` 且 `readback:UNCHANGED`；当时 `data.error` 具体值未保留，故失败原因仍不明。成功的复测不能倒推出第一次失败原因。
+- 范围：只验证该私人空间的单篇合成 Markdown 文档和当前 Token 权限；不代表生产任务总表或不同文档权限已验证，不代表 ESP32→桥接→S5 voice MCP 端到端完成。S5 仍默认关闭，S4 生产只读与 PR Draft 不变。禁止再重复写该测试页；它现已含更新后的标记。
+
+
 ## 2026-11-04 T-20261104-21 — 编辑文档契约确认及既有页最小复测探针
 - 用户 Windows 官方 `npm run inspect:s5-edit -- --live` 真正只读核查成功，文档说明证实 `edit_doc` 是整篇 Markdown 覆盖、支持 `doc_id` 定位目标、可选 title，走三路合并保存且要求编辑权限；`append_to_doc` 同样需要编辑权限；`list_docs` 接受必填 `space_id`，返回标题、类型、更新时间，可用于寻找已有测试页。
 - 未有新一次远端编辑。为避免重建新页面，新增 `s5-probe-existing-edit.mjs` 和单测：仅在 list_spaces/list_docs/read_doc 识别唯一本次创建的合成页且初始正文严格匹配后，提示本机明确输入 EDIT，至多一次 edit_doc 并读回；错误分类限定，原始响应值、页面 ID 和空间 ID 不输出。其他情况停止。
