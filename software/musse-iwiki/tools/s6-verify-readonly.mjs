@@ -48,6 +48,7 @@ async function main(argv) {
       "Read-only verification of pinned knowledge base and current task document.\n");
     return;
   }
+  let stage = "local_config";
   try {
     const privateDir = join(homedir(), "MuSSE-MCP-Local", "musse-bridge");
     const scope = JSON.parse(await readFile(join(privateDir, "musse-iwiki-s6-scope.json"), "utf8"));
@@ -59,13 +60,16 @@ async function main(argv) {
       await readFile(join(privateDir, "xiaozhi.config.json"), "utf8")));
     const client = new IwikiMcpClient(connection);
     const port = createOfficialS6GoalPort(client, docId);
+    stage = "goal_scan";
     const goals = await scanGoals(port, scope);
+    stage = "task_table";
     const tasks = summarizePinnedTaskDoc(await client.callTool("read_doc", { doc_id: docId }), docId);
     const verified = tasks.titleMatches && tasks.columnCount === 12;
     process.stdout.write(JSON.stringify({
       inspection: "S6_LOCAL_READ_ONLY_VERIFICATION",
       goalScopeMode: "space",
       goalDocumentCount: goals.size,
+      testGoalG999Verified: goals.has("G-999"),
       taskDocTitleMatches: tasks.titleMatches,
       taskTableColumnCount: tasks.columnCount,
       taskCount: tasks.taskCount,
@@ -75,7 +79,8 @@ async function main(argv) {
     }, null, 2) + "\n");
     if (!verified) process.exitCode = 1;
   } catch {
-    process.stderr.write("S6_READ_ONLY_VERIFICATION_FAILED: inspect local configuration privately; no iWiki write attempted.\n");
+    process.stderr.write("S6_READ_ONLY_VERIFICATION_FAILED at " + stage +
+      ": no iWiki write attempted; do not paste private config/errors.\n");
     process.exitCode = 1;
   }
 }
