@@ -9,14 +9,14 @@
 ## Windows 操作顺序
 
 1. 暂时关闭运行中的 xiaozhi start（设备语音桥接），迁移期间不发起目标工具调用，保持之前成功访问官方 iWiki 的网络模式。
-2. 打开 PowerShell，依次执行（不要把 Windows 的私有配置发给任何人）：
+2. 打开 PowerShell，依次执行（不要把 Windows 的私有配置发给任何人）。**本机 S6 可能有未推送的运行环境提交，因此使用正常三方合并保留本地历史，而非仅允许快进；若发生冲突则停止，不强制重置**：
 
     cd "$HOME\MuSSE-Lab\MuSSE-S6\software\musse-iwiki"
     git status --short
     git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-discovery
     if ($LASTEXITCODE -ne 0) { throw "Git fetch 失败，停止" }
-    git merge --ff-only FETCH_HEAD
-    if ($LASTEXITCODE -ne 0) { throw "非快进合并，停止，不要强制重置" }
+    git merge --no-edit FETCH_HEAD
+    if ($LASTEXITCODE -ne 0) { throw "本地提交与远端更改冲突，请停止；不得 reset --hard 或覆盖本地提交" }
     npm test
     if ($LASTEXITCODE -ne 0) { throw "测试失败，停止" }
     npm run migrate:s6-ids -- --plan
