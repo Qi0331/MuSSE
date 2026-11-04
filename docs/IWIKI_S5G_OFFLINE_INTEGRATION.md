@@ -84,3 +84,9 @@
 接下来的实际验收顺序：用户允许后先在独立 S5 Windows worktree 同步最新分支并跑 `npm test` 与上述只读预检；再经用户单独授权讨论部署第三个 S5 MCP，以只预览/可取消开始，最后才对明确批准且内容结构符合业务规划器的**隔离测试目标**进行两轮语音试写。原 S5-F 合成文档只是写 API 探针，不保证符合任务表或快捷笔记业务模板，不可直接盲目重用作业务写入目标。
 
 在此之前，不能声称 ESP32 / 小智 → Windows 桥接 → S5 → iWiki 真实语音写入已通过，也不应继续堆叠无必要的模拟用例。
+
+## 7. S5-H 实际小智语音预览的安全注册入口（2026-11-04）
+
+为尽快开始真实 ESP32/小智联调，新增可选的 `src/mcp/server-s5-preview.ts`，**只读** iWiki 文档，语音 MCP 只展示准备修改与取消两种工具；即使明确调用隐藏的 `musse_write_confirm` 也返回 `S5_PREVIEW_ONLY`。该服务无需写契约文件、不启用写入环境变量，不能调用 `edit_doc`。它不等价于 S5 真实语音写入功能验收。
+
+Windows 独立 S5 工作区更新最新代码后，在 `software/musse-iwiki` 执行 `node tools/s5-preview-bridge.mjs --install-preview`，为小智配置追加仅一个 `musse_iwiki_s5_preview` stdio 服务，自动备份；原官方 iWiki 和 S4 只读 MCP 保留。**该操作只有用户明确运行命令才发生**，随后重启小智即可测试两轮“语音预览、取消”；如需撤销，执行 `node tools/s5-preview-bridge.mjs --rollback-preview` 并重启。GitHub S5-H [完整测试 148/148](https://github.com/Qi0331/MuSSE/actions/runs/41823641283)，但 Windows 实际安装与小智现场测试未发生。确认预览成功后，再另行考虑仅对批准的合规隔离文档启用写入能力。

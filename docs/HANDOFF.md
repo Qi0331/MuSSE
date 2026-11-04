@@ -1,4 +1,11 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-H：开始真实小智语音测试的独立只读预览入口（最新）
+- 为加速现场语音联调，在 S5 Draft PR #25 原分支新增 `src/mcp/server-s5-preview.ts`（独立启动入口）、`src/mcp/server-s5.ts` 的 `buildS5PreviewFlow/mainPreview`、`tools/s5-preview-bridge.mjs`（Windows `--install-preview/--status/--rollback-preview`），以及 `tests/s5h-preview-bridge.test.mjs`。安装入口要求原官方 iWiki 和 S4 只读服务仍在，备份桥接配置，只追加第三个 `musse_iwiki_s5_preview`，可单独回滚；不会替换 S4。
+- **设计上彻底不具备写入能力**：独立预览服务器使用 `OfficialIwikiReadStore`、未提供 `writeWithoutCondition`，不加载写契约、不需 `MUSSE_S5_WRITE_ENABLED`；协议仅列出 prepare/cancel，手动伪造 confirm 调用也拒绝 `S5_PREVIEW_ONLY`。可在真实小智上先测试“生成预览/语音取消”，不得声称已真实写入。
+- GitHub 功能提交 `349df3e`、测试提交 `8bdbc17`；GitHub Node 完整套件 [41823641283](https://github.com/Qi0331/MuSSE/actions/runs/41823641283) **148/148 pass、0 fail、0 skipped**；仓库检查 [41823641268](https://github.com/Qi0331/MuSSE/actions/runs/41823641268) 成功。实际用户 Windows 尚未同步本次新增 S5-H 代码，尚未注册第三个 MCP，真实 ESP32/小智未测。
+- **现场下一步（用户手动执行即明确允许只读注册）**：Windows 独立 S5 worktree 当前 detached HEAD `c09f5a4`，继续用 `git fetch origin feat/iwiki-s5-guarded-write-design` 和 `git merge --ff-only FETCH_HEAD` 快进代码（不必先修分支），进入 `software/musse-iwiki` 执行 `node tools/s5-preview-bridge.mjs --install-preview`，重启小智客户端，再使用任务创建的口头预览测试与取消测试。仅此注册会修改本机私人桥接 JSON 的**第三条服务记录**，自动产生备份，但不触及远端任何文档内容；回退命令为 `node tools/s5-preview-bridge.mjs --rollback-preview` 并重启小智。后续真实隔离写入须另行授权/配置，不能复测 S5-F 旧合成页。
+- 用户明确要求停止重复预检，后续应以现场语音预览/取消结果作为下一次反馈，**不要要求再次运行同样的 144 项检查或过度检查分支**。保留 PR #24/#25 Draft；不动生产任务总表、S4 双 MCP 原配置、Token、日志补丁、ESP32 固件及云。
+
 ## 2026-11-04 S5-G Windows 实际离线测试已通过（当前最新）
 - 用户提交完整 Windows PowerShell 输出：`fetch` 成功，`git merge --ff-only FETCH_HEAD` 显示 `Updating e1f30fc..c09f5a4` 并快进成功；`npm test` **144/144 pass、0 fail、0 skipped**；`npm run preflight:s5 -- --local-readonly` 完成只读状态检查。S4 官方/业务 MCP 保留，正式任务文档映射格式有效，S5 MCP 未注册、私有写契约文件缺失、写入开关未设置，笔记映射尚未确认。详见 `docs/TEST_LOG.md` T-20261104-25。
 - **一个未解的 Git 分支细节**：前置命令 `git branch --show-current` 与预期不一致并触发 `WRONG_BRANCH`；成功的快进和测试不能反证该问题，需只读 `git status -sb`、`git branch --show-current`、`git rev-parse --short HEAD` 识别当前真实分支/分离 HEAD，再决定最小修复。

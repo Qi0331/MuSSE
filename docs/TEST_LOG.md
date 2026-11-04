@@ -1,4 +1,10 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-26 — S5-H 可注册的真实语音预览服务与回滚机制
+- 新增独立 S5 预览服务入口，实际 Node 子进程启动测试确认：没有私人 `musse-iwiki-write.json` 时正常初始化，`tools/list` 只含 `musse_write_prepare` / `musse_write_cancel`，伪造 `musse_write_confirm` 返回 `S5_PREVIEW_ONLY`；服务侧读取使用只读映射，不持有编辑函数。即使环境意外设置 `MUSSE_S5_WRITE_ENABLED=1`，预览服务仍不能写。
+- 用合成 Windows 桥接配置执行真实的安装/回滚函数：只追加 `musse_iwiki_s5_preview`、备份原始文件、保留官方 iWiki/S4 旧服务、回滚复原原 JSON；缺少 S4 或私有映射时不修改配置。用户尚未在真实 Windows 上执行安装。
+- GitHub S5 commits `349df3e`、`8bdbc17`，完整 Node [run 41823641283](https://github.com/Qi0331/MuSSE/actions/runs/41823641283) **148/148 pass、0 fail、0 skipped**；文档检查 [41823641268](https://github.com/Qi0331/MuSSE/actions/runs/41823641268) pass。
+- **边界**：这是现场语音**预览模式**入口，不是语音写入验收；第三个 MCP 仅在用户在 Windows 显式执行 `--install-preview` 后才注册，并且需重启小智。取消后不得写入。正式 S5 写入仍需单独授权和合规隔离文档。
+
 ## 2026-11-04 T-20261104-25 — S5-G Windows 本机 144/144 + 只读预检（用户实际终端证据）
 - **证据来源**：用户提供 Windows PowerShell 原始终端输出。独立 S5 worktree 中 `git -c http.version=HTTP/1.1 fetch origin feat/iwiki-s5-guarded-write-design` 成功；随后 `git merge --ff-only FETCH_HEAD` 报告 `Updating e1f30fc..c09f5a4` 与 `Fast-forward`。没有从此推断线上 S4 配置发生任何变更。
 - **真实本机完整测试**：`software/musse-iwiki` 执行 `npm test`，最终统计 `tests 144 / pass 144 / fail 0 / skipped 0`，包括 S5-G stdio JSON Lines、prepare/confirm/cancel、回执/写后读回及只读本地预检的合成测试。这是独立于 GitHub Actions 144/144 的 Windows 本地输出；测试未连远端写入。
