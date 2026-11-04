@@ -1,5 +1,12 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-06 — S4-D Windows 私有文档映射本地成功（用户回报）
+
+- 用户在本机 PowerShell 的既有桥接目录新建 `musse-iwiki-readonly.json`，以不回显的输入方式填入其自己保存的 S2-A 测试任务表 `page-...` 文档 ID；终端显示 `MAPPING_CREATED`。
+- 用户在仓库业务目录调用 `readonlyDocumentIdsFromFile` 检查映射文件，回传 `MAPPING_OK: task only`。说明文件可读取，任务表 ID 格式通过校验；**尚未进行真实 iWiki `read_doc`**，不能认定 ID 存在、读取权限有效或文档格式可解析。
+- 未读取、记录或提交真实文档 ID、Token、iWiki 内容；未改动 Windows `xiaozhi.config.json`、日志补丁、防火墙、ESP32、云端或 PR 合并状态。
+- 下一步已指导用户在本人 Windows 上执行仅 `read_doc` 的合计数量查询，仅回传 `CONFIG_OK`、`READ_ONLY_OK` 或 `READ_ONLY_FAILED` 及汇总计数；不得打印真实任务内容或泄露私有配置。未收到该真实查询的结果前，S4-D 保持未验收。
+
 ## 2026-11-04 T-20261104-05 — S4-D Windows 正式工作区离线测试（用户提供的终端回显）
 
 - **证据来源**：用户在对话中逐行提供 Windows PowerShell 命令及输出；记录的是用户执行结果，不是 ChatGPT 自行在远程 Windows 运行。
