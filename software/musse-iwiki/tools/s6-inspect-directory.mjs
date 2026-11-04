@@ -1,0 +1,79 @@
+/**
+ * S6 one-shot READ-ONLY inspection. Never prints tokens, IDs, names,
+ * full MCP endpoint, documents, content or raw upstream responses.
+ * Does not call create_markdown_doc, edit_doc or any other write tool.
+ */
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { extractConnection } from "./inspect-readonly.mjs";
+import { IwikiMcpClient } from "../src/store/iwiki-mcp-client.ts";
+import { validateScope } from "../src/goals/s6-goal-discovery.ts";
+
+const obj = (v) => v && typeof v === "object" && !Array.isArray(v);
+export function summarizeS6ListShape(response) {
+  if (!obj(response) || response.isError === true) return { businessOk: false };
+  const candidates = [];
+  if (obj(response.structuredContent)) candidates.push(response.structuredContent);
+  if (Array.isArray(response.content)) for (const v of response.content) {
+    if (typeof v?.text !== "string") continue;
+    try { const parsed = JSON.parse(v.text); if (obj(parsed)) candidates.push(parsed); }
+    catch { /* no raw output */ }
+  }
+  const value = candidates.find((x) => x.ok === true && obj(x.data));
+  if (!value) return { businessOk: false };
+  const data = value.data;
+  const arrayField = ["docs", "documents", "items", "list", "results"]
+    .find((k) => Array.isArray(data[k])) ?? null;
+  const items = arrayField === null ? [] : data[arrayField];
+  const sample = items.find(obj);
+  return {
+    businessOk: true,
+    arrayField,
+    itemCount: items.length,
+    totalPresent: Number.isSafeInteger(data.total),
+    hasMoreExplicitFalse: data.has_more === false,
+    cursorAbsent: data.next_cursor === null || data.next_cursor === "",
+    sampleFields: {
+      docId: Boolean(sample && typeof sample.doc_id === "string"),
+      title: Boolean(sample && typeof sample.title === "string"),
+      parentId: Boolean(sample && typeof sample.parent_id === "string"),
+      spaceId: Boolean(sample && typeof sample.space_id === "string"),
+      kind: Boolean(sample && (typeof sample.page_type === "string" || typeof sample.kind === "string")),
+    },
+  };
+}
+
+async function main(args) {
+  if (args.length !== 1 || args[0] !== "--read-only") {
+    process.stdout.write("Usage: npm run inspect:s6-dir -- --read-only\nRead tools/list and list_docs shape only. No writes, no private details printed.\n");
+    return;
+  }
+  try {
+    const configPath = join(homedir(), "MuSSE-MCP-Local", "musse-bridge", "xiaozhi.config.json");
+    const dir = dirname(configPath);
+    const scopeFile = process.env.MUSSE_S6_SCOPE_FILE ?? join(dir, "musse-iwiki-s6-scope.json");
+    const scope = JSON.parse(await readFile(scopeFile, "utf8"));
+    validateScope(scope);
+    const connection = extractConnection(JSON.parse(await readFile(configPath, "utf8")));
+    const client = new IwikiMcpClient(connection);
+    const advertised = await client.listTools();
+    const summarize = (name) => {
+      const tool = advertised.find((x) => x?.name === name);
+      const required = Array.isArray(tool?.inputSchema?.required) ? tool.inputSchema.required : null;
+      return { present: Boolean(tool), requiredKnown: required !== null,
+        requiredOnlySupported: required !== null && required.every((s) => ["space_id"].includes(s)) };
+    };
+    const report = { listDocs: summarize("list_docs"), listDocTree: summarize("list_doc_tree") };
+    if (!report.listDocs.present || !report.listDocs.requiredOnlySupported)
+      throw Error("S6_DISCOVERY_METADATA_UNAVAILABLE");
+    const response = await client.callTool("list_docs", { space_id: scope.spaceId });
+    process.stdout.write(JSON.stringify({ inspection: "S6_READ_ONLY_SHAPE", ...report,
+      listShape: summarizeS6ListShape(response), writesAttempted: 0 }, null, 2) + "\n");
+  } catch {
+    process.stderr.write("S6_READ_ONLY_INSPECTION_UNAVAILABLE: verify private scope locally; do not paste raw errors.\n");
+    process.exitCode = 1;
+  }
+}
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main(process.argv.slice(2));
