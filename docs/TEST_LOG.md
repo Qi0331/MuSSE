@@ -1,4 +1,5 @@
 # 实验与测试日志
+- **最新 GitHub CI 实际结果**：run `41799562069`，完整 Node 测试 `112/112 pass, 0 fail`；文档 CI run `41799562141` 成功。新增 8 项自动创建/一次编辑模拟测试；真实 iWiki create/edit 均尚未执行。
 ## 2026-11-04 T-20261104-15 — S5-F 自动创建并编辑探针代码（尚未远端运行）
 - 用户建议不必人工先创建隔离文档，直接测试官方 `create_markdown_doc` 和 `edit_doc`。增加 `tools/s5-probe-auto-create.mjs` 及 `tests/s5-probe-auto-create.test.mjs`，并注册 `npm run probe:s5-auto`。
 - 未指定 `--create-and-write-test` 不会连线；指定后仅一次创建隔离测试页，若没有明确成功且唯一 `page-...` ID 则停止；仅对自动新建的测试页执行标记核验、一次 edit、写后核验。不打印私密 ID、Token、正文或远端异常，不自动重试。
