@@ -59,3 +59,10 @@
 - 仅输出测试用标题、是否执行、成功布尔值和响应字段形状及读回状态；不输出 Token、page ID、正文或服务器原始异常。不确定时不自动重试。
 - 自动探针可能创建一篇永久存在的测试文档；**不会自动删除**。独立 `create_doc`、`append_to_doc`、`write_note` 语义尚未实测，不能扩大通过范围。
 - 即使通过，S5 生产桥接、旧只读连接及私人文档映射仍不变，必须另行批准生产启用。
+
+## 首次真实运行结果（2026-11-04）
+- Git 因 HTTPS 暂时不通，用户最终通过 `-c http.version=HTTP/1.1` 成功 fetch/ff 更新到 `7aa98f0`。
+- 自动创建工具 `create_markdown_doc` 调用成功返回 MCP 结果，但业务包络 `ok:false`，`data` 字段名为 `error/reason/expected`，值被原探针抑制。结果为 `CREATE_UNCONFIRMED`；**未调用 `edit_doc`**。此次并未证明服务器实际创建了新页面，不可假定一定不存在。
+- 合成测试标题是 `MuSSE S5-F 自动隔离测试 e02cd7d9`，仅用于排查可能的残留隔离页；不含私人文档 ID。
+- 后续先执行 `npm run inspect:s5-create -- --live`，读取创建工具 `tools/list` 元数据，不向 iWiki 发任何写工具请求。不得原样重跑创建测试或调整生产 Token。
+
