@@ -42,7 +42,7 @@ test("S5-E two-turn flow requires an explicit phrase and never writes on prepare
 });
 
 test("S5-E accepts only unambiguous confirmation with optional final sentence punctuation", async () => {
-  for (const spoken of ["确认写入。", "确认保存。", "确认写入!", "确认保存！", "确认写入."]) {
+  for (const spoken of ["确认", "确认。", "确认.", "确认!", "确认！", "确认写入", "确认写入。", "确认写入.", "确认保存", "确认保存。", "确认写入!", "确认保存！"]) {
     const f = fixture();
     const voice = createS5VoiceFlow(f.port, f.planner, { concurrencyMode: "check-before-write" });
     const p = await voice.prepare(intent);
@@ -53,11 +53,11 @@ test("S5-E accepts only unambiguous confirmation with optional final sentence pu
   const f = fixture();
   const voice = createS5VoiceFlow(f.port, f.planner, { concurrencyMode: "check-before-write" });
   const p = await voice.prepare(intent);
-  for (const spoken of ["保存。", "可以", "确认写入？", "确认保存吗？", "不要确认写入", "确认写入。取消"]) {
+  for (const spoken of ["保存", "保存。", "可以", "好", "确认吗", "确认？", "确认?", "确认写入？", "确认保存吗？", "不要确认", "不要确认写入", "取消", "确认写入。取消", "确认写入并删除", "确认。。"]) {
     await assert.rejects(voice.confirm(p.operationId, spoken), fail("S5_EXPLICIT_CONFIRMATION_REQUIRED"));
     assert.equal(f.writes, 0);
   }
-  await voice.confirm(p.operationId, "确认写入。");
+  await voice.confirm(p.operationId, "确认。");
   assert.equal(f.writes, 1);
 });
 
