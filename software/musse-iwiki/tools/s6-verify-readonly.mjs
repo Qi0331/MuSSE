@@ -69,7 +69,7 @@ async function main(argv) {
       inspection: "S6_LOCAL_READ_ONLY_VERIFICATION",
       goalScopeMode: "space",
       goalDocumentCount: goals.size,
-      testGoalG999Verified: goals.has("G-999"),
+      testGoalG999Verified: goals.has("G999"),
       taskDocTitleMatches: tasks.titleMatches,
       taskTableColumnCount: tasks.columnCount,
       taskCount: tasks.taskCount,
