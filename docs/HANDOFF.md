@@ -1,4 +1,10 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F 创建业务拒绝后的最新交接
+- Windows 已通过 `git -c http.version=HTTP/1.1 fetch` 将独立 S5 worktree 成功更新至 `7aa98f0`。用户仅一次真正调用 `create_markdown_doc`；MCP 通信正常但业务结果 `ok:false`，`data` 有 `error/reason/expected` 字段（值未输出）。没有成功解析唯一页面 ID，`edit_doc` 未调用、写入成功未证实。
+- 当前阻塞是**官方创建工具的业务前置条件**（具体错误尚未知），不要再建议立刻重复 `--create-and-write-test`，也不要直接调高只读 Token 权限。新增仅读取 `tools/list` 的 `npm run inspect:s5-create -- --live`，查相关官方工具及空间字段元数据，等用户本机脱敏结果后再决定下一次最小实际调用。
+- 不改用户 S4 桥接、Token/私有映射、Muse 角色、ESP32 或现有文档。PR #24/#25 仍 Draft。
+
+
 - **最新自动化证据**：新增自动创建探针后完整 Node CI `112/112` 通过（run `41799562069`），文档检查成功（run `41799562141`）。只说明离线模拟通过。
 - **新优先入口（S5-F 自动测试）**：用户希望程序直接通过 `create_markdown_doc` 创建测试文档、再使用 `edit_doc` 更新，因此新增 `npm run probe:s5-auto -- --create-and-write-test`。它只使用原有私有连接，自动创建一篇合成隔离页，收到明确成功与唯一 ID 才读页、改一次并复读；不要求手工创建页面或提供私人 page ID。若服务端响应不符合当前解析范围，停止并报告不确定，不可反复运行。见 `docs/IWIKI_S5F_DISCOVERY.md`。
 
