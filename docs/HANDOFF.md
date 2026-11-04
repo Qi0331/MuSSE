@@ -1,5 +1,13 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S5-B 新分支离线安全门禁交接（最新）
+- 用户要求直接 S5、加快进度，取消额外 S4-E 目标/笔记验收；S4-D 既有用户现场验收不重做。
+- 当前代码在 `feat/iwiki-s5-guarded-write-design`，从 `25a9f64` 分支出来，不改原 Draft PR #24。设计见 `docs/IWIKI_S5_SECURITY_DESIGN.md`；实现见 `software/musse-iwiki/src/write/guarded-write.ts` 和 `plan-write.ts`。
+- 离线安全测试 `tests/s5-guarded-write.test.ts` 在隔离 Node 22.16 上 13/13 通过（模拟原子适配器）；`tests/s5-plan-write.test.ts` 仅提交和语法检查，**还未在原仓库运行**。未跑全量 `npm test`；没有实际写 iWiki 或接入设备。
+- 关键硬门槛：官方只读 `OfficialIwikiReadStore` 仍不写且版本令牌为空；旧 `IwikiMcpStore` 写入契约未验证；模型不得自行授权，必须使用真正独立的可信用户确认；没有已验证的远端原子 CAS 就不能写回整份 Markdown。
+- 当前 S5 不连接 `xiaozhi-client`、不改私有 Token/文档映射、不添加生产写 MCP、不改 Muse 提示词/ESP32/防火墙/日志补丁。继续在此分支做离线开发和安全审查，部署或真实写入需要另外授权。
+
+
 ## 2026-11-04 最新交接：S4-D 任务/日程语音验收通过，下一阶段待用户指定
 
 > **新对话优先阅读 [IWIKI_S4D_FINAL_HANDOFF.md](IWIKI_S4D_FINAL_HANDOFF.md)**。本文件下方的“S4 方案待审/尚未在设备接入”是历史快照，不再代表当前事实。
