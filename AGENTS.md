@@ -1,5 +1,12 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 S4-D 最新优先级（覆盖下方旧 S4 待审状态）
+
+- 新对话先读 `docs/IWIKI_S4D_FINAL_HANDOFF.md`、`docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`。用户现场验收：官方 `iwiki` MCP 与新 `musse_iwiki_readonly` MCP 正常，新服务六工具可见并确认被调用；任务数量、今日、近期/逾期、普通聊天自然语言场景均正常。现有 Windows 指定离线 10/10、真实任务表统计 3/2/1/0、stdio 工具白名单写入拒绝有用户终端证据；逐次原始调用日志未独立采集。
+- S4-D 的**任务/日程语音链路按用户报告通过**，不能扩大为目标/笔记已通过；两者虽有只读工具但私有文档 ID 未映射。S2-B 人工三文档验收保持取消，S5 受控写入未授权。
+- iWiki 唯一持久化；Windows 原有日志脱敏补丁、防火墙 9999 入站阻断、`xiaozhi-client@2.3.0`、ESP32 固件和 Muse 现行角色提示词不改。功能分支 `feat/iwiki-s2a-readonly-contract` / PR #24 **Draft 未合并**；不得上传私密文档 ID、Token、配置、日志，不因新对话重复部署或擅自开放写入。
+
+
 ## 2026-11-04 当前 iWiki 阶段覆盖（优先于以下历史快照）
 
 - 新对话先阅读 `docs/IWIKI_S4_HANDOFF.md`、`docs/STATUS.md`、`docs/HANDOFF.md` 和 `docs/IWIKI_S3_PROMPT_CURRENT.md`；以用户已配置的现行 MuSSE 人设与 iWiki 只读提示词为准，不擅自修改已生效角色介绍。

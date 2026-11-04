@@ -1,5 +1,10 @@
 # MuSSE — Windows 本地 iWiki MCP 桥接运行手册
 
+> **2026-11-04 最新状态覆盖**：S4-D 任务与日程语音已按用户现场报告验收通过。Windows 当前同时运行官方 `iwiki` 远程 MCP 与新增 `musse_iwiki_readonly` 本地 stdio MCP，用户确认六个只读业务工具可见、新工具被调用，以及任务数量、今日、近期/逾期和普通聊天均正常。仅任务表完成私有 ID 映射；目标/笔记尚未验收。**以下“仅官方 MCP、业务尚未上线”属于 2026-11-03 的历史描述**，应以 [S4-D 最终交接](IWIKI_S4D_FINAL_HANDOFF.md) 为准。
+- 当前运行仍用 `Set-Location "$HOME\MuSSE-MCP-Local\musse-bridge"` 后 `xiaozhi start`，保持电脑运行。管理面板 `http://localhost:9999/dashboard` 应见两个服务，其中新服务 6 工具。无需重新安装客户端或固件。
+- 安装辅助脚本位于 `$HOME\MuSSE-Lab\MuSSE\software\musse-iwiki\tools\s4d-bridge.mjs`。出现故障先停止桥接，在该业务源码目录执行 `node tools/s4d-bridge.mjs --rollback`，再运行原桥接；只移除新增服务配置项，原官方 iWiki 保留。绝不上传含密钥备份或私人映射文件。
+
+
 > 验证日期：2026-11-03。此手册描述**已经实际跑通**的独立 Windows 本地桥接，而不是尚未上线的 `software/musse-iwiki/` 业务 MCP 服务。用户确认 ESP32-S3 通过小智智能体语音查询 iWiki 成功；更细粒度的服务端写权限与长期稳定性未经独立审计。
 
 ## 一、链路与实际范围

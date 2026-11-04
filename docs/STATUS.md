@@ -1,5 +1,15 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 最新最高优先级：S4-D 任务/日程自然语言语音链路按用户现场报告通过
+
+- **用户现场回报**：原官方 `iwiki` MCP 正常，新增 `musse_iwiki_readonly` MCP 正常且六工具可见；用户确认新业务 MCP 被实际调用，四项自然语言场景（任务数量、今日安排、近期与逾期、普通聊天）均“正常”。不需要用户每次口述 MCP 或工具名。
+- **证据边界**：这是用户报告的现场验收，没有可供本代理独立复核的逐次原始工具轨迹。因此仅将 **S4-D 任务/日程语音集成标记为用户验收通过**；不宣称长期稳定性或目标/笔记也通过。
+- **此前实测**：Windows Node `v22.23.2` 上三份指定离线测试 **10/10**；官方 `read_doc` 真实读取虚构任务表 **总 3、待办 2、完成 1、归档 0**；新增 stdio MCP `--smoke` 输出 `tools=6`、`write_blocked=true`、任务统计一致。`--install` 已备份原私有配置，保留官方 iWiki 并增添本地只读业务服务。
+- **仍未验收**：当前 Windows 私有映射只有 `taskDocId`；`goal_query` 和 `note_query` 虽可见，真实目标/笔记 ID 未映射且未作端到端读取。S2-B 三文档繁琐验收已取消，不能默认恢复。S5 受控语音写入仍未授权。
+- iWiki 仍为唯一持久化数据源。生产链路：ESP32-S3 → 小智云端 MuSSE → Windows `xiaozhi-client@2.3.0` → 官方 iWiki 远程 MCP / 本地业务只读 MCP。现有 S3-A Muse 角色提示词、固件、本机补丁、防火墙保持不变。PR [#24](https://github.com/Qi0331/MuSSE/pull/24) **继续 Draft、未合并 main**。
+- **新对话交接以 [IWIKI_S4D_FINAL_HANDOFF.md](IWIKI_S4D_FINAL_HANDOFF.md) 为准**，优先于下方历史记录；勿重做已完成的 S2-A/S4-B/C/D 测试。
+
+
 ## 2026-11-04 S4-D 首次真实 iWiki 任务只读成功；Windows 桥接接入脚本已准备
 
 - 用户在 Windows `Node.js v22.23.2`、`b0b0436` 工作区用 `buildReadonlyTaskService(process.env)` 构建官方 iWiki 只读 `read_doc` 客户端，终端回传 `CONFIG_OK`、`READ_ONLY_OK`、`total=3`、`todo=2`、`done=1`、`archived=0`。**这是用户实际执行的官方只读文档读取 + 业务解析**，不是模拟；尚未通过新 MCP stdio 或小智设备语音链路。
