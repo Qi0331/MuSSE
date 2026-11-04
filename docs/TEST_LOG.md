@@ -1,5 +1,6 @@
 # 实验与测试日志
 ## 2026-11-04 T-20261104-16 — S5-F 首次真实创建尝试：业务拒绝
+- **最新 GitHub CI**：独立完整 `iWiki Node tests` run `41808126130` 实测 **114/114 pass、0 fail**；`Repository checks` run `41808125886` 成功。新增仅 tools/list 的创建工具元数据检测测试 2 项，**不涉及新的远程写入**。
 - 用户 Windows 独立 worktree 在 Git HTTP/1.1 fetch 成功后，从 `508e908` 快进至 `7aa98f0`，`S5F_UPDATE_SUCCESS`；原 S4 工作区未切换分支。
 - 用户执行且仅报告一次 `npm run probe:s5-auto -- --create-and-write-test`，生成合成测试标题 `MuSSE S5-F 自动隔离测试 e02cd7d9`。官方 `create_markdown_doc` **确实被调用**，没有抛网络异常（`createCallFailed:false`），MCP `isError:false`。
 - 但业务返回 JSON `ok:false`，其 `data` 仅被脱敏汇总为字段名 `error/reason/expected`，具体字段值尚未采集；因没有确认新 `page-...` ID，自动中止并返回 `CREATE_UNCONFIRMED`，**`editAttempted:false`**。
