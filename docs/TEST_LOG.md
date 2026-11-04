@@ -1,5 +1,14 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-12 — S5-D 全量 GitHub Node CI（完整工作区）
+- 新增 `.github/workflows/iwiki-node-tests.yml`，在完整 GitHub 检出的 `software/musse-iwiki` 执行 `npm test`；GitHub Actions `iWiki Node tests` **run `41784910123`，job `126424728412`，Node.js `v22.23.4`** → **84 tests / 84 pass / 0 fail**，结论 `success`。仅标准库测试；不注入密钥，不访问生产 iWiki。
+- 首次运行 run `41784471528` 的 81 项结果为 **80 pass / 1 fail**，失败是旧 `tests/service.test.ts` 对即时 `note_create` 的日期断言硬编码 `2026-11-03`，在 2026-11-04 执行失败；改为调用前后实时上海日期窗口后，整个 CI 通过。
+- 新增三项核心安全回归：在途提交跨 TTL 不被误删且阻止同文档新提案、`UNCERTAIN` 跨过期仍隔离同文档、任务单行字段换行显式拒绝。S5 专项由 26 增至 29 项，包含在 84/84 全包测试内。
+- 既有 `Repository checks / validate-docs` 工作流只验证文档骨架，不应混称为 Node 全量测试。完整 S5-C 之前局部测试的局限由本轮全量包 CI 证据补足，但仍没有 Windows 生产运行、iWiki 真实写入或用户可信批准 UI 的测试。
+- S5 分支六文件本地/GitHub 哈希比对属于此前 S5-C 证据；本轮额外提交后以 GitHub CI 对当前代码的整包通过为准。
+- 未执行任何真实 iWiki `tools/call` 写入；未修改 Windows/ESP32/Muse 人设/凭证/防火墙或生产配置。查看 `docs/IWIKI_S5D_FINAL_HANDOFF.md`。
+
+
 ## 2026-11-04 T-20261104-11 — S5-C 离线确认门禁增强及只读写工具发现器
 - **开发侧环境**：隔离 Linux Node 22.16.0（低于生产 >=22.18），本机暂存的部分依赖模块根据此前 GitHub 可见源码重建，非完整仓库检出。
 - **实际运行**：`node --experimental-strip-types --test tests/s5-guarded-write.test.ts tests/s5-plan-write.test.ts tests/s5-inspect-write-contract.test.mjs` → **26/26 pass，0 fail**。六个 S5 源码与测试文件运行 `node --experimental-strip-types --check` → **6/6 pass**。
