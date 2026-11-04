@@ -4,6 +4,8 @@ import {
   summarizeS6ListShape,
   summarizeS6SpacesShape,
   summarizeS6Tool,
+  summarizeS6ToolFields,
+  summarizeS6TreeShape,
 } from "../tools/s6-inspect-directory.mjs";
 
 const envelope = (data) => ({
@@ -75,4 +77,43 @@ test("S6 inspector still rejects absent or malformed tool schema", () => {
   assert.equal(summarizeS6Tool({ inputSchema: { required: "space_id" } }, []).requiredOnlySupported, false);
   assert.equal(summarizeS6Tool({ inputSchema: { required: ["space_id"] } }, []).requiredOnlySupported, false);
   assert.equal(summarizeS6Tool(null, []).present, false);
+});
+
+
+test("S6 metadata-only probes expose approved parameter names, never descriptions or IDs", () => {
+  const fields = summarizeS6ToolFields([{
+    name: "create_markdown_doc",
+    description: "PRIVATE MUST NOT APPEAR",
+    inputSchema: { properties: {
+      content: { description: "secret content" },
+      title: { type: "string" },
+      space_id: { type: "string" },
+      parent_id: { type: "string" },
+      "secret-PRIVATE": { type: "string" },
+    }, required: ["title", "content"] },
+  }], "create_markdown_doc");
+  assert.deepEqual(fields.fields, ["content", "title", "space_id", "parent_id"]);
+  assert.deepEqual(fields.required, ["title", "content"]);
+  assert.equal(fields.supportsParentId, true);
+  assert.equal(JSON.stringify(fields).includes("PRIVATE"), false);
+});
+
+test("S6 tree shape only reveals safe structural counts and booleans", () => {
+  const shape = summarizeS6TreeShape(envelope({
+    nodes: [{ title: "PRIVATE SECRET", doc_id: "page-PRIVATE" }],
+    root_id: "PRIVATE",
+  }));
+  assert.equal(shape.businessOk, true);
+  assert.equal(shape.arrayField, "nodes");
+  assert.equal(shape.itemCount, 1);
+  assert.equal(shape.rootIdPresent, true);
+  assert.equal(JSON.stringify(shape).includes("PRIVATE"), false);
+});
+
+test("S6 list reports exact empty total and missing pagination flags without identifiers", () => {
+  const shape = summarizeS6ListShape(envelope({ docs: [], total: 0 }));
+  assert.equal(shape.totalEqualsItemCount, true);
+  assert.equal(shape.totalIsZero, true);
+  assert.equal(shape.hasMoreOmitted, true);
+  assert.equal(shape.itemCount, 0);
 });
