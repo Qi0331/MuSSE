@@ -1,4 +1,9 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-G 下一轮本地预检已准备（最新）
+- **最新 S5 HEAD 功能提交 `9b6ec4f`**：新增无写入、无联网的 Windows 本地配置检查 `npm run preflight:s5 -- --local-readonly`。不注册 S5、不修改桥接/Token/映射/文档，只把已存在的双 MCP、文档映射有效性、私有 `edit_doc/doc_id/content` 字段契约与 S5 启用状态汇总成脱敏状态。无参数默认不读私有文件。真实 Windows 尚未运行。
+- GitHub Node 完整 CI [run 41819040249](https://github.com/Qi0331/MuSSE/actions/runs/41819040249) **144/144 pass、0 fail**；[文档检查 41819040721](https://github.com/Qi0331/MuSSE/actions/runs/41819040721) 成功。新增三项是合成私有配置测试，不是远端写入测试。
+- **可进行下一轮授权讨论，但尚不能声称语音控制写入已在 ESP32/小智环境解决。** 必须先 Windows 同步/离线回归/只读预检，再明确批准独立 S5 MCP 注册，先验语音预览/取消，最后才针对**符合 Markdown 业务模板且经授权的隔离目标**做一次实际写入/读回；不复测旧 S5-F 创建/编辑探针、不改生产任务表。PR #24/#25 仍 Draft，暂无云迁移。
+
 ## 2026-11-04 S5-G 离线整合已通过（最新权威）
 - **结果与后续边界**：`docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`。在 S5 原分支 / Draft PR #25 上完成正式 MCP → 两轮语音协议 → 写前检查 → 一次 `edit_doc` → 写后复读的模拟端到端测试，以及标准 stdio JSON Lines 两轮链路测试；没有修改 Windows 桥接或任何远程 iWiki 数据。
 - 真实已验证的 `edit_doc + doc_id + content` 写入契约现要求业务 `ok:true`、`data.doc_id` 与目标一致且无矛盾包络；`isError:false` 不等于写成功。写前读失败改为明确拒绝、可重新准备；写后读失败或写调用不确定时依然不自动重试。

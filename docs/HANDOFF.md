@@ -1,4 +1,10 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-G 下一轮语音联调前置步骤（最新）
+- **当前最新 S5 GitHub 开发提交 `9b6ec4f`；完整 Node CI 144/144 通过**，仓库文档 CI 通过。S5-Draft PR #25 仍基于 S4 Draft PR #24，无合并。先前 `cd88bc9` 完成 141/141 两轮 stdio 业务模拟；本次仅增加安全的 Windows 本地预检工具和 3 项测试，没有任何 Windows/真实 iWiki 操作。
+- Windows S5 独立 worktree 同步后，可在 `software/musse-iwiki` 先 `npm test`，再 `npm run preflight:s5 -- --local-readonly`；后者只在显式参数下只读本机桥接/映射/合同结构，结果无私人 ID、Token、路径或正文，且不联网、不更改。**目前还没有本地运行结果**。
+- 用户需要另行批准后才讨论第三个 S5 MCP 的受控注册/回滚，以及真实两轮语音的预览、取消、隔离试写。S5-F 旧合成页不能直接被假设是合法任务表或快捷笔记模板；不盲目改动生产任务表、不重复 S5-F 探针、不迁云。
+- 执行依据：[S5-G 离线整合](IWIKI_S5G_OFFLINE_INTEGRATION.md)。
+
 ## 2026-11-04 S5-G 离线开发完成（后续优先本节）
 - **当前新入口**：`docs/IWIKI_S5G_OFFLINE_INTEGRATION.md`（S5-F 的原始新对话背景仍见 `docs/IWIKI_S5G_NEXT_CHAT_HANDOFF.md`）。S5 原分支 `feat/iwiki-s5-guarded-write-design` 最新功能提交 `cd88bc9`；完整 GitHub CI **141/141 pass**、仓库检查通过，真实 Windows 仍只证实 `e1f30fc` 128/128 + 私人合成页 `edit_doc ok:true/readback UPDATED`。
 - 已实现/验证的**离线模拟**：`musse_write_prepare/confirm/cancel`、完整预览、下一轮明确确认、写前读比较、官方写回执 `ok:true,data.doc_id` 核验、一次 `edit_doc`、写后 `read_doc`，以及两轮 stdio JSON Lines。错误/取消/网页冲突/读回不一致不会盲重试；写前读失败是明确未写入且允许重新准备。

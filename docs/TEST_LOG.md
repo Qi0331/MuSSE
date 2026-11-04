@@ -1,4 +1,9 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-24 — S5-G Windows 只读预检工具（开发侧，非本机实跑）
+- 增加 `software/musse-iwiki/tools/s5-local-preflight.mjs` 与 `npm run preflight:s5 -- --local-readonly`。无参数仅帮助；显式执行也只从 Windows 私有 JSON 读取信息，报告脱敏的原官方 iWiki/S4 注册、S5 注册状态、文档映射格式、`edit_doc/doc_id/content` 写契约格式与当前 Shell 开关；**不调用 iWiki、不注册 MCP、不写任何配置/生产文档、不输出 Token、真实 ID 或路径**。
+- 新增 `tests/s5g-local-preflight.test.mjs` 三项合成私有配置测试：合法配置脱敏/保留 S4、无写契约不误判准备就绪、异常契约和 S5 注册检测、不修改输入文件。GitHub S5 commit `9b6ec4f` 全量 Node CI [41819040249](https://github.com/Qi0331/MuSSE/actions/runs/41819040249) 实际输出 **144 tests / 144 pass / 0 fail / 0 skipped**；Repository checks [41819040721](https://github.com/Qi0331/MuSSE/actions/runs/41819040721) success。
+- **证据边界**：GitHub 合成测试，而非用户 Windows 已跑预检；没有新增真实语音或 iWiki 试写。后续用户授权后才进行本地一次性同步/离线测试/只读预检及隔离语音联调，不要重复 S5-F 实写。
+
 ## 2026-11-04 T-20261104-23 — S5-G 语音写入离线端到端集成（无真实远端写入）
 - 先读 GitHub `da4394d`：完整 Node CI run `41816644844` **130/130 pass、0 fail**；文档检查 run `41816644660` 成功。确认 GitHub PR #24 与 PR #25 均为 Draft，S5 base 为 S4 分支。
 - 提交 `8e2b320`：官方业务 `ok:true` 与 `data.doc_id` 必须对应预期页，拒绝 `ok:false`、矛盾包络、未知响应和错页回执；修复写前 `read_doc` 失败时错误进入 `UNCERTAIN` 的状态（未写入应拒绝且允许新提案）；新增十项模拟 MCP 端到端用例，覆盖工具列表、预览、明确/含糊确认、取消、重复、网页冲突、读写不确定与笔记写入。完整 CI run `41817549089` **140/140 pass**。
