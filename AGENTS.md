@@ -1,4 +1,7 @@
 # MuSSE — Agent 工作约定
+- **S5-F 已真实验收通过（2026-11-04）**：用户 Windows `npm test` 128/128 全绿。已在私人空间创建测试 Markdown 文档（`create_markdown_doc ok:true`）并 `read_doc` 校验；对唯一现有页 `MuSSE S5-F 自动隔离测试 8a6fc40f` 二次输入 `EDIT` 后成功 `edit_doc ok:true`，写后 `read_doc` 为 `UPDATED`，结果 `EXISTING_EDIT_VERIFIED`，真实返回键 `new_rev_no/old_chars/new_chars`。第一次编辑失败的业务原因未知，不再猜。**停止重复 S5-F 实写探针**。S5 生产 MCP 仍禁用、PR #25 Draft，S4 双 MCP/桥接/Token/真实任务表/ESP32 均不变。下一阶段只做已验证 `edit_doc + doc_id + content` 的 S5 适配、语音流程和独立启用前检查。详见 `docs/STATUS.md`、`docs/TEST_LOG.md` T-20261104-22。
+
+
 - **S5-F 最近结果**：官方 `edit_doc` 只读元数据确认整篇 Markdown 替换与三路合并、编辑权限要求；先前业务 `ok:false` 仍未找到具体原因。已增加仅复用 `MuSSE S5-F 自动隔离测试 8a6fc40f` 的 `probe:s5-existing-edit -- --edit-once`：list_spaces/list_docs/read_doc 严格定位后需本机输入 EDIT，最多一次 edit_doc，读回并仅分类错误。严禁重复自动创建新文档、打印原始错误/私人 ID 或修改生产任务表。见 `docs/IWIKI_S5F_DISCOVERY.md`。
 
 - **S5-F 最新真实联调结果**：Windows 个人空间的合成页面 `MuSSE S5-F 自动隔离测试 8a6fc40f` 已由 `create_markdown_doc` 业务 `ok:true` 创建并被 `read_doc` 成功读取。随后 `edit_doc` 返回业务 `ok:false`、错误值未采集，`readback:UNCHANGED`；**创建验证通过，编辑未通过**。禁止重复 `probe:s5-auto` 创建新页。下一步优先 `npm run inspect:s5-edit -- --live`（只读 tools/list）获取 `edit_doc`/查询旧页工具元数据，再复用原测试页。生产 S5 仍不启用。
