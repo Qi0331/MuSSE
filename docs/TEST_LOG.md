@@ -1,4 +1,12 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-16 — S5-F 首次真实创建尝试：业务拒绝
+- 用户 Windows 独立 worktree 在 Git HTTP/1.1 fetch 成功后，从 `508e908` 快进至 `7aa98f0`，`S5F_UPDATE_SUCCESS`；原 S4 工作区未切换分支。
+- 用户执行且仅报告一次 `npm run probe:s5-auto -- --create-and-write-test`，生成合成测试标题 `MuSSE S5-F 自动隔离测试 e02cd7d9`。官方 `create_markdown_doc` **确实被调用**，没有抛网络异常（`createCallFailed:false`），MCP `isError:false`。
+- 但业务返回 JSON `ok:false`，其 `data` 仅被脱敏汇总为字段名 `error/reason/expected`，具体字段值尚未采集；因没有确认新 `page-...` ID，自动中止并返回 `CREATE_UNCONFIRMED`，**`editAttempted:false`**。
+- 此结果无法判断是缺少目标知识库空间、Token 缺写权限或其他输入规则；也不能认定已成功创建。不得盲目重复创建，也不得冒称 `edit_doc` 已通过。
+- 新增仅 `initialize/tools/list` 的创建工具元数据检查 `npm run inspect:s5-create -- --live`，不再调用写接口；等待 Windows 实际字段说明后，按真实证据选定唯一的下一次测试。此检查源码与模拟单测按 CI 结果另行确认。
+
+
 - **最新 GitHub CI 实际结果**：run `41799562069`，完整 Node 测试 `112/112 pass, 0 fail`；文档 CI run `41799562141` 成功。新增 8 项自动创建/一次编辑模拟测试；真实 iWiki create/edit 均尚未执行。
 ## 2026-11-04 T-20261104-15 — S5-F 自动创建并编辑探针代码（尚未远端运行）
 - 用户建议不必人工先创建隔离文档，直接测试官方 `create_markdown_doc` 和 `edit_doc`。增加 `tools/s5-probe-auto-create.mjs` 及 `tests/s5-probe-auto-create.test.mjs`，并注册 `npm run probe:s5-auto`。
