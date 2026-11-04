@@ -1,5 +1,12 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S4-D Windows 10/10 离线测试已由用户实测通过
+
+- 用户报告 Node `v22.23.2`，Git `2.54.0.windows.1`，本地克隆提交 `b0b0436`，三份测试文件 `tests 10 / pass 10 / fail 0`。因此可进入本机私有映射准备，但**不宣称已完成真实 iWiki 查询或 MuSSE 设备集成**。
+- 代码位于 `$HOME\MuSSE-Lab\MuSSE\software\musse-iwiki`，现有生产桥接仍在 `$HOME\MuSSE-MCP-Local\musse-bridge`，互不替换。
+- 下一步仅需验证私人 `xiaozhi.config.json` 文件存在，确认实际已有 iWiki 任务文档和目标/笔记文档的情况，再在 Windows 个人目录建立本机 `musse-iwiki-readonly.json` 映射。若目标或笔记不存在，先保持可选映射为空，勿要求恢复取消的 S2-B 三文档试验。
+- 后续添加 `stdio` 业务服务前，必须保证 Windows 现有配置备份、补丁和防火墙规则保留；绝不提交真实 Token、文档 ID 或完整日志。PR #24 仍是 Draft。
+
 ## 2026-11-04 S4-D 准备阶段：等待 Windows 本机离线测试结果
 
 - 仓库已完成 S4-B+C 六个查询并提交 S4-D 最小安全修正：任务/笔记数组返回 `structuredContent.data`、目标对象保持对象格式。新增私有映射文件路径读取，避免在 `xiaozhi-client v2.3.0` 的 `mcpServers` 中放含真实页面 ID 的 `env` 字段（上游转换配置有打印配置的代码）。

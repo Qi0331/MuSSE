@@ -1,5 +1,14 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-05 — S4-D Windows 正式工作区离线测试（用户提供的终端回显）
+
+- **证据来源**：用户在对话中逐行提供 Windows PowerShell 命令及输出；记录的是用户执行结果，不是 ChatGPT 自行在远程 Windows 运行。
+- **环境**：Node `v22.23.2`；Git `2.54.0.windows.1`；Windows `C:\Users\HONOR`；分支 `feat/iwiki-s2a-readonly-contract`；短 SHA `b0b0436`。
+- **原样命令**：`node --test tests/s4b-readonly.test.ts tests/s4c-readonly.test.ts tests/s4d-preflight.test.ts`。
+- **用户终端结果**：`tests 10`、`pass 10`、`fail 0`、`cancelled 0`、`skipped 0`、`todo 0`；运行约 200.46 ms。
+- **范围限制**：这次是完整 Git 工作区下的指定 10 项离线单测，未执行完整 `npm test`、真实 iWiki `read_doc`、桥接聚合或 ESP32 语音验收。没有新增或修改私人配置、固件或数据。
+- **判断**：S4-D 进入私有映射与接入审查阶段，S4-B/C/D 三份预检测试按用户证据通过。不要将 S4-D 完整验收记为完成。
+
 ## 2026-11-04 T-20261104-04 — S4-D 接入前代码静态审查与待测项
 
 - 对比仓库新增 MCP 协议入口与固定的上游 `xiaozhi-client v2.3.0`：上游 `src/mcp-core/transport-factory.ts` 支持 `stdio` `command/args/env`；`src/config/adapter.ts` 在服务配置转换中存在打印原始配置的路径，因此未来业务服务配置不得放置真实文档 ID、Token 等私人数据。

@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 S4-D Windows 正式工作区离线检查 10/10 通过（用户实测）
+
+- 用户在 Windows PowerShell 的 `C:\Users\HONOR\MuSSE-Lab\MuSSE\software\musse-iwiki` 中克隆分支，反馈 Node.js `v22.23.2`、Git `2.54.0.windows.1`、提交 `b0b0436`。
+- 用户执行 `node --test tests/s4b-readonly.test.ts tests/s4c-readonly.test.ts tests/s4d-preflight.test.ts`，回传汇总 **tests 10 / pass 10 / fail 0 / skipped 0**。这是 Windows 上完整代码目录中的离线测试，**不是**真实 iWiki 数据读取或 MCP 桥接/设备语音实测。
+- 下一步先建立本机私有文档 ID 映射并检查原桥接配置的可用性；任何实际新增桥接服务项应先备份、审查配置，保留原官方 iWiki MCP 与日志脱敏补丁。不要上传私人配置、Token、文档 ID，也不要恢复已取消的 S2-B 人工验收。
+- GitHub PR #24 仍保持 Draft；S5 受控写入未授权，不得启用。
+
 ## 2026-11-04 S4-D 接入前代码修正已提交；等待用户 Windows 离线检查
 
 - 用户要求继续推进 S4-D 并询问需要做什么。**目前仅完成仓库内接入前修正**，未读取真实 iWiki、未修改 Windows 桥接/私有配置、未改小智云端/ESP32，PR #24 仍是草稿。
