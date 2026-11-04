@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-05 — S5 语音写入确认标点修复（代码已提交；Windows 未部署）
+
+- 真实设备日志显示 S5 prepare 成功后，S5 confirm 分别接收到 spokenText="保存。"、"确认保存。"、"确认写入。"，返回 S5_EXPLICIT_CONFIRMATION_REQUIRED；同一 operationId 上多次拒绝，未进入远端写入阶段。
+- 修改 src/write/voice-flow.ts：只接受完整确认短语“确认写入”或“确认保存”，允许末尾至多一个句号或感叹号（中文/英文），仍拒绝单独“保存”、疑问句、否定句、混合取消命令。新增严格正反例测试，未扩大写入权限或跳过二次确认。
+- GitHub iWiki Node 216/216 tests pass（提交 d01243e21c84ea455e50b8d8084c5c5a712ff08d），仓库检查成功。Windows 要同步分支并重启 xiaozhi 才会生效；旧待办提案不得复用或直接重试；先检查任务总表再决定是否另行创建。
+
+
 ## 2026-11-05 — S6 Gxxx 编号统一（已提交代码；Windows/iWiki 数据待迁移）
 
 - 用户决定仅把长期目标编号统一为 G001/G998/G999，无横线；模糊查找另期开发。S6 discovery / create / MCP schema 及测试已更新；真实旧数据 G-998/G-999 必须先迁移，才能启用新版 S6。
