@@ -87,3 +87,9 @@
 - `edit_doc` MCP 正常但**业务 `ok:false`**，`data` 仅有 `error` 字段，原探针隐藏了值；`editCallFailed:false` 仅表示未抛请求异常，不代表服务端编辑成功。再读回为 `UNCHANGED`。本轮未证明编辑权限、整篇编辑支持或成功回执结构，正式 S5 写入仍禁用。
 - **禁止重跑 `probe:s5-auto -- --create-and-write-test`**，否则会产生另一篇测试文档。应复用已经存在的合成页面，先查官方 `edit_doc` 元数据，明确编辑对 Markdown 页的支持与必需字段，再考虑一次针对性修正。
 - GitHub S5 分支新增 `npm run inspect:s5-edit -- --live`：只通过 `initialize/tools/list` 读 `edit_doc`、`append_to_doc`、`list_docs`、`search_kb`、`list_doc_tree` 的工具描述和字段约束。**不调用 tools/call、不读取文档、不写入**；输出经过基本脱敏，仅用于接口契约判断。私有 Token、页面 ID 和正文均不进代码库。
+
+## 2026-11-04 真实 edit_doc 失败后的复用测试页方案
+- 用户已真实创建 `MuSSE S5-F 自动隔离测试 8a6fc40f`；`read_doc` 首次校验成功，`edit_doc` 业务 `ok:false`、`data.error` 未展示，复读为 `UNCHANGED`。最新 `tools/list` 元数据确认 `edit_doc` 的 `doc_id` 可选、`content` 为必须提供的**完整 Markdown 正文**，请求参数与声明一致。其写入使用三路合并且需要编辑权限，故拒绝的精确原因仍待诊断。
+- 新增 `npm run probe:s5-existing-edit -- --edit-once`，**不再创建新文档**：终端本机询问原测试页所属的私人空间名，分别只读调用 `list_spaces` 和 `list_docs(space_id)` 定位与固定合成标题完全匹配的**唯一根级文档**，再调用 `read_doc` 校验正文恰好仍是 `MUSSE_S5F_ORIGINAL`。若发现失败、重名、不可读或正文已经变化，禁止写入。
+- 只有用户在终端明确输入 `EDIT` 才调用 **一次** `edit_doc({doc_id, content:MUSSE_S5F_UPDATED})`，之后只读复核；不重试。诊断 `errorKind` 仅允许有限错误类型 `PERMISSION/NOT_FOUND/CONFLICT/READ_ONLY/DOCUMENT_TYPE/ARGUMENT/OTHER_BUSINESS_ERROR`，不打印服务端原始 `error` 值、Token、空间 ID、文档 ID 或正文。若响应有未知结构，失败即停止。
+- 该新脚本的模拟测试与代码完成不代表真实编辑成功；正式 S5 仍保持禁用，不碰生产桥接、S4 或真实任务总表。复用一篇已经存在的隔离测试页，不向用户索要其私有 ID。
