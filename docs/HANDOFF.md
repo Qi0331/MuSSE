@@ -1,4 +1,9 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F 修正创建目标空间（最新）
+- Windows 已用仅 `tools/list` 的 `npm run inspect:s5-create -- --live` 确认：`create_markdown_doc` 的业务说明强制提供 `space_id` 或 `space_name`（二选一），但 JSON schema 的 `required` 只有标题与正文。无需继续猜缺失原因。
+- GitHub S5-F 探针已更正：执行 `npm run probe:s5-auto -- --create-and-write-test` 时在 Windows 私下输入**一个确切空间名称**；请求只多传 `space_name`，不把名称打印在脱敏结果里。仅限新建测试页、一次 edit、写后读回；已知失败不能盲重跑。
+- 尚无该修正后的 Windows 真实写入证据。原 S4 桥接、私有配置、生产 Token、Muse 人设、ESP32 和 Draft PR 均不动。
+
 ## 2026-11-04 S5-F 创建业务拒绝后的最新交接
 - Windows 已通过 `git -c http.version=HTTP/1.1 fetch` 将独立 S5 worktree 成功更新至 `7aa98f0`。用户仅一次真正调用 `create_markdown_doc`；MCP 通信正常但业务结果 `ok:false`，`data` 有 `error/reason/expected` 字段（值未输出）。没有成功解析唯一页面 ID，`edit_doc` 未调用、写入成功未证实。
 - 当前阻塞是**官方创建工具的业务前置条件**（具体错误尚未知），不要再建议立刻重复 `--create-and-write-test`，也不要直接调高只读 Token 权限。新增仅读取 `tools/list` 的 `npm run inspect:s5-create -- --live`，查相关官方工具及空间字段元数据，等用户本机脱敏结果后再决定下一次最小实际调用。
