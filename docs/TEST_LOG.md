@@ -1,5 +1,14 @@
 # 实验与测试日志
 
+## 2026-11-04 T-20261104-11 — S5-C 离线确认门禁增强及只读写工具发现器
+- **开发侧环境**：隔离 Linux Node 22.16.0（低于生产 >=22.18），本机暂存的部分依赖模块根据此前 GitHub 可见源码重建，非完整仓库检出。
+- **实际运行**：`node --experimental-strip-types --test tests/s5-guarded-write.test.ts tests/s5-plan-write.test.ts tests/s5-inspect-write-contract.test.mjs` → **26/26 pass，0 fail**。六个 S5 源码与测试文件运行 `node --experimental-strip-types --check` → **6/6 pass**。
+- **新增用例**：已验证回执经过新提案仍能去重；并发提案在异步读取期间严格占用容量；超长预览安全拒绝；任务确认前后值、完整笔记/创建预览；笔记文档错误映射拒写；写工具候选列表脱敏、假连接工具不执行 `tools/call`、CLI 无参数只帮助。
+- **仓库完整性**：6 个 S5 源码/测试文件 GitHub blob SHA 与本机 `git hash-object` 逐一比对 **6/6 相同**。GitHub Actions `Repository checks / validate-docs` 对 PR #25 最新代码提交显示成功；该工作流只验证文档骨架，不等于 `npm test`。
+- **未执行**：Windows 完整工作区 `npm test`、开发侧完整 `python scripts/check_repo.py`、远端官方 `tools/list` 真实检查（脚本仅离线模拟）、任何 `tools/call` 写请求、设备语音、部署、生产改动。S5 尚不可在真实 iWiki 写入。
+- 先前初次文件暂存传输产生的两份不完整文本已修复；最终 GitHub 文件与本地测试版本哈希相同，前序暂存过程不作为验收证据。
+
+
 ## 2026-11-04 T-20261104-10 — S5-B 离线安全门禁开发侧测试
 - **运行环境**：隔离 Linux Node.js `v22.16.0`（低于项目声明的 Windows Node `>=22.18`），独立临时工作目录；使用标准库假 `S5AtomicPort`，不连接真实 iWiki。
 - **实际命令**：`node --experimental-strip-types --test .../tests/s5-guarded-write.test.ts` → **13 tests / 13 pass / 0 fail**。覆盖严格白名单、伪造确认拒绝、跨事务摘要不匹配、过期、无原子条件写门槛、无版本令牌拒写、成功后读回与同一事务重复提交、预写冲突、模糊远端结果不盲重试、读回不一致、拒绝、待处理容量限制、敏感错误脱敏和并发双提交。
