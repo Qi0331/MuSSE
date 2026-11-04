@@ -201,3 +201,55 @@ test("S5 rejects previews that omit required full approval detail by exceeding t
   await assert.rejects(g.untrusted.prepare(intent), match("S5_INVALID_PLAN"));
   assert.equal(f.writes, 0);
 });
+
+test("S5 does not evict an in-flight commit when approval TTL passes", async () => {
+  const f = fake();
+  let now = 100_000;
+  let release: (() => void) | undefined;
+  const port: S5AtomicPort = {
+    ...f.port,
+    compareAndWrite: async (...args) => {
+      await new Promise<void>((resolve) => { release = resolve; });
+      return f.port.compareAndWrite(...args);
+    },
+  };
+  const gate = createS5Gate(port, f.planner, { clock: () => now, ttlMs: 1000, maxPending: 2 });
+  const p = await gate.untrusted.prepare(intent);
+  gate.trusted.approve(p.operationId, p.approvalDigest);
+  const committing = gate.untrusted.commit(p.operationId);
+  for (let i = 0; i < 12 && !release; i++) await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.ok(release);
+  now = p.expiresAt + 1000;
+  assert.equal(gate.untrusted.status(p.operationId), "COMMITTING");
+  await assert.rejects(gate.untrusted.prepare(intent), match("S5_DOCUMENT_BLOCKED"));
+  release();
+  const receipt = await committing;
+  assert.equal(receipt.status, "VERIFIED");
+  assert.deepEqual(await gate.untrusted.commit(p.operationId), receipt);
+  assert.equal(f.writes, 1);
+});
+
+test("S5 uncertain write survives cleanup and blocks same-document re-prepare", async () => {
+  const f = fake(); f.failAfter();
+  let now = 100_000;
+  const gate = createS5Gate(f.port, f.planner, { clock: () => now, ttlMs: 1000 });
+  const p = await gate.untrusted.prepare(intent);
+  gate.trusted.approve(p.operationId, p.approvalDigest);
+  await assert.rejects(gate.untrusted.commit(p.operationId), match("S5_WRITE_UNCERTAIN"));
+  now = p.expiresAt + 120_000;
+  assert.equal(gate.untrusted.status(p.operationId), "UNCERTAIN");
+  await assert.rejects(gate.untrusted.prepare(intent), match("S5_DOCUMENT_BLOCKED"));
+  // Other documents remain independently usable; none are written without approval.
+  const note = await gate.untrusted.prepare({ type: "note_create", content: "unrelated" });
+  assert.equal(note.status, "AWAITING_APPROVAL");
+  assert.equal(f.writes, 1);
+});
+
+test("S5 task fields reject newlines that Markdown table serialization would silently collapse", () => {
+  for (const field of ["title", "description", "category"] as const) {
+    const value = field === "title" ? "foo\nbar" : "foo\r\nbar";
+    assert.throws(() => parseS5Intent({ type: "task_update", taskId: "T-001", changes: { [field]: value } }), match("S5_INVALID_VALUE"));
+  }
+  const note = parseS5Intent({ type: "note_create", content: "first\nsecond" });
+  assert.equal(note.type, "note_create");
+});
