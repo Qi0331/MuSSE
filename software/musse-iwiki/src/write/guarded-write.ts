@@ -16,11 +16,13 @@ export interface S5Snapshot {
   revision: string;
 }
 
-/** The adapter MUST implement server-side atomic conditional writes. A local lock or pre-write hash is insufficient. */
+/** Atomic writes are preferred. For personal low-frequency use, an explicitly enabled read-check-write fallback is also supported. */
 export interface S5AtomicPort {
   readonly supportsAtomicConditionalWrite: boolean;
   read(document: S5Document): Promise<S5Snapshot>;
   compareAndWrite(document: S5Document, expectedRevision: string, content: string, operationId: string): Promise<void>;
+  /** Optional best-effort fallback; never atomic against concurrent iWiki browser edits. */
+  writeWithoutCondition?(document: S5Document, content: string, operationId: string): Promise<void>;
 }
 
 export interface S5Mutation {
@@ -153,7 +155,7 @@ export interface S5Prepared {
 export function createS5Gate(
   port: S5AtomicPort,
   planner: S5Planner,
-  options: { clock?: () => number; ttlMs?: number; maxPending?: number } = {},
+  options: { clock?: () => number; ttlMs?: number; maxPending?: number; concurrencyMode?: "atomic" | "check-before-write" } = {},
 ) {
   const pending = new Map<string, Pending>();
   const receipts = new Map<string, { receipt: { operationId: string; status: "VERIFIED" }; expiresAt: number }>();
@@ -217,8 +219,11 @@ export function createS5Gate(
       const item = get(operationId);
       if (item.status === "VERIFIED" && item.receipt) return item.receipt;
       if (item.status !== "APPROVED") throw new S5GateError("S5_NOT_APPROVED");
-      if (!port.supportsAtomicConditionalWrite || typeof item.revision !== "string" || item.revision.trim() === "") {
-        throw new S5GateError("S5_ATOMIC_WRITE_UNAVAILABLE");
+      const useAtomic = port.supportsAtomicConditionalWrite && typeof item.revision === "string" && item.revision.trim() !== "";
+      const useBestEffort = !useAtomic && options.concurrencyMode === "check-before-write" && typeof port.writeWithoutCondition === "function";
+      if (!useAtomic && !useBestEffort) throw new S5GateError("S5_ATOMIC_WRITE_UNAVAILABLE");
+      if ([...pending.values()].some((other) => other.id !== item.id && other.document === item.document && other.status === "COMMITTING")) {
+        throw new S5GateError("S5_DOCUMENT_BUSY");
       }
       item.status = "COMMITTING"; // Prevent concurrent duplicates before any await.
       try {
@@ -234,7 +239,8 @@ export function createS5Gate(
         throw error instanceof S5GateError ? error : new S5GateError("S5_READ_BEFORE_WRITE_FAILED");
       }
       try {
-        await port.compareAndWrite(item.document, item.revision, item.content, item.id);
+        if (useAtomic) await port.compareAndWrite(item.document, item.revision, item.content, item.id);
+        else await port.writeWithoutCondition!(item.document, item.content, item.id);
       } catch {
         // Even a timeout may have committed remotely. Never blindly retry.
         item.status = "UNCERTAIN";
