@@ -1,5 +1,11 @@
 # MuSSE 最新交接（持续更新）
 
+## 2026-11-04 S5-F 最新交接（优先于 S5-E）
+- 用户在 Windows 已成功用独立 worktree 检出 S5 `508e908`，`npm run inspect:s5-write -- --live` 列出 27 个官方工具，确认 `edit_doc` 参数 `doc_id/content/title` 与 `append_to_doc` 参数 `doc_id/content`。只进行 `initialize/tools/list`，**未执行任何真实写入**。
+- S5 仍按 D-021 的低频方案：预览、第二轮确认、提交前复读比较、普通写入一次、写后复读。不再要求原子 CAS 或独立批准 UI 才能测试；但要确认编辑语义和响应，不虚报结果、不盲重试。
+- S5-F 分支新增独立单页隔离探针 `npm run probe:s5-edit -- --write-test`，**不得在用户另行明确授权一次真实写入之前运行**。需要用户自己在网页建立正文恰好为 `MUSSE_S5F_ORIGINAL` 的新测试页，私有 ID 仅在本机环境变量；原有任务总表绝不可作为探针目标。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
+- 生产 S5 服务仍未部署，原 S4 双 MCP/Windows 生产配置及日志补丁/防火墙、Muse 角色、ESP32 与 Draft PR #24/#25 保持不变；自动化结果以新 CI 为准。
+
 ## 2026-11-04 S5-E 接手（最新）
 - **先看 `docs/IWIKI_S5E_PRACTICAL_HANDOFF.md`**，最新用户明确反对过度防御。不要继续照旧 S5-D 要求 CAS、独立批准 UI 或跨重启数据库才允许考虑个人低频写入，也不要恢复 S2-B/S4-E 验收。
 - S5 PR #25 新增轻量写前二次读取/比对与写后校验、显式配置写工具的普通 iWiki 适配器、两轮语音确认、仅三工具的独立 stdio 服务器（未启用、未部署）。旧原子模式兼容仍在。
