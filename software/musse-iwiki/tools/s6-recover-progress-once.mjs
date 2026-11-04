@@ -72,18 +72,30 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
   const { ask, backup, report = () => {}, clock = Date.now } = options;
   if (typeof ask !== "function" || typeof backup !== "function") fail("S6_CONSENT_REQUIRED");
 
+  report({ type: "stage", stage: "goal_scan" });
   const goals = await scanGoals(port, scope);
   const g999 = goals.get("G-999");
   const g998 = goals.get("G-998");
-  if (goals.size !== 2 || !g999 || !g998 ||
-      !g999.goal.description.includes(G999_MARKER) ||
-      g998.goal.title !== G998_TITLE ||
-      g998.entry.title !== "G-998") fail("S6_TEST_TARGET_CHANGED");
-  if (g998.goal.history.some((h) => h.note === NOTE)) fail("S6_PROGRESS_ALREADY_EXISTS");
+  const checks = {
+    goalCountTwo: goals.size === 2,
+    g999Present: Boolean(g999),
+    g999MarkerValid: Boolean(g999?.goal.description.includes(G999_MARKER)),
+    g998Present: Boolean(g998),
+    g998TitleValid: Boolean(g998?.goal.title === G998_TITLE),
+    g998IdValid: Boolean(g998?.entry.title === "G-998"),
+    progressAlreadyPresent: Boolean(g998?.goal.history.some((h) => h.note === NOTE)),
+  };
+  report({ type: "preflight_check", checks });
+  if (!checks.goalCountTwo || !checks.g999Present || !checks.g999MarkerValid ||
+      !checks.g998Present || !checks.g998TitleValid || !checks.g998IdValid)
+    fail("S6_TEST_TARGET_CHANGED");
+  if (checks.progressAlreadyPresent) fail("S6_PROGRESS_ALREADY_EXISTS");
 
   control.targetDocId = g998.entry.docId;
+  report({ type: "stage", stage: "task_read" });
   const tasks = parseTaskTable(await port.readTaskTable());
   const percent = computeGoalProgress(g998.goal, tasks).percent;
+  report({ type: "stage", stage: "progress_build" });
   const ts = clock();
   const expected = appendProgressRecord(g998.content, {
     date: formatShanghai(new Date(ts)).slice(0, 10),
@@ -91,6 +103,7 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
   });
   // Fail closed if the prepared write is identical to prior content.
   if (expected === g998.content) fail("S6_NO_CHANGE");
+  report({ type: "stage", stage: "prepare" });
   const flow = createS6GoalFlow(port, scope, { clock: () => ts, ttlMs: 600_000 });
   const prepared = await flow.prepare({
     type: "goal_record_progress", goalId: "G-998", note: NOTE,
@@ -98,6 +111,7 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
   if (prepared.status !== "AWAITING_APPROVAL") fail("S6_PREVIEW_FAILED");
 
   report({ type: "preview", progressPercent: percent });
+  report({ type: "stage", stage: "consent" });
   const answer = await ask(CONFIRM);
   if (answer.trim() !== CONFIRM) {
     flow.cancel(prepared.operationId);
@@ -107,7 +121,9 @@ export async function recoverS6ProgressOnce(port, scope, control, options) {
       writeRetryPermitted: false,
     };
   }
+  report({ type: "stage", stage: "backup" });
   await backup(g998.content);
+  report({ type: "stage", stage: "write_and_readback" });
   control.armed = true;
   let flowResult = "UNCONFIRMED";
   try {
@@ -173,6 +189,8 @@ async function main(args) {
     ack: null, remoteErrorCode: null,
   };
   let backupSaved = false;
+  let failureStage = "local_config";
+  let preflightChecks = null;
   try {
     const dir = join(homedir(), "MuSSE-MCP-Local", "musse-bridge");
     const scope = JSON.parse(await readFile(join(dir, "musse-iwiki-s6-scope.json"), "utf8"));
@@ -186,6 +204,8 @@ async function main(args) {
     rl = createInterface({ input: process.stdin, output: process.stdout });
     const result = await recoverS6ProgressOnce(port, scope, control, {
       report(ev) {
+        if (ev.type === "stage") failureStage = ev.stage;
+        if (ev.type === "preflight_check") preflightChecks = ev.checks;
         if (ev.type === "preview") process.stdout.write(
           "预检通过：G-998 的验收进度记录仍不存在；将新增一条 " +
           ev.progressPercent + "% 的记录；G-999 和任务总表不变。\n");
@@ -204,10 +224,19 @@ async function main(args) {
     process.stdout.write(JSON.stringify({ ...result, backupSaved }, null, 2) + "\n");
     if (result.status !== "VERIFIED" && result.status !== "PERSISTED_ACK_UNCONFIRMED" &&
         result.status !== "CANCELED_NO_WRITES") process.exitCode = 2;
-  } catch {
+  } catch (error) {
+    // Only locally-defined S6_ codes or known domain error codes are exposed.
+    // Never print raw exceptions: remote messages may contain credentials/IDs.
+    const rawCode = typeof error?.code === "string" && error.code.startsWith("S6_")
+      ? error.code : typeof error?.message === "string" &&
+        /^S6_[A-Z0-9_]+$/.test(error.message) ? error.message : null;
     process.stderr.write(JSON.stringify({
       inspection: "S6_TARGETED_PROGRESS_RECOVERY",
-      status: "STOPPED_NO_RETRY", writeAttempts: control.attempted,
+      status: "STOPPED_NO_RETRY",
+      failureStage,
+      failureCode: rawCode ?? "CHECK_FAILED",
+      preflightChecks,
+      writeAttempts: control.attempted,
       editResponse: control.ack, remoteErrorCode: control.remoteErrorCode,
       backupSaved, writeRetryPermitted: false,
     }, null, 2) + "\n");
