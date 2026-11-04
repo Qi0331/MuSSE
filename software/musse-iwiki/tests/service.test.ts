@@ -8,7 +8,7 @@ import { TaskService } from "../src/service/task-service.ts";
 import { DOC_PATHS } from "../src/store/wiki-store.ts";
 import { parseTaskTable } from "../src/markdown/tasks.ts";
 import { computeGoalProgress, parseGoal } from "../src/markdown/goals.ts";
-import { dueTimestamp, isOverdue } from "../src/date.ts";
+import { dueTimestamp, isOverdue, shanghaiNow } from "../src/date.ts";
 import { createIwikiStoreFromEnv, IwikiMcpStore } from "../src/store/iwiki-store.ts";
 import { IwikiMcpClient } from "../src/store/iwiki-mcp-client.ts";
 import { callTool } from "../src/mcp/tools.ts";
@@ -210,10 +210,12 @@ test("MCP tool dispatch works on the offline fixture", async () => {
   })) as { id: string; status: string };
   assert.equal(created.status, "todo");
 
+  const beforeDate = shanghaiNow(new Date()).date;
   const note = (await callTool(service, "note_create", { content: "工具笔记" })) as {
     createdAt: string;
   };
-  assert.ok(note.createdAt.startsWith("2026-11-03"));
+  const afterDate = shanghaiNow(new Date()).date;
+  assert.ok([beforeDate, afterDate].some((date) => note.createdAt.startsWith(date)));
   const notes = (await callTool(service, "note_query", { limit: 5 })) as Array<{
     content: string;
   }>;
