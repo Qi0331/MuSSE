@@ -46,7 +46,7 @@ test("S6 manual title mode requires BOTH titles already renamed; contents still 
   const plan = await buildS6IdMigrationPlan(fixture({ manual: true }), scope, { manualTitles: true });
   assert.equal(plan.docs.length, 2);
   await assert.rejects(() => buildS6IdMigrationPlan(fixture(), scope, { manualTitles: true }),
-    /S6_MIGRATION_TARGET_NOT_FOUND/);
+    /S6_MIGRATION_UNEXPECTED_LEGACY_TITLE/);
 });
 test("S6 migration stops on mismatched bodies, title collisions and unrelated pages", async () => {
   await assert.rejects(() => buildS6IdMigrationPlan(fixture({ wrongContent: true }), scope),
