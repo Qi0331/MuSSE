@@ -1,5 +1,13 @@
 # MuSSE / 小七 — S6 会话交接（2026-11-05）
 
+## 2026-11-05 后续补充：统一 Gxxx 目标 ID（实施分支，真实数据待迁移）
+
+- 新规则统一 G001/G998/G999；只更改 S6 独立长期目标能力，不做自然语言模糊搜索，不动 S4/S5。
+- 已更新 S6 范围扫描、创建校验、MCP 语音工具 schema、相关测试；保留已通过真实验收记录。历史测试脚本的直接执行入口退休。
+- 新增 tools/s6-migrate-goal-ids-once.mjs：以固定 scope 精确核对 G-998/G-999，备份到 Windows 本地；有经过工具元数据确认的专用重命名工具才能自动改标题，否则须网页将两个标题手动改为 G998/G999，再运行 --manual-title --apply 修改正文和必要任务关联。脚本每步精确读回，不确定结果禁止重试。
+- 迁移说明 docs/S6_GOAL_ID_MIGRATION_2026-11-05.md。GitHub 仓库不持有个人 iWiki 接口/Token，且此次未直接修改远端 iWiki；Windows 同步、真实迁移和最终语音复测未完成。
+
+
 ## 最新收尾更新（2026-11-05，覆盖下方历史阻塞状态）
 
 - **S6 Windows 本地真实业务验收已完成**：用户在关闭代理/梯子的网络环境下执行真实只读审计，返回 `goalCount=2`、`g999MarkerVerified=true`、`g998ExistsAndValid=true`、`matchingProgressRecords=0`、`taskCount=4`、`writesAttempted=0`。审计退出码 2 表示当时预期进度尚未出现，**不是网络故障**。
