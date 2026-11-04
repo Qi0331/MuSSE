@@ -193,3 +193,13 @@ npm run recover:s6-progress -- --once
 ```
 
 若已在网页中手工补写过 G-998 进度，请不要使用此工具；程序会因检测到重复记录而拒绝写入。成功后仍需单独完成小智 S6 语音服务部署验收，不能以 Windows 本地 CLI 成功等同于已上线。
+
+## 14. 本机 207/207 通过后的 iWiki 工具列表阻塞
+
+用户上传的最新本地日志（Windows S6 工作区已到 d8d6fe0）证明 `npm test` 207/207 通过，随后 `recover:s6-progress -- --once` 的只读前置发现失败：`failureStage=goal_scan`、`failureCode=S6_DISCOVERY_UNAVAILABLE`、`listAttempts=2`、`listReadOnlyRetries=1`、`lastListError=S6_TOOLS_UNAVAILABLE`、`writeAttempts=0`、`backupSaved=false`。因此此时还没有任何新 iWiki 编辑，也不能将故障归咎于进度计算/格式。
+
+根源范围：正式读取适配器的 `listDirectChildren` 先请求 `client.listTools()` 核对 `list_docs` 工具契约；`S6_TOOLS_UNAVAILABLE` 表示 `client.listTools()` 抛出异常。此前已通过的 2 个目标内容解析未在本轮开始。它可能是 `initialize` 握手、`tools/list` RPC、HTTP 权限或网络问题，**没有真实错误类别前不能断言根因**。
+
+本轮代码仅在 S6 定向恢复入口提前执行一次相同的只读 `initialize → tools/list`，缓存其成功响应，并在失败时输出脱敏的 `toolAccessStage`（`initialize`/`tools_list`）、`toolAccessError`（已知错误类别及数字 HTTP/RPC 状态），不暴露响应消息、私人 ID、终端配置或令牌。依然在未授权前 0 写入，检查通过后仍需终端逐项确认 G-998 的唯一 edit_doc，且严格禁止自动重试写入。
+
+结论：本地业务测试通过 ≠ 远端 iWiki MCP 可用；等待真实匿名诊断结果后再判断是否需要调整网络、令牌或服务端工具契约。绝不改 S5 原链路。
