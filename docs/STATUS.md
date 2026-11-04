@@ -1,5 +1,13 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 最新进展：S5-B 离线受控写入门禁已入新分支（覆盖下方 S4 快照）
+- 用户明确跳过 S4-E 目标/笔记额外验收，直接推进 S5；**仅授权仓库开发和离线安全测试，不等于允许真实 iWiki 写入或部署**。
+- 新分支 `feat/iwiki-s5-guarded-write-design` 从 S4-D `25a9f64` 创建；新增 `docs/IWIKI_S5_SECURITY_DESIGN.md`、`src/write/guarded-write.ts`、`src/write/plan-write.ts` 与两份 S5 离线测试文件（均位于 `software/musse-iwiki/`）。
+- **真实执行**：隔离 Linux Node.js `v22.16.0` 使用 `--experimental-strip-types` 跑 `tests/s5-guarded-write.test.ts`，13/13 通过；新增核心/业务规划文件及两份测试通过 Node strip-types 语法检查。`tests/s5-plan-write.test.ts` **尚未在完整仓库执行**；未执行完整 `npm test`，不可将核心 13 项写成所有 S5 集成测试通过。
+- S5 核心支持严格操作白名单、只读预览、短期内存事务、独立可信批准接口、过期/拒绝/冲突/不确定状态、原子条件写入前置门槛、写后读回、同一事务防重复；业务规划器覆盖任务创建/更新/完成/归档/恢复和笔记追加。**尚未连接任何真实可信批准界面或已验证 iWiki 写适配器，无法生产写入**。
+- 保持官方 `iwiki`、本地 `musse_iwiki_readonly`、Windows 补丁/防火墙、Muse 角色与 ESP32 固件不变；原 PR #24 保持 Draft 未合并。下一步需要核实官方远端原子条件写契约和可信用户确认机制后才能考虑生产写入。
+
+
 ## 2026-11-04 最新最高优先级：S4-D 任务/日程自然语言语音链路按用户现场报告通过
 
 - **用户现场回报**：原官方 `iwiki` MCP 正常，新增 `musse_iwiki_readonly` MCP 正常且六工具可见；用户确认新业务 MCP 被实际调用，四项自然语言场景（任务数量、今日安排、近期与逾期、普通聊天）均“正常”。不需要用户每次口述 MCP 或工具名。
