@@ -3,7 +3,7 @@ import test from "node:test";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { TEST_ORIGINAL, TEST_UPDATED } from "../tools/s5-probe-edit-doc.mjs";
-import { extractConfirmedCreatedPageId, probeS5CreateAndEdit } from "../tools/s5-probe-auto-create.mjs";
+import { extractConfirmedCreatedPageId, extractListedSpaceNames, listAvailableSpaceNames, probeS5CreateAndEdit } from "../tools/s5-probe-auto-create.mjs";
 
 const id = "page-S5F_NEW_ONLY";
 const label = "MuSSE S5-F 自动隔离测试 deadbeef";
@@ -100,6 +100,39 @@ test("auto-create: missing destination space fails before remote call", async ()
   await assert.rejects(probeS5CreateAndEdit(f.client, "", label), /S5F_SPACE_NAME_REQUIRED/);
   await assert.rejects(probeS5CreateAndEdit(f.client, " space ", label), /S5F_SPACE_NAME_REQUIRED/);
   assert.deepEqual(f.calls, []);
+});
+
+test("auto-create: parse list_spaces success response without exposing IDs", () => {
+  const response = { content: [{ type: "text", text: JSON.stringify({
+    ok: true, data: { spaces: [
+      { id: "private-id-1", name: "私人测试知识库" },
+      { id: "private-id-2", space_name: "科研与项目" },
+    ] },
+  }) }] };
+  assert.deepEqual(extractListedSpaceNames(response), ["私人测试知识库", "科研与项目"]);
+  assert.deepEqual(extractListedSpaceNames({ isError: true, ...response }), []);
+  assert.deepEqual(extractListedSpaceNames({
+    content: [{ type: "text", text: JSON.stringify({ ok: false, data: { spaces: [{ name: "private" }] } }) }],
+  }), []);
+  assert.deepEqual(extractListedSpaceNames({ structuredContent: { spaces: [{ name: "空间A" }] } }), ["空间A"]);
+});
+
+test("auto-create: list_spaces is read-only and never guesses required args", async () => {
+  const calls = [];
+  const client = {
+    async listTools() { return [{ name: "list_spaces", inputSchema: { properties: {}, required: [] } }]; },
+    async callTool(name, args) {
+      calls.push({ name, args });
+      return { structuredContent: { ok: true, data: { items: [{ name: "私人测试知识库" }] } } };
+    },
+  };
+  assert.deepEqual(await listAvailableSpaceNames(client), ["私人测试知识库"]);
+  assert.deepEqual(calls, [{ name: "list_spaces", args: {} }]);
+  const failClosed = {
+    listTools: async () => [{ name: "list_spaces", inputSchema: { required: ["scope"] } }],
+    callTool: async () => { throw Error("should not be called"); },
+  };
+  assert.deepEqual(await listAvailableSpaceNames(failClosed), []);
 });
 
 test("auto-create: default CLI is inert", () => {
