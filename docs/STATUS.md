@@ -1,4 +1,8 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-F 确认创建必须指定空间（最新）
+- 用户在 Windows 实际只读检查官方 `create_markdown_doc` 元数据，证明目标空间必须 `space_id` 或 `space_name` 二选一；此条件未体现在其 `required` 数组里。此前仅传 title/content 造成 `ok:false` 的原因与此一致，无需假设是 Token 权限问题。
+- 开发分支已修改自动创建+编辑探针：交互式在 Windows 本机输入准确 `space_name`，仅对该空间尝试新建一篇合成隔离文档，继续最多一次 `edit_doc` 与读回检查；不改桥接、生产 Token、现有任务或已部署两个 MCP。见 `docs/IWIKI_S5F_DISCOVERY.md`。**修正后尚未真实写入验证**。
+
 ## 2026-11-04 S5-F 真实创建联调已触达业务层（最新）
 - 用户已用 HTTP/1.1 成功将 Windows S5 worktree 快进到 `7aa98f0`。真实运行一次自动测试时，`create_markdown_doc` 有 MCP 响应，但服务器业务 JSON `ok:false`，携带 `data.error/reason/expected`；没有确认文档 ID，因此程序停止，`edit_doc` **没有调用**。
 - **不能把此次视为真实写入成功，也不能武断归因于 Token 或空间**。在未明晰业务规则和页面是否已创建之前，不重复创建。新增仅读取工具元数据的 `npm run inspect:s5-create -- --live`，用于检查创建的空间参数说明。见 `docs/TEST_LOG.md` 最新 T-20261104-16。
