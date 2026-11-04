@@ -34,7 +34,7 @@ function success(response: unknown): Record<string, unknown> {
 
 /**
  * This adapter deliberately requires independently verifiable list completeness
- * and parent+space fields. If the live list_docs response omits these, S6 fails
+ * and explicit space membership for non-empty rows. If live list_docs omits these, S6 fails
  * closed until its REAL response shape is inspected and the parser is reviewed.
  */
 function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
@@ -53,11 +53,16 @@ function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
     if (!object(value)) throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
     const parent = value.parent_id;
     const space = value.space_id;
-    if (typeof parent !== "string" || typeof space !== "string") {
+    if (typeof space !== "string" || space !== scope.spaceId ||
+        (parent != null && typeof parent !== "string")) {
       throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
     }
-    if (space !== scope.spaceId) throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
-    if (parent !== scope.folderId) continue; // other documents in this verified space
+    if (scope.mode !== "space") {
+      if (typeof parent !== "string") throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
+      if (parent !== scope.folderId) continue; // unrelated folders in the same space
+    }
+    // Dedicated knowledge base mode intentionally includes every page in that
+    // space. Its scope is the space, not an invented folder ID.
     const id = value.doc_id;
     const title = value.title;
     const kind = value.page_type ?? value.kind;
@@ -65,7 +70,8 @@ function directChildren(payload: Record<string, unknown>, scope: GoalScope) {
         typeof title !== "string" || kind !== "markdown") {
       throw new S6Error("S6_SCOPE_OR_METADATA_MISMATCH");
     }
-    entries.push({ docId: id, title, parentId: parent, spaceId: space, kind: "markdown" });
+    entries.push({ docId: id, title, parentId: typeof parent === "string" ? parent : null,
+      spaceId: space, kind: "markdown" });
   }
   return { complete: true as const, entries };
 }
@@ -107,13 +113,15 @@ export function createOfficialS6GoalPort(
       validateScope(scope);
       if (!/^G-[0-9]{3,6}$/.test(title)) throw new S6Error("S6_INVALID_GOAL_ID");
       await requireTool("create_markdown_doc", ["title", "content", "space_id", "parent_id"]);
-      const data = success(await call("create_markdown_doc", {
-        title, content, space_id: scope.spaceId, parent_id: scope.folderId,
-      }));
+      const args: Record<string, unknown> = {
+        title, content, space_id: scope.spaceId,
+      };
+      if (scope.mode !== "space") args.parent_id = scope.folderId;
+      const data = success(await call("create_markdown_doc", args));
       if (typeof data.doc_id !== "string" || !PAGE.test(data.doc_id) ||
           (data.title !== undefined && data.title !== title) ||
           (data.space_id !== undefined && data.space_id !== scope.spaceId) ||
-          (data.parent_id !== undefined && data.parent_id !== scope.folderId))
+          (scope.mode !== "space" && data.parent_id !== undefined && data.parent_id !== scope.folderId))
         throw new S6Error("S6_CREATE_UNCONFIRMED");
       return data.doc_id;
     },
