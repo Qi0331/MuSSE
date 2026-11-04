@@ -340,6 +340,7 @@ async function main(args) {
     process.exitCode = 1;
   } finally { rl?.close(); }
 }
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1])
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   process.stderr.write("S6_LEGACY_PROGRESS_RECOVERY_RETIRED: remote progress already verified; never repeat.\n");
   process.exitCode = 2;
+}
