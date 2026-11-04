@@ -1,6 +1,7 @@
 # MuSSE 当前项目状态（唯一权威）
 
 ## 2026-11-04 S5-F 最新进展：官方写工具真实发现，尚无写入
+- **当前最新 CI**：S5-F 新增隔离探针 6 项离线测试后，完整 Node 22 GitHub Actions `npm test` **104/104 pass、0 fail**（run `41798382817`），文档检查也成功（run `41798382801`）；仍不代表真实远端写入。
 - 用户 Windows 创建了独立 S5 worktree，HEAD `508e908`，未切换原 S4 工作目录；`npm run inspect:s5-write -- --live` 实际成功，官方 SSE_MARKET iWiki `tools/list` 共 27 个工具，筛出 6 个候选。
 - 主要候选：`edit_doc`（字段 `doc_id/content/title`，仅 `content` 必填）；`append_to_doc`（`doc_id/content`，仅 `content` 必填）。真实更新语义、响应格式、写权限**均未验证**。未调用任何 `tools/call`。
 - S5-F 已新增严格匹配测试标记的一次性隔离 `edit_doc` 探针和离线测试；不调用真实工具，必须经用户**另行明确授权**并自行在 iWiki 网页建立专门测试页后才可运行。见 `docs/IWIKI_S5F_DISCOVERY.md`。
