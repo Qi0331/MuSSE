@@ -1,4 +1,9 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F 成功创建 + 编辑拒绝交接
+- 用户 Windows 本机 `list_spaces` 选 3 进行一次隔离测试：`create_markdown_doc` 业务 `ok:true`，新页面 `read_doc` 校验通过；`edit_doc` 业务 `ok:false` 且 `data.error` 未披露，最终 `readback:UNCHANGED`、`outcome:EDIT_UNCONFIRMED`。不能宣称写入编辑成功，也不能将 `editCallFailed:false` 理解为成功。
+- 唯一已创建测试页标题：`MuSSE S5-F 自动隔离测试 8a6fc40f`。禁止原样再次执行 `probe:s5-auto`，否则另建测试页；以后优先复用此页，先读前置 marker，仍不猜私人 page ID。
+- S5 分支新增只读 `npm run inspect:s5-edit -- --live` 用于读取 `edit_doc`、`append_to_doc` 与 `list_docs/search_kb/list_doc_tree` 工具约束。基于此决定最小调整，不扩大生产授权，保持 PR Draft、不碰 S4/Token/ESP32。
+
 ## 2026-11-04 S5-F 下一步：本机只读列空间后选择
 - 用户不能确认 iWiki 私人空间名称；现有提示符中先按 Ctrl+C（没有发写请求）。GitHub S5 自动探针改为先只读 `list_spaces`，仅在用户 Windows 本机显示空间名供编号选择，绝不自动选公共/团队空间；输入 0 取消，未知返回结构停止。新建只限选定的私人测试空间。见 `docs/IWIKI_S5F_DISCOVERY.md`。
 
