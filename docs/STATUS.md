@@ -1,4 +1,6 @@
 # MuSSE 当前项目状态（唯一权威）
+- **S5-F 简化调整**：用户指出可由官方 `create_markdown_doc` 直接创建隔离页，故增加 `npm run probe:s5-auto -- --create-and-write-test` 自动创建→核验→编辑一次→读回流程，免去网页手工创建和输入 page ID。该探针尚未远端执行；创建响应 ID/默认空间是否可用仍需实测。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 
 ## 2026-11-04 S5-F 最新进展：官方写工具真实发现，尚无写入
 - **当前最新 CI**：S5-F 新增隔离探针 6 项离线测试后，完整 Node 22 GitHub Actions `npm test` **104/104 pass、0 fail**（run `41798382817`），文档检查也成功（run `41798382801`）；仍不代表真实远端写入。
