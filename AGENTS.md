@@ -1,5 +1,12 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 S5-D 最新权威进展（覆盖历史 S5-C/B）
+- 用户要求加速 S5；取消 S4-E 额外验收与 S2-B 三文档验收，禁止恢复。
+- **最新入口：`docs/IWIKI_S5D_FINAL_HANDOFF.md`。GitHub CI 在完整仓库 Node 22.23.4 执行 `npm test` 已 84/84 通过**，run 41784910123。现有 S5 29 项专项已包含在完整包 84 项中；不再宣称仅有隔离环境测试。
+- 已修复固定日期旧测、在途 `COMMITTING` 过期误清理、`UNCERTAIN` 被误清理及同文档重复提案、Markdown 单行字段换行不同步；S5 新 CI 独立工作流只授予 `contents: read`。
+- 生产写入**仍禁用**：官方 iWiki 原子 CAS/可靠幂等未证实、可信独立用户批准通道未接入、跨进程重启不确定状态未耐久恢复。旧 13 工具入口不可挂生产，两套已有 MCP、Muse 人设、Windows 日志脱敏补丁和防火墙、ESP32 固件、云端、私有配置与 iWiki 数据不动。S5 PR #25 与 S4 PR #24 均 Draft，未合并。
+
+
 ## 2026-11-04 S5-C 最新状态（覆盖下方 S5-B 交接）
 - 用户要求 S5 加速推进，不恢复 S2-B/S4-E 人工验收；`docs/IWIKI_S5C_HANDOFF.md` 为 S5 最新入口。
 - S5 Draft PR #25 的核心与业务规划已有 26/26 开发侧隔离专项测试（Node 22.16，非完整仓库），六份文件 GitHub blob SHA 与本机已测源码一致；文档 CI 通过，但完整 `npm test` 与 Windows 实测尚未执行。
