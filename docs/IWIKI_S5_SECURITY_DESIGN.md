@@ -1,7 +1,7 @@
 # MuSSE iWiki S5｜受控语音写入安全设计（S5-A）
 
 - 日期：2026-11-04
-- 状态：**设计草案；未实现、未部署、未授权真实写入**
+- 状态：**S5-B 离线核心门禁与纯业务规划器已提交；未接入远端写适配器、未部署、未授权真实写入**
 - 基线：`feat/iwiki-s2a-readonly-contract` @ `25a9f64`，PR #24 仍为 Draft、未合并。
 - 用户最新方向：不再要求 S4-E 目标/笔记的额外映射与验收，直接推进 S5；**不等于跳过 S5 自身必要的安全测试**。
 - 权威交接：`docs/IWIKI_S4D_FINAL_HANDOFF.md`、`docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/DECISIONS.md`（D-018）。
@@ -81,4 +81,4 @@
 
 ## 7. 本文件的验证边界
 
-这是一份根据当前 GitHub 源码和 S4-D 交接完成的**架构评审草案**，没有执行真实 iWiki 请求、没有部署新 MCP、没有开启读写 Token 或写入开关，也没有宣称 S5 功能已经实现或验收通过。
+本设计已在独立 S5 分支落实为 `src/write/guarded-write.ts` 与 `src/write/plan-write.ts` 及离线测试：模拟端口核心 13/13 通过；纯规划器测试已提交、尚未在完整仓库运行。**没有执行真实 iWiki 写入、没有部署新 MCP、没有开启读写 Token 或写入开关**，不能宣称 S5 已生产可用。
