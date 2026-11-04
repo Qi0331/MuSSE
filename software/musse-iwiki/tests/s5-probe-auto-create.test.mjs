@@ -98,7 +98,7 @@ test("auto-create: ignore ambiguous and conflicting IDs", () => {
 test("auto-create: missing destination space fails before remote call", async () => {
   const f = fixture();
   await assert.rejects(probeS5CreateAndEdit(f.client, "", label), /S5F_SPACE_NAME_REQUIRED/);
-  await assert.rejects(probeS5CreateAndEdit(f.client, "space\\ninvalid", label), /S5F_SPACE_NAME_REQUIRED/);
+  await assert.rejects(probeS5CreateAndEdit(f.client, " space ", label), /S5F_SPACE_NAME_REQUIRED/);
   assert.deepEqual(f.calls, []);
 });
 
