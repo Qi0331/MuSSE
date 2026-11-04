@@ -1,5 +1,12 @@
 # MuSSE 当前项目状态（唯一权威）
 
+## 2026-11-04 S5-C 最新覆盖：受控写入安全门禁增强，专项离线 26/26
+- S5 继续推进，无需 S4-E 目标/笔记额外验收；详见 `docs/IWIKI_S5C_HANDOFF.md`。新增只读的 `tools/s5-inspect-write-contract.mjs`（默认无网络，显式 `--live` 仅 `tools/list`，从不 `tools/call`），补充对应离线测试。
+- S5 准备/确认流程已修正：任务修改确认预览必须展示字段**前后值**；创建任务/笔记展示完整待确认内容；超长预览拒绝；确认摘要绑定预览；并发准备阶段预留容量；短期已验证结果跨后续准备保留去重；笔记标题不符合格式则拒绝添加。
+- **开发侧实际测试**：隔离 Node v22.16，三个 S5 专项测试文件 **26/26**，新增/更新的六文件语法检查 **6/6**；由于依赖按已见仓库源码临时暂存，**不是完整 Git 工作区的 `npm test`**。GitHub 六文件 blob SHA 与本地已测文件哈希 **6/6 对应**。PR #25 最新提交的文档骨架 GitHub Actions 检查成功，**不包含完整 Node 回归**。
+- **生产上线硬阻塞仍在**：官方 iWiki 远端原子条件写入契约未确认，可信独立用户批准通道未接入。只读双 MCP、旧 PR #24、Windows 补丁/防火墙、Muse 人设、固件、云端、私有 Token 和真实文档均未改变；PR #25 仍 Draft，不能据离线测试声称可语音写入。
+
+
 ## 2026-11-04 最新进展：S5-B 离线受控写入门禁已入新分支（覆盖下方 S4 快照）
 - 用户明确跳过 S4-E 目标/笔记额外验收，直接推进 S5；**仅授权仓库开发和离线安全测试，不等于允许真实 iWiki 写入或部署**。
 - 新分支 `feat/iwiki-s5-guarded-write-design` 从 S4-D `25a9f64` 创建；新增 `docs/IWIKI_S5_SECURITY_DESIGN.md`、`src/write/guarded-write.ts`、`src/write/plan-write.ts` 与两份 S5 离线测试文件（均位于 `software/musse-iwiki/`）。
