@@ -1,11 +1,13 @@
 import { readFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 
 import { TaskService } from "../service/task-service.ts";
 import { IwikiMcpClient } from "../store/iwiki-mcp-client.ts";
 import { OfficialIwikiReadStore } from "../store/official-iwiki-read.ts";
-import { readonlyDocumentIds } from "./document-ids.ts";
+import { readonlyDocumentIds, readonlyDocumentIdsFromFile } from "./document-ids.ts";
 import { extractConnection } from "../../tools/inspect-readonly.mjs";
 import { handleReadonlyRpc } from "./readonly-protocol.ts";
 
@@ -13,18 +15,21 @@ import { handleReadonlyRpc } from "./readonly-protocol.ts";
  * S4-B/C standalone stdio entry point. No local persistence, no write capability,
  * and no connection until a task query is actually invoked.
  *
- * Both env vars must be set by the operator at a future authorized integration:
- *   MUSSE_IWIKI_PRIVATE_CONFIG_FILE: existing local xiaozhi.config.json path
- *   MUSSE_IWIKI_TASK_DOC_ID: required task table page-... ID
- *   MUSSE_IWIKI_NOTES_DOC_ID: optional notes page-... ID
- *   MUSSE_IWIKI_GOAL_DOC_IDS: optional JSON object mapping goal IDs to page-... IDs
- * Missing optional mappings fail closed on the corresponding query.
- * Neither secret nor document ID belongs in the public repository.
+ * S4-D Windows deployment defaults (after separate approval):
+ *   $HOME/MuSSE-MCP-Local/musse-bridge/xiaozhi.config.json
+ *   $HOME/MuSSE-MCP-Local/musse-bridge/musse-iwiki-readonly.json
+ * Optional env overrides preserve existing S4-B/C compatibility.
+ * Never put document IDs or credentials in the xiaozhi-client service entry:
+ * its upstream config converter can log the entry. Private data stays on disk.
  */
 export async function buildReadonlyTaskService(env: NodeJS.ProcessEnv): Promise<TaskService> {
-  const configFile = env.MUSSE_IWIKI_PRIVATE_CONFIG_FILE;
-  if (!configFile) throw new Error("S4_READONLY_CONFIG_MISSING");
-  const documentIds = readonlyDocumentIds(env);
+  const configFile = env.MUSSE_IWIKI_PRIVATE_CONFIG_FILE ??
+    join(homedir(), "MuSSE-MCP-Local", "musse-bridge", "xiaozhi.config.json");
+  const mappingFile = env.MUSSE_IWIKI_PRIVATE_MAPPING_FILE ??
+    join(dirname(configFile), "musse-iwiki-readonly.json");
+  const documentIds = env.MUSSE_IWIKI_TASK_DOC_ID
+    ? readonlyDocumentIds(env)
+    : await readonlyDocumentIdsFromFile(mappingFile);
   const config = JSON.parse(await readFile(configFile, "utf8"));
   const connection = extractConnection(config); // reuse S2-A verified official endpoint selection
   const store = new OfficialIwikiReadStore(

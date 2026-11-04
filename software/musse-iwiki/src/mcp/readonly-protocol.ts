@@ -40,9 +40,14 @@ export async function handleReadonlyRpc(
           tool.name,
           args as Record<string, unknown>,
         );
+        // MCP structuredContent must be an object, not a bare array.
+        // Text content preserves the original query result for older clients.
+        const structuredContent = value !== null && typeof value === "object" && !Array.isArray(value)
+          ? value
+          : { data: value };
         return result({
           content: [{ type: "text", text: JSON.stringify(value) }],
-          structuredContent: value,
+          structuredContent,
         });
       } catch (error) {
         // Never relay raw upstream errors, paths or private task data into logs.
