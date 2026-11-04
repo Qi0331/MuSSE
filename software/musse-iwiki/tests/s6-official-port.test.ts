@@ -16,6 +16,7 @@ function harness() {
   ];
   let total: number | undefined = docs.length;
   let hasMore: boolean | undefined = false;
+  let nextCursor: string | null = null;
   let editAck = true;
   const client = {
     async listTools() {
@@ -25,7 +26,7 @@ function harness() {
     },
     async callTool(name: string, args: Record<string, unknown>) {
       calls.push({ name, args });
-      if (name === "list_docs") return ack({ docs, total, has_more: hasMore, next_cursor: null });
+      if (name === "list_docs") return ack({ docs, total, has_more: hasMore, next_cursor: nextCursor });
       if (name === "read_doc") return ack({ doc_id: args.doc_id, content: "# 目标：示例\n- 目标ID: G-001\n" });
       if (name === "create_markdown_doc") return ack({
         doc_id: "page-CREATED", title: args.title, space_id: args.space_id, parent_id: args.parent_id,
@@ -36,6 +37,9 @@ function harness() {
   };
   return { port: createOfficialS6GoalPort(client, "page-TASKS"), calls,
     setIncomplete() { total = undefined; }, setUnknownPagination() { hasMore = undefined; },
+    setEmptyNoPagination() { docs = []; total = 0; hasMore = undefined; },
+    setEmptyWithContinuation() { docs = []; total = 0; hasMore = undefined; nextCursor = "opaque-cursor"; },
+    setEmptyWrongTotal() { docs = []; total = 2; hasMore = undefined; },
     setWrongSpace() { docs = [{ doc_id: "page-GOAL", title: "G-001",
       parent_id: scope.folderId, space_id: "space-OTHER", page_type: "markdown" }]; total = 1; },
     failEditAck() { editAck = false; },
@@ -93,4 +97,14 @@ test("S6 diagnostic reports only structural booleans, no user document metadata"
     parentId: true, spaceId: true, kind: true });
   assert.equal(JSON.stringify(report).includes(secret), false);
   assert.equal(JSON.stringify(report).includes("page-SECRET"), false);
+});
+
+
+test("S6 official list accepts exact empty total=0 without has_more; denies ambiguous emptiness", async () => {
+  const empty = harness(); empty.setEmptyNoPagination();
+  assert.deepEqual(await empty.port.listDirectChildren(scope), { complete: true, entries: [] });
+  const continued = harness(); continued.setEmptyWithContinuation();
+  await reject(() => continued.port.listDirectChildren(scope), "S6_LIST_INCOMPLETE");
+  const inconsistent = harness(); inconsistent.setEmptyWrongTotal();
+  await reject(() => inconsistent.port.listDirectChildren(scope), "S6_LIST_INCOMPLETE");
 });
