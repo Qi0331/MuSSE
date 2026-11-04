@@ -1,4 +1,11 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F 真实写能力最终通过（最新交接）
+- **已实证完成**：Windows 独立 S5 worktree `e1f30fc`，Node 本地测试 **128/128 全绿**；此前 `create_markdown_doc` 业务 `ok:true` 并读回初始正文；本轮 `probe:s5-existing-edit -- --edit-once` 只读定位唯一旧测试页并在用户本机二次输入 `EDIT` 后，**`edit_doc ok:true` 且写后 `readback:UPDATED` / `EXISTING_EDIT_VERIFIED`**。返回 `new_rev_no/old_chars/new_chars`，确认服务端有修订元数据。
+- 私人测试页标题 `MuSSE S5-F 自动隔离测试 8a6fc40f`；已经成功更新，不再运行原始 marker 要求的探针，也不要创建另一篇测试页。没有任何 Token、空间 ID、私人页面 ID 或正文泄漏到仓库。
+- **当前阻塞已解除**：官方工具的真实 `create_markdown_doc`、`read_doc`、`edit_doc` 基本能力均已验证。首次编辑业务 `ok:false` 的原因未查明，不能猜。S5-E 现成最佳努力（best effort）写适配器使用 `edit_doc + doc_id + content` 及成功包络、写前比对、二轮语音确认、写后核验；开发阶段可按真实响应完善测试，不要再做无谓实际试写。
+- **尚未完成**：生产任务文档的单独授权/映射确认、S5 写 MCP 安全部署与语音链路端到端验证。S5 入口默认禁用，Windows 桥接和现有 S4 双 MCP、Token、ESP32 未动，PR #25 继续 Draft；不得擅自上线或改真实任务表。权威状态见 `docs/STATUS.md`，实际证据见 `docs/TEST_LOG.md` T-20261104-22。
+
+
 ## 2026-11-04 S5-F 已有测试文档编辑复测交接
 - 最新官方 `edit_doc` 描述已确认：`content` 为完整 Markdown，`doc_id` 指定目标，三路合并、需要编辑权限。用户第一次真实 edit 返回业务 `ok:false`，后续读回未变化；不能推断缺写权限。
 - 已开发 `npm run probe:s5-existing-edit -- --edit-once`，只读 list_spaces → 指定私人空间 list_docs → **完全匹配固定测试标题** `MuSSE S5-F 自动隔离测试 8a6fc40f` → read_doc 确认原始 marker → 本机输入 `EDIT` 才尝试一次 edit_doc → read_doc；服务端错误只输出分类，不打印原始值和私有 ID。
