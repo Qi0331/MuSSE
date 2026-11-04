@@ -1,5 +1,15 @@
 # MuSSE / 小七 — S6 会话交接（2026-11-05）
 
+## 最新收尾更新（2026-11-05，覆盖下方历史阻塞状态）
+
+- **S6 Windows 本地真实业务验收已完成**：用户在关闭代理/梯子的网络环境下执行真实只读审计，返回 `goalCount=2`、`g999MarkerVerified=true`、`g998ExistsAndValid=true`、`matchingProgressRecords=0`、`taskCount=4`、`writesAttempted=0`。审计退出码 2 表示当时预期进度尚未出现，**不是网络故障**。
+- 用户随后**另行明确授权**并仅执行一次 `npm run recover:s6-progress -- --once`。最终输出 `status=VERIFIED`、`flowResult=ACK_AND_READBACK_VERIFIED`、`writeAttempts=1`、`progressRecordsObserved=1`、`backupSaved=true`、`toolAccessStage=ready`、`listReadOnlyRetries=0`、`remoteErrorCode=null`。记录进度为 0%，结果从 iWiki 写入回执及精确远端读回双重确认；**禁止再次运行恢复命令或重跑 `accept:s6`**。
+- 网络诊断：无代理环境变量；Windows DNS 成功、TCP 443 成功、Node.js v22.23.2 对 `https://ssemarket.cn/` 的 HTTPS HEAD 返回 200，且 iWiki MCP 真实只读与单次受控写入均成功。代理/梯子路由是之前 `ECONNRESET` 的**主要嫌疑但未经过开关对照确认**，不可断言远端服务或客户端一定有缺陷。
+- **Windows 桥接配置事故与恢复**：最初提供的 PowerShell S6 安装片段在 `mcpServers` 为 null 时未整体停止，仍把无效候选写入原配置；随后只读扫描 4 份历史备份，找到 1 份满足官方 iWiki + S4 + S5 的完整备份，并得到 `RESTORE_STATUS=SUCCESS`、`IWIKI_PRESERVED=TRUE`、`S4_PRESERVED=TRUE`、`S5_PRESERVED=TRUE`、`S6_NOT_INSTALLED=TRUE`。这些是**本地配置恢复**的证据，不是此时运行服务的健康检查。
+- 此后提供专用 Node.js 安全安装器 `software/musse-iwiki/tools/s6-safe-install.cjs`，只在本地检查私有文件、离线 MCP initialize/tools/list、配置原服务不变且备份存在后追加 `musse_iwiki_s6_goals` 条目；安装阶段不调用 iWiki 远端写入。用户最新反馈“没问题了，都好了”，可记为**用户报告本地接入已恢复/运行正常**；没有收到本次新安装器的完整匿名输出或 ESP32 实际 `musse_goal_find` 调用证据，**不得把设备级工具调用、语音创建/进度写入算作已独立验收**。
+- 当前剩余边界：S6 语音服务提供 `musse_goal_find`、`musse_goal_prepare`、`musse_goal_confirm`、`musse_goal_cancel` 四个工具。若尚未核实平台工具开关，须先仅启用 `musse_goal_find`；任何语音确认/远端写入仍须对具体修改重新授权，不能把 S6 Windows CLI 成功等同于语音写入。保留 S4/S5、私有备份和本机令牌；所有 Draft PR 不合并。
+
+
 > 目的：用户已明确要求停止当前对话里不断追加测试脚本的循环；新开一个 S6 网络阻塞专项对话。**本文件是交接记录，不是新的运行指令。** 新对话应先阅读本文件与既有 `docs/IWIKI_S6_IMPLEMENTATION.md`，**不得重复已经完成的 S5/S6 验收、不得擅自向 iWiki 写入**。
 
 ## 0. 最新结论（请先读）
