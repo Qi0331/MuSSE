@@ -143,7 +143,7 @@ export function summarizeS6SpacesShape(response, target = "长期目标") {
   };
 }
 
-function uniqueSpaceId(response, target = "长期目标") {
+export function uniqueSpaceId(response, target = "长期目标") {
   if (!obj(response) || response.isError === true) return null;
   const candidates = [];
   if (obj(response.structuredContent)) candidates.push(response.structuredContent);
