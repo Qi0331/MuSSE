@@ -66,6 +66,48 @@ export function summarizeS6ListShape(response) {
 }
 
 
+
+/** Report approved contract field names only, never descriptions or metadata values. */
+export function summarizeS6ToolFields(tools, name) {
+  const tool = tools.find((entry) => entry?.name === name);
+  const schema = obj(tool?.inputSchema) ? tool.inputSchema : null;
+  const properties = obj(schema?.properties) ? schema.properties : {};
+  const keep = new Set(["space_id", "space_name", "parent_id", "doc_id",
+    "title", "content", "page", "page_size", "limit", "offset", "cursor", "root_id"]);
+  const fields = Object.keys(properties).filter((key) => keep.has(key));
+  return {
+    present: Boolean(tool),
+    fields,
+    required: Array.isArray(schema?.required)
+      ? schema.required.filter((key) => keep.has(key)) : [],
+    supportsSpaceId: fields.includes("space_id"),
+    supportsParentId: fields.includes("parent_id"),
+  };
+}
+export function summarizeS6TreeShape(response) {
+  if (!obj(response) || response.isError === true) return { businessOk: false };
+  const candidates = [];
+  if (obj(response.structuredContent)) candidates.push(response.structuredContent);
+  if (Array.isArray(response.content)) for (const entry of response.content) {
+    if (typeof entry?.text !== "string") continue;
+    try { const parsed = JSON.parse(entry.text); if (obj(parsed)) candidates.push(parsed); }
+    catch { /* no private values printed */ }
+  }
+  const value = candidates.find((x) => x.ok === true && obj(x.data));
+  if (!value) return { businessOk: false };
+  const data = value.data;
+  const arrayField = ["tree", "nodes", "docs", "items", "children", "list", "results"]
+    .find((key) => Array.isArray(data[key])) ?? null;
+  return {
+    businessOk: true,
+    arrayField,
+    itemCount: arrayField === null ? null : data[arrayField].length,
+    rootIdPresent: typeof data.root_id === "string",
+    spaceIdPresent: typeof data.space_id === "string",
+    parentIdPresent: typeof data.parent_id === "string",
+  };
+}
+
 /**
  * Discover a candidate by exact space name, without returning its private ID
  * in the user-visible diagnostic. This is a READ-ONLY shape hint, not proof
@@ -147,6 +189,11 @@ async function main(args) {
       listDocs: summarize("list_docs"),
       listDocTree: summarize("list_doc_tree"),
     };
+    const toolFields = {
+      listDocs: summarizeS6ToolFields(advertised, "list_docs"),
+      listDocTree: summarizeS6ToolFields(advertised, "list_doc_tree"),
+      createMarkdownDoc: summarizeS6ToolFields(advertised, "create_markdown_doc"),
+    };
     let chosenSpaceId = scope?.spaceId ?? null;
     let spacesShape = null;
     if (report.listSpaces.present && report.listSpaces.requiredOnlySupported) {
@@ -160,11 +207,21 @@ async function main(args) {
       const response = await client.callTool("list_docs", { space_id: chosenSpaceId });
       listShape = summarizeS6ListShape(response);
     }
+    let treeShape = null;
+    if (chosenSpaceId && report.listDocTree.present && report.listDocTree.requiredOnlySupported &&
+        toolFields.listDocTree.supportsSpaceId) {
+      try {
+        const response = await client.callTool("list_doc_tree", { space_id: chosenSpaceId });
+        treeShape = summarizeS6TreeShape(response);
+      } catch {
+        treeShape = { businessOk: false };
+      }
+    }
     process.stdout.write(JSON.stringify({
       inspection: "S6_READ_ONLY_SHAPE",
       privateScopePresent: Boolean(scope),
       candidateSpaceResolved: Boolean(chosenSpaceId),
-      ...report, spacesShape, listShape, writesAttempted: 0,
+      ...report, toolFields, spacesShape, listShape, treeShape, writesAttempted: 0,
     }, null, 2) + "\n");
   } catch {
     process.stderr.write("S6_READ_ONLY_INSPECTION_UNAVAILABLE: verify private scope locally; do not paste raw errors.\n");
