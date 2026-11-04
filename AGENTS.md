@@ -1,5 +1,13 @@
 # MuSSE — Agent 工作约定
 
+## 2026-11-04 S5-B 最新优先级（覆盖下面历史 S4 下一步建议）
+- 用户明确要求跳过 S4-E 目标/笔记额外验收，直接开发 S5 受控语音写入，并减少零散确认；不要再推荐恢复已取消的 S2-B 测试。
+- 新 S5 分支 `feat/iwiki-s5-guarded-write-design`，Draft PR #25 **以 S4 功能分支为 base**；原 PR #24 仍 Draft 未合并。S5 安全设计见 `docs/IWIKI_S5_SECURITY_DESIGN.md`，最新状态和测试以 `docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`、D-019 为准。
+- S5-B 离线核心门禁、变更规划器、两份测试已提交；仅在隔离 Node 22.16 实测核心门禁 13/13 通过，真实 Markdown 规划测试和完整 `npm test` 尚未运行。不能将此表述为生产写入成功。
+- **禁止**将 `src/mcp/server.ts` 旧 13 工具服务接入生产、复用模型声明作为用户确认、在没有已证实的官方原子条件写入支持时整篇覆写任务表。未接入可信确认通道和远端写适配器；不得读取或泄露 Token、真实文档 ID、私人日志。
+- 官方 `iwiki` 与现有 `musse_iwiki_readonly` 两 MCP、Windows 日志脱敏补丁及防火墙、Muse 角色提示词、ESP32 固件与真实 iWiki 数据保持不变。后续仅在明确授权下进行真实写入、凭证升级、桥接配置或部署。
+
+
 ## 2026-11-04 S4-D 最新优先级（覆盖下方旧 S4 待审状态）
 
 - 新对话先读 `docs/IWIKI_S4D_FINAL_HANDOFF.md`、`docs/STATUS.md`、`docs/TEST_LOG.md`、`docs/HANDOFF.md`。用户现场验收：官方 `iwiki` MCP 与新 `musse_iwiki_readonly` MCP 正常，新服务六工具可见并确认被调用；任务数量、今日、近期/逾期、普通聊天自然语言场景均正常。现有 Windows 指定离线 10/10、真实任务表统计 3/2/1/0、stdio 工具白名单写入拒绝有用户终端证据；逐次原始调用日志未独立采集。
