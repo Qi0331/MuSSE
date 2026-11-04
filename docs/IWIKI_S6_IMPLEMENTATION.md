@@ -90,9 +90,22 @@ git -c http.version=HTTP/1.1 fetch --no-tags origin feat/iwiki-s6-document-disco
 if ($LASTEXITCODE -ne 0) { throw "更新失败，停止后续命令" }
 git merge --ff-only FETCH_HEAD
 npm run pin:s6-scope -- --pin-local
+npm run verify:s6 -- --read-only
 ```
 
 该命令重新以只读方式核实唯一同名、空知识库及总数，成功输出 `S6_LOCAL_SCOPE_PINNED`，不打印任何私人 ID。保留 scope 文件，后续不再重复固定。**知识库归属由用户在其 iWiki 网页确认**，仅同名唯一不是写入授权。
 
 下一阶段：必须先有一个用户主动创建或明确授权创建的实际 `G-xxx` 目标页，单次只读检查非空列表的父目录/空间字段、类型和分页，再针对真实字段调整官方适配器。之后才考虑 S6 的受控预览、取消、确认及读回；**不提前运行 `mcp:s6`，不重复 S5 已通过的语音写入探针**。
+
+
+## 7. 只读迁移核验
+
+`npm run verify:s6 -- --read-only` 使用刚刚固定的 `mode:"space"` 作用域，实际检查目标知识库列表，并通过当前 Windows **原有** `musse-iwiki-readonly.json` 的 `taskDocId` 读取原《任务总表》：
+
+- 检查返回的真实 `doc_id` 与 Windows 本地任务映射一致，标题确为 `任务总表`；
+- 使用已有 `parseTaskTable` 严格解析 12 列结构和任务行，输出任务数而不是私人正文或 ID；
+- 目标文档数仅统计经过完整范围检查的结果；当前独立知识库应为 0；
+- 即使这一步通过，仍明确输出 `readyForWrite:false`，不会启用受控写入或擅自新建测试目标。
+
+用户贴回仅 `S6_LOCAL_READ_ONLY_VERIFICATION` 匿名结构；如失败不得输出私有 JSON、令牌或完整报错。
 
