@@ -9,6 +9,7 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createInterface } from "node:readline/promises";
 import { extractConnection } from "./inspect-readonly.mjs";
 import { IwikiMcpClient } from "../src/store/iwiki-mcp-client.ts";
 import { TEST_ORIGINAL, probeS5EditDoc, summarizeEditResponse } from "./s5-probe-edit-doc.mjs";
@@ -47,17 +48,22 @@ export function extractConfirmedCreatedPageId(response) {
   return ids.size === 1 ? [...ids][0] : null;
 }
 
-export async function probeS5CreateAndEdit(client, label = `MuSSE S5-F 自动隔离测试 ${randomUUID().slice(0, 8)}`) {
+export async function probeS5CreateAndEdit(client, spaceName, label = `MuSSE S5-F 自动隔离测试 ${randomUUID().slice(0, 8)}`) {
+  if (typeof spaceName !== "string" || spaceName.trim() !== spaceName || !spaceName || spaceName.length > 200 || /[\r\n\u0000-\u001f]/.test(spaceName)) {
+    throw new Error("S5F_SPACE_NAME_REQUIRED");
+  }
   if (typeof label !== "string" || !/^MuSSE S5-F 自动隔离测试 [0-9a-f]{8}$/.test(label)) {
     throw new Error("S5F_INVALID_TEST_LABEL");
   }
-  // Only documented required parameters; no existing real document ID is used.
+  // The real official tools/list requires space_id OR space_name despite optional schema flags.
+  // The user selects the exact space locally; never guess it or use a private existing page ID.
   let creation;
   let createCallFailed = false;
   try {
     creation = await client.callTool("create_markdown_doc", {
       title: label,
       content: TEST_ORIGINAL,
+      space_name: spaceName,
     });
   } catch {
     createCallFailed = true;
@@ -95,14 +101,21 @@ export async function probeS5CreateAndEdit(client, label = `MuSSE S5-F 自动隔
 
 async function main(argv) {
   if (argv.length !== 1 || argv[0] !== "--create-and-write-test") {
-    process.stdout.write("Usage: node tools/s5-probe-auto-create.mjs --create-and-write-test\nExplicitly creates ONE isolated Markdown test page and edits it once. Does not retry.\n");
+    process.stdout.write("Usage: node tools/s5-probe-auto-create.mjs --create-and-write-test\nPrompts for the exact iWiki space name, then creates ONE isolated page and edits it once. Does not retry.\n");
     return;
   }
   try {
+    if (!process.stdin.isTTY) throw new Error("S5F_INTERACTIVE_TERMINAL_REQUIRED");
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    let spaceName;
+    try {
+      spaceName = (await rl.question("请输入要创建隔离测试文档的 iWiki 空间精确名称（仅在本机使用）：")).trim();
+    } finally { rl.close(); }
+    if (!spaceName || spaceName.length > 200) throw new Error("S5F_SPACE_NAME_REQUIRED");
     const configFile = join(homedir(), "MuSSE-MCP-Local", "musse-bridge", "xiaozhi.config.json");
     const config = JSON.parse(await readFile(configFile, "utf8"));
     const connection = extractConnection(config);
-    const result = await probeS5CreateAndEdit(new IwikiMcpClient(connection));
+    const result = await probeS5CreateAndEdit(new IwikiMcpClient(connection), spaceName);
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } catch {
     process.stderr.write("S5F automatic test unavailable. Do not re-run after an uncertain result; inspect the test page locally.\n");
