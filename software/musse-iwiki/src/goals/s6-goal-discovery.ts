@@ -20,7 +20,8 @@ export interface GoalPort {
 }
 export interface FoundGoal { entry: GoalEntry; goal: Goal; content: string }
 export class S6Error extends Error {
-  constructor(readonly code: string) { super(code); this.name = "S6Error"; }
+  readonly code: string;
+  constructor(code: string) { super(code); this.code = code; this.name = "S6Error"; }
 }
 const ID = /^G-[0-9]{3,6}$/;
 const PAGE = /^page-[A-Za-z0-9_-]{1,100}$/;
