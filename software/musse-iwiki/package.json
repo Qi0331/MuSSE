@@ -16,6 +16,7 @@
     "probe:task-queries": "node tools/probe-task-queries.mjs",
     "probe:goal-notes": "node tools/probe-goal-notes.mjs",
     "mcp:s5": "node src/mcp/server-s5.ts",
-    "inspect:s5-write": "node tools/s5-inspect-write-contract.mjs"
+    "inspect:s5-write": "node tools/s5-inspect-write-contract.mjs",
+    "probe:s5-edit": "node tools/s5-probe-edit-doc.mjs"
   }
 }
