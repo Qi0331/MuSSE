@@ -1,4 +1,7 @@
 # MuSSE — Agent 工作约定
+- **S5-F Windows 跨平台回归修复**：用户在 `e660f2b` 运行 npm test 为 113/115，通过前禁止真实写入。#58 命令行测试把 URL.pathname 当作 Windows 路径，已改 `fileURLToPath`；#90 任务表 `updateTaskRow` 原先丢失 CRLF，已修复保留原始分隔符并添加 CRLF+混合换行回归。最新 GitHub S5 分支代码必须重新核验 CI / Windows 测试后再实写。见 `docs/TEST_LOG.md` T-20261104-18。
+
+
 - **S5-F 最新创建规则**：Windows `tools/list` 实际证明 `create_markdown_doc` 创建正式文档时必须带 `space_id` 或 `space_name`（二选一），尽管 schema required 未体现。现已改为用户本机交互输入私有空间的准确 `space_name`，再做一次隔离新建/编辑验证。不要猜空间、上传空间名/ID 或在生产任务表写测试内容。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
 
 - **S5-F 最新真实结果**：Windows 已实际一次调用 `create_markdown_doc`，MCP 正常但业务 `ok:false`；返回 `data.error/reason/expected` 的字段值未输出，未获得确认页面 ID，因此 `edit_doc` 未被调用。不得虚称写成功、猜测缺空间或权限并盲目重复创建。下一步只用 `npm run inspect:s5-create -- --live` 取得创建工具元数据，见最新 `docs/STATUS.md` 和 `T-20261104-16`。
