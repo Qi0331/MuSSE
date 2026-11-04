@@ -1,4 +1,9 @@
 # MuSSE 当前项目状态（唯一权威）
+## 2026-11-04 S5-F 既有测试页编辑复核（最新）
+- 官方只读 `tools/list` 已确认 `edit_doc` 接受 `doc_id` 和整篇 `content`，需文档编辑权限，使用三路合并；之前业务 `ok:false` 的确切原因尚未知，不可直接归因于权限或接口参数。
+- S5 分支新增**只针对既有合成测试文档**的 `npm run probe:s5-existing-edit -- --edit-once`：通过 list_spaces/list_docs/read_doc 前置定位、精确标题及内容标记校验，终端额外输入 `EDIT` 后只编辑一次，读回并输出安全的错误类别。**不创建新页、不遍历生产文档、不输出私人 ID 和原始错误**。
+- 真实新脚本尚未执行，生产 S4 与 S5 默认禁用状态保持不变。详见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 ## 2026-11-04 S5-F 真实创建成功、编辑被拒（最新）
 - Windows 单次隔离真实测试：创建工具 `create_markdown_doc` 返回业务 `ok:true`，对新文档 `read_doc` 前置验证成功；随后 `edit_doc` 返回业务 `ok:false`、`data.error` 值仍未知；写后 `read_doc` 显示 `UNCHANGED`，未发生已验证的修改。创建权限可用，编辑能力**未验证**。
 - 测试文档合成标题 `MuSSE S5-F 自动隔离测试 8a6fc40f`，不得重复创建。S5 写服务保持默认禁用，S4 只读服务及生产配置不变。
