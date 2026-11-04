@@ -7,7 +7,7 @@ const scope = { mode: "space", spaceId: "space-PRIVATE_GOALS" };
 const NOTE = "小七 S6 受控进度写入验收（隔离测试）";
 const goal999 = [
   "# 目标：小七 S6 验收",
-  "- 目标ID: G-999",
+  "- 目标ID: G999",
   "- 说明: 用于验证长期目标动态发现。 [小七 S6 一次性验收]",
   "",
   "## 阶段",
@@ -19,7 +19,7 @@ const goal999 = [
 ].join("\n");
 const goal998 = [
   "# 目标：小七 S6 自动创建验收",
-  "- 目标ID: G-998",
+  "- 目标ID: G998",
   "- 说明: 隔离测试文档，完成验收后由用户自行决定保留或清理",
   "",
   "## 阶段",
@@ -45,8 +45,8 @@ function fixture({ editBehavior = "success", existingNote = false } = {}) {
   const control = { armed: false, attempted: 0, targetDocId: null,
     ack: null, remoteErrorCode: null };
   const pages = new Map([
-    ["page-G999", { title: "G-999", content: goal999 }],
-    ["page-G998", { title: "G-998", content: existingNote ?
+    ["page-G999", { title: "G999", content: goal999 }],
+    ["page-G998", { title: "G998", content: existingNote ?
       goal998 + "\n| 2026-11-04 | 0% | " + NOTE + " |\n" : goal998 }],
   ]);
   const calls = [];
@@ -90,11 +90,11 @@ const options = (answers, saved) => ({
   backup: async (content) => saved.push(content),
   clock: () => Date.parse("2026-11-04T09:00:00Z"),
 });
-test("S6 targeted recovery verifies one and only one edit, preserves G-999", async () => {
+test("S6 targeted recovery verifies one and only one edit, preserves G999", async () => {
   const f = fixture();
   const saved = [];
   const result = await recoverS6ProgressOnce(
-    f.port, scope, f.control, options(["确认单次补写 G-998"], saved));
+    f.port, scope, f.control, options(["确认单次补写 G998"], saved));
   assert.equal(result.status, "VERIFIED");
   assert.equal(result.writeAttempts, 1);
   assert.equal(result.progressRecordsObserved, 1);
@@ -116,7 +116,7 @@ test("S6 targeted recovery requires new exact approval and never writes on cance
 test("S6 targeted recovery reconciles remote error after persisted edit without retrying", async () => {
   const f = fixture({editBehavior:"after"});
   const result = await recoverS6ProgressOnce(f.port, scope, f.control,
-    options(["确认单次补写 G-998"], []));
+    options(["确认单次补写 G998"], []));
   assert.equal(result.status, "PERSISTED_ACK_UNCONFIRMED");
   assert.equal(result.flowResult, "WRITE_UNCERTAIN");
   assert.equal(result.remoteErrorCode, "IWIKI_RPC_ERROR");
@@ -126,7 +126,7 @@ test("S6 targeted recovery reconciles remote error after persisted edit without 
 test("S6 targeted recovery classifies unchanged remote document and forbids repeat", async () => {
   const f = fixture({editBehavior:"before"});
   const result = await recoverS6ProgressOnce(f.port, scope, f.control,
-    options(["确认单次补写 G-998"], []));
+    options(["确认单次补写 G998"], []));
   assert.equal(result.status, "UNCHANGED_NO_RETRY");
   assert.equal(f.control.attempted, 1);
   assert.equal(f.pages.get("page-G998").content, goal998);
@@ -135,7 +135,7 @@ test("S6 targeted recovery fails if prior progress was already recorded", async 
   const f = fixture({existingNote:true});
   let prompts = 0;
   await assert.rejects(() => recoverS6ProgressOnce(f.port, scope, f.control, {
-    ...options([],[]), ask:async () => { prompts++; return "确认单次补写 G-998"; },
+    ...options([],[]), ask:async () => { prompts++; return "确认单次补写 G998"; },
   }), /S6_PROGRESS_ALREADY_EXISTS/);
   assert.equal(prompts, 0);
   assert.equal(f.control.attempted, 0);
