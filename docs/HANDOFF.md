@@ -1,4 +1,7 @@
 # MuSSE 最新交接（持续更新）
+## 2026-11-04 S5-F 下一步：本机只读列空间后选择
+- 用户不能确认 iWiki 私人空间名称；现有提示符中先按 Ctrl+C（没有发写请求）。GitHub S5 自动探针改为先只读 `list_spaces`，仅在用户 Windows 本机显示空间名供编号选择，绝不自动选公共/团队空间；输入 0 取消，未知返回结构停止。新建只限选定的私人测试空间。见 `docs/IWIKI_S5F_DISCOVERY.md`。
+
 ## 2026-11-04 S5-F Windows 测试失败及修复交接（最新）
 - 用户已经在 Windows S5 worktree 跑 `npm test`：**115 total / 113 pass / 2 fail**，没有执行真实创建或编辑；错误片段明确证明 #58 是 `new URL(...).pathname` 在 Windows 下产生错误 Node 路径，#90 是 `updateTaskRow` 无条件把 CRLF 替换为 LF，破坏无关行原样保持。
 - S5 GitHub 分支已修复 #58 用 `fileURLToPath`，修复 #90 保留原文每个 CRLF/LF 分隔符，并加跨平台数据保真单测。**先确认最新全部测试通过再做真实写入**，不要无条件重复 `--create-and-write-test`。
