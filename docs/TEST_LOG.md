@@ -1,4 +1,9 @@
 # 实验与测试日志
+## 2026-11-04 T-20261104-21 — 编辑文档契约确认及既有页最小复测探针
+- 用户 Windows 官方 `npm run inspect:s5-edit -- --live` 真正只读核查成功，文档说明证实 `edit_doc` 是整篇 Markdown 覆盖、支持 `doc_id` 定位目标、可选 title，走三路合并保存且要求编辑权限；`append_to_doc` 同样需要编辑权限；`list_docs` 接受必填 `space_id`，返回标题、类型、更新时间，可用于寻找已有测试页。
+- 未有新一次远端编辑。为避免重建新页面，新增 `s5-probe-existing-edit.mjs` 和单测：仅在 list_spaces/list_docs/read_doc 识别唯一本次创建的合成页且初始正文严格匹配后，提示本机明确输入 EDIT，至多一次 edit_doc 并读回；错误分类限定，原始响应值、页面 ID 和空间 ID 不输出。其他情况停止。
+- 目前该新脚本真实服务端行为（list_docs 返回结构、定位、edit 结果）仍未核实，CI/Windows 全量通过情况亦必须另行记录；不得将离线模拟测试当作远端写成功。
+
 ## 2026-11-04 T-20261104-20 — 真实创建通过，真实编辑被拒绝
 - 用户 Windows 选择 `list_spaces` 的第 3 个个人空间（仅为用户主动选择，本记录不使用私人空间 ID），发起一次合成隔离创建。生成标题 `MuSSE S5-F 自动隔离测试 8a6fc40f`，`createAttempted:true, createCallFailed:false`，`createResponseShape.envelopes[0].ok:true`。服务器返回 `doc_id` 等数据键，程序成功从响应解析唯一 ID 并对该新页面做首次 `read_doc`。
 - `editAttempted:true, editCallFailed:false` 但 `editResponseShape.envelopes[0].ok:false`，`dataFields:["error"]`；`readback:"UNCHANGED"` 且 `outcome:"EDIT_UNCONFIRMED"`。真实创建和读成功，**真实更新失败，服务器的 error 值尚未采集**。
