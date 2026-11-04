@@ -1,6 +1,6 @@
 /**
  * Recover evidence after S6_WRITE_UNCERTAIN without ANY remote mutation.
- * Checks G-999, G-998 and the exact expected single progress record.
+ * Checks G999, G998 and the exact expected single progress record.
  * Does not retry edit_doc. Never logs private IDs, page text, tokens or errors.
  */
 import { readFile } from "node:fs/promises";
@@ -33,10 +33,10 @@ export function s6RecoveryReadOnlyClient(client) {
 
 /** No untrusted content, private IDs, notes, titles or full errors exposed. */
 export function summarizeS6Recovery(goals, tasks) {
-  const g999 = goals.get("G-999");
-  const g998 = goals.get("G-998");
+  const g999 = goals.get("G999");
+  const g998 = goals.get("G998");
   const markerVerified = Boolean(g999?.goal?.description.includes(MARKER));
-  const titleVerified = g998?.entry?.title === "G-998" && g998?.goal?.id === "G-998";
+  const titleVerified = g998?.entry?.title === "G998" && g998?.goal?.id === "G998";
   const rows = g998?.goal?.history.filter((row) => row.note === NOTE) ?? [];
   const matches = rows.length;
   const expectedPercent = g998 ? computeGoalProgress(g998.goal, tasks).percent : null;
