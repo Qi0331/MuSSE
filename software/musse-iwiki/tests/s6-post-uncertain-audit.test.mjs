@@ -8,7 +8,7 @@ import {
 
 const g999 = [
   "# 目标：小七 S6 验收",
-  "- 目标ID: G-999",
+  "- 目标ID: G999",
   "- 说明: 用于验证长期目标动态发现。 [小七 S6 一次性验收]",
   "",
   "## 阶段",
@@ -21,7 +21,7 @@ const g999 = [
 
 const base = [
   "# 目标：小七 S6 自动创建验收",
-  "- 目标ID: G-998",
+  "- 目标ID: G998",
   "- 说明: 隔离测试文档，完成验收后由用户自行决定保留或清理",
   "",
   "## 阶段",
@@ -40,8 +40,8 @@ const base = [
 const row = "| 2026-11-04 | 0% | 小七 S6 受控进度写入验收（隔离测试） |";
 function makeGoals(content) {
   return new Map([
-    ["G-999", { entry: { title: "G-999" }, goal: parseGoal(g999) }],
-    ["G-998", { entry: { title: "G-998" }, goal: parseGoal(content) }],
+    ["G999", { entry: { title: "G999" }, goal: parseGoal(g999) }],
+    ["G998", { entry: { title: "G998" }, goal: parseGoal(content) }],
   ]);
 }
 test("S6 post-uncertain audit identifies exactly one already-persisted record", () => {
