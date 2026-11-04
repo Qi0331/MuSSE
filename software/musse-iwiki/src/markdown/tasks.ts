@@ -200,7 +200,8 @@ export function serializeTaskTable(markdown: string, tasks: Task[]): string {
 
 /** Updates one task by stable ID; other rows are preserved byte-for-byte. */
 export function updateTaskRow(markdown: string, id: string, patch: Partial<Task>): string {
-  const lines = markdown.split(/\r?\n/);
+  const parts = markdown.split(/(\r?\n)/);
+  const lines = parts.filter((_part, index) => index % 2 === 0);
   const headerIndex = lines.findIndex(
     (line) => line.trim().startsWith("|") && line.includes("ID") && line.includes("名称"),
   );
@@ -221,7 +222,8 @@ export function updateTaskRow(markdown: string, id: string, patch: Partial<Task>
     lines[i] = taskRow(next);
   }
   if (!found) throw new ParseError(`task ID not found: ${id}`);
-  return lines.join("\n");
+  for (let i = 0; i < lines.length; i++) parts[2 * i] = lines[i];
+  return parts.join("");
 }
 
 function taskFromCells(cells: string[]): Task {
