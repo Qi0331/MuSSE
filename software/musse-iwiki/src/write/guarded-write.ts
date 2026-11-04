@@ -79,6 +79,7 @@ function validateTaskFields(input: Record<string, unknown>): Record<string, stri
   const result: Record<string, string> = {};
   for (const field of Object.keys(input)) {
     if (!TASK_FIELDS.includes(field as typeof TASK_FIELDS[number])) throw new S5GateError("S5_INVALID_FIELDS");
+    if (typeof input[field] === "string" && /[\r\n]/.test(input[field])) throw new S5GateError("S5_INVALID_VALUE");
     const value = textField(input[field], LIMITS[field], ["description", "category", "dueTime"].includes(field));
     if (field === "priority" && !PRIORITIES.includes(value)) throw new S5GateError("S5_INVALID_PRIORITY");
     if (field === "dueDate") validateDate(value);
@@ -166,26 +167,31 @@ export function createS5Gate(
   const get = (id: string): Pending => {
     const item = pending.get(id);
     if (!item) throw new S5GateError("S5_UNKNOWN_PROPOSAL");
-    if (item.status !== "VERIFIED" && item.status !== "COMMITTING" && clock() >= item.expiresAt) { item.status = "EXPIRED"; item.content = ""; }
+    if ((item.status === "AWAITING_APPROVAL" || item.status === "APPROVED") && clock() >= item.expiresAt) { item.status = "EXPIRED"; item.content = ""; }
     return item;
   };
   const untrusted = Object.freeze({
     async prepare(input: unknown): Promise<S5Prepared> {
       const action = parseS5Intent(input);
+      const document = target(action);
       for (const [id, entry] of receipts) if (clock() >= entry.expiresAt) receipts.delete(id);
       for (const [id, item] of pending) {
         if (item.status === "VERIFIED" && item.receipt) {
           receipts.set(id, { receipt: item.receipt, expiresAt: clock() + ttlMs });
           pending.delete(id);
-        } else if (["EXPIRED", "REJECTED", "CONFLICT", "UNCERTAIN"].includes(item.status) || clock() >= item.expiresAt) {
+        } else if (item.status !== "COMMITTING" && item.status !== "UNCERTAIN" && clock() >= item.expiresAt) {
           pending.delete(id);
         }
       }
       while (receipts.size > 128) receipts.delete(receipts.keys().next().value!);
+      // A write with unknown outcome must block further mutations to the same document.
+      if ([...pending.values()].some((item) => item.document === document &&
+        (item.status === "COMMITTING" || item.status === "UNCERTAIN"))) {
+        throw new S5GateError("S5_DOCUMENT_BLOCKED");
+      }
       if (pending.size + preparing >= maxPending) throw new S5GateError("S5_TOO_MANY_PENDING");
       preparing++; // Reserve capacity before the asynchronous read.
       try {
-      const document = target(action);
       let snapshot: S5Snapshot;
       try { snapshot = await port.read(document); } catch { throw new S5GateError("S5_READ_FAILED"); }
       if (!snapshot || typeof snapshot.content !== "string" || snapshot.content.length > 512_000) throw new S5GateError("S5_INVALID_SNAPSHOT");
